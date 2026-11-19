@@ -29,7 +29,8 @@ $PY mhd.py --stahnout > /dev/null
 echo "== web"
 $PY build_html.py > /dev/null
 # Zkušební nasazení: build_html.py přepíše robots.txt na „Allow“. Dokud _headers zakazuje indexování, zakázat i tady.
-if grep -q noindex site/_headers 2>/dev/null; then
+# hledá skutečný řádek hlavičky, ne slovo v komentáři (2026-11-19: komentář „noindex odstraněn“ nechal Disallow)
+if grep -q -E '^[[:space:]]+X-Robots-Tag:.*noindex' site/_headers 2>/dev/null; then
   printf 'User-agent: *\nDisallow: /\n# Zkušební nasazení: vyhledávače nemají stránku indexovat. Ostré nasazení odstraní noindex v site/_headers.\n' > site/robots.txt
 fi
 $PY nastroje-pavel/zprava_jr.py

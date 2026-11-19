@@ -15,7 +15,8 @@ from pathlib import Path
 KOREN = Path(__file__).resolve().parent.parent
 FORK = 'https://github.com/PaulHubiss/izomapa-hodonin.git'
 KLON = KOREN / 'build' / 'verejny-kod'
-SKRYT = re.compile(r'^(\.claude|archiv|assets|build|dokumenty|napady|navrhy|sessions|volby|ladeni|plakaty|videa|snimky|podklady|fotky)/'
+SKRYT = re.compile(r'^(\.claude|archiv|assets|build|dokumenty|napady|navrhy|sessions|volby|ladeni|plakaty|videa|snimky|podklady|podklady-soukrome|fotky)/'
+                   r'|^pamatky/(?!_)[^/]+\.(js|json)$'          # modely památek Hodonína = data města (nástroje _*.js a .mjs/.py zůstávají)
                    r'|^(CHYBY-CLAUDA|POZNAMKY|PROJEKT|STRANKY|TESTY|UKOLY|ZKRATKY)\.md$'
                    r'|^(mista|poznamky)\.json$'
                    r'|^web/(og\.jpg|logo-hodonin\.svg)$')

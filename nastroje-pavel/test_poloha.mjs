@@ -43,7 +43,8 @@ await p.evaluate(() => { const i = document.getElementById('l-v-sport'); i.click
 s = await stav();
 over('ruční přepnutí zhasne předvolbu', s.zap.length === 0, s.zap.join());
 await klik('Vše'); s = await stav();
-over('Vše zapne všechno', Object.values(s.v).every(Boolean) && s.zap.join() === 'Vše');
+// vánoční výzdobu předvolby nechávají být (zapíná se podle data), proto se nepočítá
+over('Vše zapne všechno', Object.entries(s.v).every(([k, v]) => v || k === 'l-xmas') && s.zap.join() === 'Vše');
 
 // ---------- poloha ----------
 over('tlačítko Moje poloha je vidět', await p.isVisible('#poloha'));

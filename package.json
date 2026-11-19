@@ -15,7 +15,7 @@
     "three": "^0.170.0"
   },
   "devDependencies": {
-    "wrangler": "^4.152.0"
+    "wrangler": "^4.165.0"
   },
   "private": true
 }

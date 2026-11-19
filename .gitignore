@@ -80,6 +80,12 @@ ladeni/
 !assets/upresneni.json
 !assets/dominanty.json
 !assets/oblasti.json
+# Vlastní modely památek (2026-11-19): autor je drží mimo git, my je verzujeme jako ostatní ruční úpravy města,
+# jinak by je M2 neměl a nedělní automat by při přestavbě mapy kreslil budovy postaru. schvalene.json rozhoduje,
+# co jde do dlaždic; rozhodnutí z dashboardu (podklady-soukrome/pamatky/rozhodnuti.json) je přidané přes `git add -f`,
+# aby pamatky/render_mapa.sh (volá schvalit.py) na M2 schválené nesmazal. Fotky a podklady v podklady-soukrome/ dál ne.
+!/pamatky/*.js
+!/pamatky/*.json
 # ── Drahé mezivýsledky, doplněno 2026-11-15 (M2) ──
 # Dají se vygenerovat znovu, ale stojí ~5 GB stahování z ČÚZK a desítky minut, přitom mají dohromady
 # jen ~4,3 MB textu a dvou masek a mění se jen při přestavbě → do gitu, druhý Mac stavbu přeskočí.

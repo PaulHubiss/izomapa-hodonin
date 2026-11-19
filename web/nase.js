@@ -69,6 +69,8 @@
     'l-lide': { barva: 'var(--muted)', ik: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>' },
     'l-smoke': { barva: 'var(--muted)', ik: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>' },
     'l-hover': { barva: 'var(--muted)', ik: '<path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z"/>' },
+    // Lucide tree-pine (Pavel 2026-11-19: u vánoční výzdoby chyběla ikonka)
+    'l-xmas': { barva: 'var(--muted)', ik: '<path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14h-.3a1 1 0 0 1-.7-1.7L9 9h-.2A1 1 0 0 1 8 7.3L12 3l4 4.3a1 1 0 0 1-.8 1.7H15l3 3.3a1 1 0 0 1-.7 1.7H17Z"/><path d="M12 22v-3"/>' },
   };
   const skupina = (nadpis, ids) => {
     const s = el('div', 'nb-sek', `<p class="label">${nadpis}</p>`), l = el('div', 'nb-layers');
@@ -81,7 +83,7 @@
     s.append(l); return s;
   };
   sek.vrstvy.append(skupina('Místa', KATEG.length ? KATEG.map((c) => c.vrstva) : ['l-labels']),
-    skupina('Život ve městě', ['l-traffic', 'l-lide', 'l-smoke', 'l-hover']));
+    skupina('Život ve městě', ['l-traffic', 'l-lide', 'l-smoke', 'l-xmas', 'l-hover']));
   // přepínač, který app.html nezná (přibyl by v autorově novince), se neztratí: přidá se do poslední skupiny
   if (stareVrstvy) { for (const lab of stareVrstvy.querySelectorAll('label')) sek.vrstvy.lastElementChild.lastElementChild.append(lab); stareVrstvy.remove(); }
 
@@ -481,6 +483,15 @@
   }
   // (lišta „Dnes“ nahoře zrušena 2026-11-16, Pavel: zprávy jsou v sekci Dnes – i s výpočtem volné plochy pro ni)
   mobil.addEventListener('change', () => { rozlozeni(); if (mobil.matches) zavri(false); });
+
+  // ---------- vánoční výzdoba: kluziště na náměstí je jen v mapě (Pavel 2026-11-19: „jen ze srandy“, s poznámkou) ----------
+  const xmasLab = $('l-xmas')?.closest('label');
+  if (xmasLab) {
+    const pozn = Object.assign(el('span', 'nb-pozn'), { textContent: ' · kluziště jen v mapě' });
+    pozn.style.cssText = 'opacity:.7;font-size:.85em';
+    xmasLab.append(pozn);
+    xmasLab.title = 'Stánky a stromek podle plánu Vánočního jarmarku. Kluziště na Masarykově náměstí ve skutečnosti není, je jen pro radost v mapě.';
+  }
 
   // ---------- start: na počítači vždy otevřený Vzhled (Pavel 2026-11-16), na telefonu zavřeno (panel by zakryl mapu) ----------
   sync(); pocet(); rozlozeni();

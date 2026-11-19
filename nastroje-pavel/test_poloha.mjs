@@ -47,6 +47,9 @@ over('Vše zapne všechno', Object.values(s.v).every(Boolean) && s.zap.join() ==
 
 // ---------- poloha ----------
 over('tlačítko Moje poloha je vidět', await p.isVisible('#poloha'));
+// od 2026-11-19 se poloha s povoleným oprávněním zapne sama (66-poloha.js); pak vypnout a ručně zapnout (skok na tečku)
+over('s povolením se poloha zapnula sama', await p.evaluate(() => document.getElementById('poloha').getAttribute('aria-pressed') === 'true'));
+await p.click('#poloha'); await p.waitForTimeout(300);
 await p.click('#poloha'); await p.waitForTimeout(2500);
 const pol = await p.evaluate(() => {
   const t = document.querySelector('.poloha-tecka'), k = document.querySelector('.poloha-kruh');

@@ -36,10 +36,17 @@ const POCASI = { current: { temperature_2m: -2.4, apparent_temperature: -6.2, we
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 1200, height: 800 }, permissions: ['clipboard-read', 'clipboard-write'] });
 const chyby = [];
-// hasiči: mapa se ptá HZS přímo (web/hasici_data.js) a prostředník je záloha. Hlavní část zkoušky jede přes zálohu
-// (přímá cesta zablokovaná), přímá cesta se surovými daty HZS se zkouší zvlášť na konci.
-await ctx.route('https://udalosti.firebrno.cz/**', (r) => r.abort());
-await ctx.route('**/api/hasici*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(HASICI) }));
+// hasiči: mapa se ptá jen HZS přímo (web/hasici_data.js); záloha přes prostředníka zrušena 2026-11-19 (PageSpeed).
+// HZS tedy dostane surová data ve svém formátu (S-JTSK: gis1 = Y, gis2 = X; přepočet pyproj EPSG:4326 → 5514) se stejnými
+// třemi událostmi jako HASICI výš; dotaz na prostředníka se nesmí objevit.
+const SUROVE_HZS = [
+  { id: 1, casOhlaseni: iso(-0.5), typId: 3100, stavId: 400, obec: 'Hodonín', ulice: 'Masarykovo náměstí', poznamkaProMedia: 'Požár kontejneru.', gis1: 564312.39, gis2: 1203025.2 },
+  { id: 2, casOhlaseni: iso(-72), typId: 3200, stavId: 700, obec: 'Hodonín', ulice: 'Národní třída', poznamkaProMedia: 'DN 2 OA.', gis1: 564508.59, gis2: 1202412.99 },
+  { id: 3, casOhlaseni: iso(-5), typId: 3500, stavId: 700, obec: 'Suchov', ulice: null, poznamkaProMedia: null, gis1: 532985.98, gis2: 1200374.57 },
+];
+let dotazProstrednik = 0;
+await ctx.route('https://udalosti.firebrno.cz/**', (r) => r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(SUROVE_HZS) }));
+await ctx.route('**/api/hasici*', (r) => { dotazProstrednik++; r.abort(); });
 await ctx.route('**/api/vyluky*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(VYLUKY) }));
 await ctx.route('**/api/program*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(PROGRAM) }));
 await ctx.route('https://api.open-meteo.com/**', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(POCASI) }));
@@ -56,6 +63,7 @@ const hz = await p.evaluate(() => ({ ikon: document.querySelectorAll('.pin.hz').
   list: window.__izo.HZ.list.map((u) => u.probiha) }));
 over('hasiči: bez ikonek a přepínače, v seznamu jen zásahy v mapě (2 ze 3, probíhající nakonec)', !hz.ikon && !hz.prepinac
   && hz.list.length === 2 && hz.list[1] === true && hz.list[0] === false, hz);
+over('hasiči: žádný dotaz na prostředníka /api/hasici (jen přímo HZS)', dotazProstrednik === 0, dotazProstrednik);
 await p.evaluate(() => window.__izo.showHasici(window.__izo.HZ.list[1])); await p.waitForTimeout(300);
 const karta = await p.evaluate(() => ({ nadpis: document.querySelector('#cardTitle').textContent, text: document.querySelector('#cardText').textContent,
   dl: document.querySelector('#cardDl').textContent, odkazy: [...document.querySelectorAll('#cardLinks a')].map((a) => a.textContent) }));

@@ -926,14 +926,14 @@
   const geoImg = (lat, lon) => { const x = (lon - cam.lon0) * cam.kx, y = (lat - cam.lat0) * cam.ky; return [x, y, ...toImg(x, y, gz(x, y))]; };
   async function hasiciNacti() {
     if (!HASICI_CFG || HZ.stop || document.hidden) return;
-    // přímo z prohlížeče (HZS dovoluje CORS; z Cloudflaru se k nim prostředník nedostane), prostředník jen jako záloha
+    // jen přímo z prohlížeče (HZS dovoluje CORS). Záloha přes náš server (functions/api/hasici.js) vypuštěna 2026-11-19:
+    // z Cloudflaru se k HZS nedostane, po 19 s vracela 502 a chybu v konzoli (napady/PAGESPEED-2026-11-19.md, bod 1)
     const primo = async () => {
       const m = await import(`./hasici_data.js?s=${SEST}`);
       const r = await fetch(m.dotaz(HASICI_CFG.kraj, HASICI_CFG.okres, HASICI_CFG.dni || 7), { signal: AbortSignal.timeout(10000) });
       return r.ok ? { udalosti: m.preved(await r.json()), zdroj: m.ZDROJ } : null;
     };
-    const q = new URLSearchParams({ kraj: HASICI_CFG.kraj, dni: HASICI_CFG.dni || 7 }); if (HASICI_CFG.okres) q.set('okres', HASICI_CFG.okres);
-    const d = await primo().catch(() => null) || await fetch(`api/hasici?${q}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const d = await primo().catch(() => null);
     if (!d || !Array.isArray(d.udalosti)) { if (!HZ.ok) HZ.stop = true; return; }
     HZ.ok = true; if (d.zdroj) HZ.zdroj = d.zdroj;
     // jen ve vykreslených čtvercích mapy (stejně jako letadla). Ikonky v mapě a vrstva zrušené (Pavel 2026-11-18),

@@ -178,8 +178,10 @@
   <button class="px-btn" type="button" id="mShare" aria-label="Sdílet tento pohled"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/><path d="M8 10H5v11h14V10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></button>
 </nav>
 <script id="izo-nastaveni">window.IZO_SEST = '{{SESTAVENI}}'; window.IZO_KAMERY = {{KAMERY}};   // webkamery pro položku menu Kamery (mesto.json "kamery", web/nase.js)</script>
-<script src="kategorie.js?s={{SESTAVENI}}"></script>
-<script src="nase.js?s={{SESTAVENI}}"></script>
+<!-- defer + hlavní skript jako module (Pavel 2026-11-19, PageSpeed bod 2): stáhnou se souběžně a spustí až po vykreslení
+     stránky, ve stejném pořadí jako dřív (kategorie → nase → OpenSeadragon → hlavní skript). napady/PAGESPEED-2026-11-19.md -->
+<script defer src="kategorie.js?s={{SESTAVENI}}"></script>
+<script defer src="nase.js?s={{SESTAVENI}}"></script>
 <!-- Cloudflare Web Analytics (Pavel 2026-11-19): bez cookies, jen na ostrém webu (zkoušky na localhost se nepočítají).
      Token je veřejný (stránka hodonin.paulhubiss.cz ve Web Analytics, JS Snippet). Zmínka v Nápovědě › O mapě › Soukromí. -->
 <script>if (location.hostname === 'hodonin.paulhubiss.cz') { const s = document.createElement('script'); s.type = 'module'; s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
@@ -187,7 +189,7 @@
 
 <!-- OpenSeadragon 4.1.0 z našeho webu (stejný soubor jako na cdnjs, ověřeno otiskem sha384 2026-11-18): nezávislost na cizím
      serveru a IP návštěvníků nikam nejde. Verzi drží upstream (package.json); při změně stáhnout znovu a ověřit otisk. -->
-<script src="openseadragon.min.js?s={{SESTAVENI}}" integrity="sha384-4BsIv4BUV37POdA1NZ6UcVAsFk96MQXmFLog7pWs+JP+a8k2XjilfManEVdWDxTe"></script>
-<script>
+<script defer src="openseadragon.min.js?s={{SESTAVENI}}" integrity="sha384-4BsIv4BUV37POdA1NZ6UcVAsFk96MQXmFLog7pWs+JP+a8k2XjilfManEVdWDxTe"></script>
+<script type="module">
 <!-- @js -->
 </script>

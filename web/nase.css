@@ -132,6 +132,15 @@ body { font-size: 15px; line-height: 1.4; }
 .ver-sk .places { margin: 0 0 6px; gap: 0; }
 .ver-sk:not(.ver-pribehy) .places button { display: flex; align-items: baseline; gap: 8px; text-align: left; }
 .ver-nazev { min-width: 0; }
+/* Telefon (Pavel 2026-11-19: Místa roztahaná, zvýraznění níž než text): autorův 40-mobil.css dává summary i položkám
+   min-height 44 px – summary pak měřilo 54 px (padding navíc) a v položkách s align-items: baseline seděl text nahoře
+   (1 px nad, 23 px pod). Teď 36 / 34 px s paddingem uvnitř a text na středu; řádek s ulicí zůstává na účaří
+   (flex-wrap + align-content: center vystředí celý řádek). Cíl pro prst nad minimem WCAG 2.2 (24 px). */
+@media (max-width: 640px) {
+  .ver-sk > summary { box-sizing: border-box; min-height: 36px; padding: 4px 8px; }
+  .ver-sk .places button, #placesBox .places button { box-sizing: border-box; min-height: 34px; display: flex; align-items: center; }
+  .ver-sk:not(.ver-pribehy) .places button { flex-wrap: wrap; align-items: baseline; align-content: center; }
+}
 .ver-kde { color: var(--muted); font-size: 12.5px; }   /* ulice u stejných názvů (4× Veřejné WC) */
 .ver-stav { margin-left: auto; flex: none; font-size: 12px; font-weight: 700; }
 .ver-stav.otevreno { color: #6fdc9a; } .ver-stav.zavreno { color: #ff8a7a; }

@@ -88,14 +88,16 @@
       }
       if (MHD.on) {
         const ns = Math.floor(now / 1000);
-        if (ns !== MHD.t) { MHD.t = ns; MHD.act = mhdActive(); updateXings(); if (MHD.follow !== null) mhdFollowText(); }
+        if (ns !== MHD.t) { MHD.t = ns; MHD.act = mhdActive(); liveMatch(); updateXings(); if (MHD.follow !== null) mhdFollowText(); }
         MHD.drawn = [];
         if (MHD.follow !== null) {
           const a = MHD.act.find((q) => q[0] === MHD.follow);
-          if (a) { const o = mhdPos(MHD.trips[a[0]], a[2] ? 0 : a[1] + (now / 1000 - ns) - (busWait.get(a[0]) || 0)); viewer.viewport.panTo(new OpenSeadragon.Point(o.ix / W, o.iy / W), true); }
+          if (a) { const o = mhdPos(MHD.trips[a[0]], a[2] ? 0 : a[1] + (now / 1000 - ns) - (busWait.get(a[0]) || 0) + (LIVE.cur.get(a[0]) || 0)); viewer.viewport.panTo(new OpenSeadragon.Point(o.ix / W, o.iy / W), true); }
         }
-        if (sx > 0.12) for (const [i, el, ceka, poradi] of MHD.act) {
+        if (sx > 0.12) for (const [i, el0, ceka, poradi] of MHD.act) {
           const trip = MHD.trips[i], [line, typ] = MHD.routes[trip[0]];
+          const el = el0 + liveOff(i, dt);                        // živá poloha: spoj posunutý v čase podle dispečinku
+          if (el > MHD.dur[i]) continue;                         // dojel (zpožděné spoje bez živé polohy po čase jízdního řádu zmizí)
           let o = mhdPos(trip, ceka ? 0 : el + (now / 1000 - ns) - (typ === 2 ? 0 : busDelay(i, trip, el + (now / 1000 - ns), dt)));   // na konečné stojí
           const ods = ceka && typ === 0 ? odstavPos(trip, ceka, poradi) : null;
           if (ods) o = ods;
@@ -108,7 +110,7 @@
           if (shown_) for (const q of typ === 2 ? drawTrain.pts : [o]) MHD.drawn.push([Math.round(ox + q.ix * sx), Math.round(oy + q.iy * sx) - Math.round(8 * sx), i]);
           if (shown_ && (sx > 0.55 || i === MHD.follow)) {     // číslo linky nad vozidlem
             const h = gz(o.x, o.y), [tx, ty] = toImg(o.x, o.y, h + 6), X_ = Math.round(ox + tx * sx), Y_ = Math.round(oy + ty * sx);
-            ctx.font = '700 13px "Atkinson Hyperlegible", system-ui, sans-serif'; const tw = Math.ceil(ctx.measureText(line).width) + 10;
+            ctx.font = '700 13px "Source Sans 3", system-ui, sans-serif'; const tw = Math.ceil(ctx.measureText(line).width) + 10;
             ctx.fillStyle = '#16191f'; ctx.fillRect(X_ - tw / 2 - 1, Y_ - 10, tw + 2, 19);
             ctx.fillStyle = typ === 0 ? '#c4352b' : typ === 2 ? '#2f7d4f' : '#1f6fb2'; ctx.fillRect(X_ - tw / 2, Y_ - 9, tw, 17);
             if (i === MHD.follow) { ctx.strokeStyle = '#f2c66d'; ctx.lineWidth = 2; ctx.strokeRect(X_ - tw / 2 - 2, Y_ - 11, tw + 4, 21); }
@@ -193,6 +195,40 @@
         drawSkier(q, sx, ox, oy);
       }
     }
+    // lidé v ulicích: krok vždy (ať se po přiblížení neobjeví všichni na stejném místě), kreslí se až při přiblížení
+    // (poloha z času t, takže se po přiblížení ani po návratu na kartu nikdo nepřeskupí)
+    const chT0 = performance.now();
+    CHODCI.stat = { zkouseno: 0, dum: 0, kresleno: 0, ms: 0, ms_tvary: 0 };
+    if (CHODCI.ok && sx > 0.25 && lideU(sx) >= 0.3 && $('l-lide') && $('l-lide').checked) {   // autorovy postavy ve skutečné velikosti: od 0,3 px na bod
+      // při oddalování ubývá lidí s druhou mocninou (do okna se vejde čtvercově víc města): v okně jich je zhruba
+      // stejně jako zblízka, místo stovek teček po 3 px (2026-11-16: 590 lidí = 14 ms na snímek, posun drhnul)
+      // cyklisté jsou řidší (jezdí hlavně mimo centrum): při oddálení jich ubývá jen úměrně měřítku, ne se čtvercem
+      // (Pavel 2026-11-17: ani jednoho nezahlédl; ve výchozím přiblížení bylo 46 chodců a 2 cyklisté)
+      const zoom_ = Math.min(1, (sx / 1.3) ** 2), venku = chodciAktivita() * zoom_, venkuKola = kolaAktivita() * Math.min(1, sx / 1.3);
+      for (const c of chodciVOkne()) {
+        if (c.zvire) {                                        // zvířata v zoo: bez řídnutí při oddálení (je jich málo)
+          const lim = zooAktivita(c.zvire);
+          for (const q of c.lide) {
+            if (q.poradi > lim) continue;
+            const { s, stoji, zpet } = chodecPoloha(c, q, t); drawZvire(c, q, s, stoji, zpet, sx, ox, oy, night, vis);
+          }
+          continue;
+        }
+        const lim = c.kolo ? venkuKola : venku;
+        for (const q of c.lide) {
+          if (q.poradi > lim || CHODCI.stat.zkouseno >= CH_NAKRESLIT) continue;
+          if (c.kolo) {                                       // cyklista: jen ve svém směru (vpravo), na konci úseku zmizí a vyjede na začátku
+            const u = (q.s0 + q.v * t) % c.L, s = q.smer > 0 ? u : c.L - u;
+            if (u < 2 || u > c.L - 2) continue;                 // na kraji úseku (křižovatka) chvíli není vidět
+            drawCyklista(c, q, s, q.smer < 0, sx, ox, oy, night, vis);
+          } else { const { s, stoji, zpet } = chodecPoloha(c, q, t); drawChodec(c, q, s, stoji, zpet, sx, ox, oy, night, vis); }
+        }
+      }
+      const naVode = lodeAktivita();
+      if (naVode > 0) for (const c of CHODCI.lode || []) for (const q of c.lodky) if (q.poradi < naVode) drawLod(c, q, t, sx, ox, oy, night, vis);
+    }
+    CHODCI.stat.ms = performance.now() - chT0;               // kolik stál tenhle snímek (měření nastroje-pavel/test_chodci.mjs)
+    kresliUlici(sx, ox, oy, now);                            // ulice vybraná v hledání
     // kluziště: led s mantinelem je ve vrstvě výzdoby, tady jen bruslaři krouží po elipsách
     const xm = xmasShow();
     if (xm && sx > 0.25) for (const R of rinks) {
@@ -324,12 +360,14 @@
     }
     // počasí
     if (state.weather === 'rain') {
-      ctx.fillStyle = 'rgba(20,28,44,0.16)'; ctx.fillRect(0, 0, cw, ch);
-      ctx.fillStyle = night > 0.5 ? 'rgba(150,170,200,0.45)' : 'rgba(210,225,245,0.55)';
-      for (const d of drops) {
+      // jemnější déšť (Pavel 2026-11-17: „mohl by být méně intenzivní“): polovina kapek, kratší čárky, slabší krytí a ztmavení
+      ctx.fillStyle = 'rgba(20,28,44,0.10)'; ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = night > 0.5 ? 'rgba(150,170,200,0.3)' : 'rgba(210,225,245,0.35)';
+      for (let i = 0; i < drops.length; i += 2) {
+        const d = drops[i];
         d.y += d.v * dt * 1.6; if (d.y > 1) { d.y -= 1; d.x = Math.random(); }
         const x = Math.round(d.x * cw + d.y * 60), y = Math.round(d.y * ch);
-        for (let k = 0; k < 4; k++) ctx.fillRect(x - k, y - k * 3, 1, 3);
+        for (let k = 0; k < 3; k++) ctx.fillRect(x - k, y - k * 3, 1, 3);
       }
     } else if (state.weather === 'snow') {
       ctx.fillStyle = 'rgba(255,255,255,0.9)';

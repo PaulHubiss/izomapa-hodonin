@@ -1,11 +1,14 @@
 <title>{{TITULEK}}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="{{POPIS}}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<!-- písmo z našeho webu, ne z Google Fonts: IP návštěvníků nejde Googlu (Pavel 2026-11-18, nastroje-pavel/pisma.py).
+     Pixelify Sans a Atkinson Hyperlegible ze šablony se nenačítají, nase.css je přepisuje na Source Sans 3. -->
+<link rel="preload" href="pismo-ss3-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="pisma.css?s={{SESTAVENI}}">
 <style>
 <!-- @css -->
 </style>
+<link rel="stylesheet" href="nase.css?s={{SESTAVENI}}">
 
 <div id="map" aria-label="Izometrická pixel-art mapa {{MESTO}}"><div id="osd"></div><div id="pluginLayers"></div><canvas id="fx"></canvas></div>
 <div class="loading" id="loading">Načítám mapu…</div>
@@ -29,6 +32,13 @@
     <input id="q" type="search" placeholder="Ulice, adresa nebo místo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
     <ul class="results" id="results"></ul>
   </div>
+
+  <details id="dnesBox" open hidden>
+    <summary id="dnesNadpis">Dnes</summary>
+    <div class="pc" id="dnesPocasi" hidden></div>
+    <p class="label pc-nadpis" id="dnesUdalosti" hidden>Ve městě</p>
+    <ul class="dnes-list" id="dnes"></ul>
+  </details>
 
   <div>
     <p class="label">Zobrazit</p>
@@ -69,18 +79,26 @@
   <div>
     <p class="label">Vrstvy</p>
     <div class="layers">
-      <label><input type="checkbox" id="l-labels" checked> Popisky</label>
+      <label><input type="checkbox" id="l-labels" checked> Popisky<span class="lay-n" id="n-labels"></span></label>
       <label><input type="checkbox" id="l-traffic" checked> Doprava</label>
-      <label><input type="checkbox" id="l-people" checked> Lidé</label>
+      <label><input type="checkbox" id="l-lide" checked> Lidé</label>
       <label><input type="checkbox" id="l-smoke" checked> Kouř z&nbsp;komínů</label>
       <label hidden><input type="checkbox" id="l-xmas"> Vánoční výzdoba</label>
       <label><input type="checkbox" id="l-hover" checked> Zvýraznit budovy</label>
+      <!-- přepínače kategorií míst (Památky, Kultura…) přidá web/nase.js podle web/kategorie.js -->
     </div>
+    <label title="Hrubší obraz a pomalejší animace, mapa pak plynuleji běží na slabším zařízení. Zapne se sám, když prohlížeč nestíhá."><input type="checkbox" id="ecoBox"> Úsporný režim</label>
   </div>
 
   <details id="placesBox">
     <summary>Místa a&nbsp;příběhy</summary>
     <ul class="places" id="places"></ul>
+  </details>
+  <div id="verSkupiny" class="ver-skupiny" hidden></div>
+
+  <details id="vylukyBox" hidden>
+    <summary><span id="vylukyNadpis">Výluky</span> <span id="vylukyN"></span></summary>
+    <ul class="vyluky" id="vyluky"></ul>
   </details>
 
   <details class="about">
@@ -89,14 +107,21 @@
     <p><strong>Co je izometrie?</strong><br>Pohled shora a&nbsp;šikmo bez perspektivy: čáry se do dálky nesbíhají a&nbsp;věci si drží svou skutečnou velikost bez ohledu na to, jak daleko jsou od pozorovatele. Dům na kraji mapy je stejně velký jako ten uprostřed. Tenhle styl si pamatuje každý, kdo koncem 90. let trávil hodiny u&nbsp;SimCity a&nbsp;podobných budovatelských her.</p>
   </details>
 </aside>
+<!-- autorův pohyb lidí (75-chodci.js, PEOPLE) vypnutý: kreslí se jeho postavy, ale po našich cestách (Pavel 2026-11-18,
+     70-animace.js). Mimo menu: nase.js při přestavbě vrstev přenese jen přepínače se štítkem a staré menu smaže. -->
+<input type="checkbox" id="l-people" hidden>
 
 <div class="follow" id="follow" hidden aria-live="polite"><span id="followTxt"></span><button class="px-btn" id="followStop" type="button" aria-label="Přestat sledovat">×</button></div>
 <section class="card" id="card" hidden aria-live="polite">
   <div class="grab" id="grab" aria-hidden="true"></div>
   <button class="px-btn close" id="cardClose" type="button" aria-label="Zavřít">×</button>
+  <button class="px-btn cshare" id="cardShare" type="button" title="Sdílet odkaz na tohle místo" aria-label="Sdílet odkaz na tohle místo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/><path d="M8 10H5v11h14V10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></button>
   <h2 id="cardTitle"></h2>
+  <figure id="cardFoto" hidden><a id="cardFotoA" target="_blank" rel="noopener"><img id="cardFotoImg" alt="" loading="lazy" decoding="async"></a><figcaption id="cardFotoCap"></figcaption></figure>
   <p id="cardText" hidden></p>
   <dl id="cardDl"></dl>
+  <div class="program" id="cardProgram" hidden></div>
+  <div class="vyl-note" id="cardVyl" hidden></div>
   <div class="links" id="cardLinks"></div>
   <details class="report" id="report" hidden>
     <summary>Nahlásit nepřesnost</summary>
@@ -130,10 +155,10 @@
     <li><b>Budova:</b> klikněte na ni a&nbsp;ukáže se název, adresa a&nbsp;odkaz na Mapy.cz.</li>
     <li><b>Roční období, denní doba a&nbsp;počasí</b> se přepínají v&nbsp;menu. Na mobilu jsou roční období a&nbsp;denní doba i&nbsp;ve spodní liště.</li>
     <li><b>Hledání</b> zná ulice, adresy, budovy i&nbsp;zajímavá místa.</li>
-    <li><b>Sdílet</b> <span class="ico-inline"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/><path d="M8 10H5v11h14V10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></span> zkopíruje odkaz přesně na to, co právě vidíte, včetně ročního období a&nbsp;denní doby.</li>
+    <li><b>Sdílet</b> <span class="ico-inline"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/><path d="M8 10H5v11h14V10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></span> zkopíruje odkaz přesně na to, co právě vidíte, včetně ročního období, denní doby a&nbsp;vypnutých vrstev. Stejné tlačítko v&nbsp;kartě budovy nebo místa pošle odkaz, který kartu rovnou otevře.</li>
   </ul>
   <p class="muted">Vytvořeno nástrojem <a href="https://github.com/adamklatovsky/izomapa" target="_blank" rel="noopener">izomapa</a> od <a href="https://www.adamklatovsky.cz/" target="_blank" rel="noopener">Adama Klatovského</a> (původní mapa: <a href="https://izomapa.fun" target="_blank" rel="noopener">izometrický Liberec</a>).<br>
-  Mapová data © přispěvatelé <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL) a&nbsp;Overture Maps, terén Terrarium (AWS Open Data), výšky budov a&nbsp;stromů, ortofoto a&nbsp;ZABAGED{{RUIAN_ZDROJ}} © <a href="https://geoportal.cuzk.cz/" target="_blank" rel="noopener">ČÚZK</a> (CC BY 4.0){{MHD_ZDROJ}}{{VITR_ZDROJ}}{{LETADLA_ZDROJ}}{{DOPRAVA_ZDROJ}}.</p>
+  Mapová data © přispěvatelé <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL) a&nbsp;Overture Maps, terén Terrarium (AWS Open Data), výšky budov a&nbsp;stromů, ortofoto a&nbsp;ZABAGED{{RUIAN_ZDROJ}} © <a href="https://geoportal.cuzk.cz/" target="_blank" rel="noopener">ČÚZK</a> (CC BY 4.0){{MHD_ZDROJ}}{{VITR_ZDROJ}}{{LETADLA_ZDROJ}}{{DOPRAVA_ZDROJ}}{{PAMATKY_ZDROJ}}{{ZIVE_ZDROJ}}.</p>
 </dialog>
 <dialog class="help plocha" id="plochaDlg" aria-labelledby="plochaTitle">
   <button class="px-btn close" id="plochaClose" type="button" aria-label="Zavřít">×</button>
@@ -152,8 +177,13 @@
   <button class="px-btn" type="button" id="mTime">Den</button>
   <button class="px-btn" type="button" id="mShare" aria-label="Sdílet tento pohled"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/><path d="M8 10H5v11h14V10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></button>
 </nav>
+<script id="izo-nastaveni">window.IZO_SEST = '{{SESTAVENI}}'; window.IZO_KAMERY = {{KAMERY}};   // webkamery pro položku menu Kamery (mesto.json "kamery", web/nase.js)</script>
+<script src="kategorie.js?s={{SESTAVENI}}"></script>
+<script src="nase.js?s={{SESTAVENI}}"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js" integrity="sha384-4BsIv4BUV37POdA1NZ6UcVAsFk96MQXmFLog7pWs+JP+a8k2XjilfManEVdWDxTe" crossorigin="anonymous"></script>
+<!-- OpenSeadragon 4.1.0 z našeho webu (stejný soubor jako na cdnjs, ověřeno otiskem sha384 2026-11-18): nezávislost na cizím
+     serveru a IP návštěvníků nikam nejde. Verzi drží upstream (package.json); při změně stáhnout znovu a ověřit otisk. -->
+<script src="openseadragon.min.js?s={{SESTAVENI}}" integrity="sha384-4BsIv4BUV37POdA1NZ6UcVAsFk96MQXmFLog7pWs+JP+a8k2XjilfManEVdWDxTe"></script>
 <script>
 <!-- @js -->
 </script>

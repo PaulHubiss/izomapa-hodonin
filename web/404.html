@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stránka nenalezena · Izometrický Hodonín</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/pisma.css">
+<!-- Vlastní stránka 404 (Pavel 2026-11-18, UKOLY.md „Před spuštěním“). Cloudflare Pages ji pošle s kódem 404 u každé
+     neexistující adresy, proto všechny cesty od kořene (/…). Vzhled = sklo z web/nase.css nad rozmazaným náhledem mapy. -->
+<style>
+:root { --sklo: rgba(20, 30, 44, .55); --hrana: rgba(255, 255, 255, .22); --ink: #fff; --muted: #d2dbe4; --zlata: #f2c66d; --na-zlate: #101a26; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: grid; place-items: center; padding: 16px; background: #1b2333; color: var(--ink);
+  font: 16px/1.5 "Source Sans 3", system-ui, sans-serif; }
+body::before { content: ""; position: fixed; inset: -24px; z-index: -1; background: url(/preview/summer.webp) center / cover no-repeat;
+  filter: blur(10px) brightness(.55) saturate(1.2); }
+main { width: 100%; max-width: 30rem; padding: 32px 28px; border-radius: 10px; border: 1px solid var(--hrana);
+  background: linear-gradient(160deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 45%), var(--sklo);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8); backdrop-filter: blur(18px) saturate(1.8);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .38), 0 6px 18px -4px rgba(10, 20, 30, .32); text-align: center; }
+.kod { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 6px 0 10px; font-size: 28px; line-height: 1.2; font-weight: 700; }
+p { margin: 0 0 22px; color: var(--muted); }
+a { display: inline-block; padding: 10px 18px; border-radius: 6px; background: var(--zlata); color: var(--na-zlate);
+  font-weight: 700; text-decoration: none; }
+a:hover { filter: brightness(1.08); }
+a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="kod">Chyba 404</p>
+  <h1>Tahle stránka v Hodoníně není</h1>
+  <p>Adresa se možná změnila, nebo v ní je překlep. Mapa města ale běží dál.</p>
+  <a href="/">Zpět na mapu</a>
+</main>
+</body>
+</html>

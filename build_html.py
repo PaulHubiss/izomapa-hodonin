@@ -76,6 +76,9 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
     fill = {
         'TITULEK': E(M['titulek']), 'POPIS': E(M['popis']), 'MESTO': E(M['nazev']), 'H1_A': E(M['h1'][0]), 'H1_B': E(M['h1'][1]),
         'PODTITUL': E(M['podtitul']),
+        # razítko sestavení: připojí se k adresám datových souborů (jiné sestavení = jiná adresa, prohlížeč nesáhne
+        # po starém souboru) a mapa ho vypíše do konzole (Safari 2026-11-17 držel starý chodci.json)
+        'SESTAVENI': __import__('time').strftime('%Y%m%d-%H%M%S'),
         'HLASENI': 'true' if M.get('hlaseni') else 'false',
         'VITR': 'true' if M.get('vitr') else 'false',
         'POCASI': 'true' if M.get('pocasi') else 'false',
@@ -83,6 +86,8 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
         'MHD': 'true' if mhd.get('gtfs') or os.path.exists('site/mhd.json') else 'false',   # mhd.json vyrábí mhd.py jen s GTFS
         'POHLED': json.dumps(pohled if isinstance(pohled, list) and len(pohled) >= 2 else None),
         'DOMU_CELEK': 'true' if M.get('domu_celek') else 'false',
+        'KAMERY': json.dumps(M['kamery'] if isinstance(M.get('kamery'), list) else [], ensure_ascii=False),
+        'ROZSAH_MESTA': json.dumps(M['rozsah_mesta'] if isinstance(M.get('rozsah_mesta'), list) and len(M['rozsah_mesta']) >= 3 else None),
         'STROM': json.dumps(strom if isinstance(strom, list) and len(strom) == 2 else None),
         'XMAS_LL': json.dumps((lambda v: v if v and isinstance(v[0], list) else [v] if v else [])(M.get('vanocni_strom'))),   # vánoční stromy [[lat, lon], ...]
         'KLUZISTE': json.dumps(M.get('kluziste') or []),
@@ -91,11 +96,30 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
         'OBEC': json.dumps(M.get('nazev') if je_obec else None, ensure_ascii=False),
         'VLAK': json.dumps({'vychozi': (M.get('vlak') or {}).get('vychozi', 'regionova') if isinstance(M.get('vlak'), dict) else M.get('vlak', 'regionova'), 'linky': M['vlak'].get('linky', {}) if isinstance(M.get('vlak'), dict) else {}}),
         'DOPRAVA_ZDROJ': ', intenzity dopravy © <a href="https://www.rsd.cz/silnice-a-dalnice/scitani-dopravy" target="_blank" rel="noopener">ŘSD ČR</a> (Celostátní sčítání dopravy)' if M.get('doprava') else '',
-        'RUIAN_ZDROJ': ', typy budov z RÚIAN' if os.path.exists('assets/ruian_budovy.json') else '',
+        'RUIAN_ZDROJ': (', typy budov a údaje o stavbách z RÚIAN' if os.path.exists('assets/ruian_karta.json')
+                        else ', typy budov z RÚIAN' if os.path.exists('assets/ruian_budovy.json') else ''),
         'VITR_ZDROJ': ', ' + ('počasí a vítr' if M.get('pocasi') and M.get('vitr') else 'počasí' if M.get('pocasi') else 'vítr') + ' © <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0)' if M.get('vitr') or M.get('pocasi') else '',
+        'PAMATKY_ZDROJ': (', kulturní památky z <a href="https://www.wikidata.org/" target="_blank" rel="noopener">Wikidat</a> (CC0), '
+                          'jejich fotky © autoři na <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> '
+                          '(autor a licence u každé fotky)' if os.path.exists('assets/pamatky.json') else ''),
         'LETADLA_ZDROJ': ', letadla © <a href="https://adsb.lol/" target="_blank" rel="noopener">adsb.lol</a> (ODbL)' if M.get('letadla', False) else '',
-        'MHD_ZDROJ': f', jízdní řády MHD © <a href="{E(mhd["zdroj_url"])}" target="_blank" rel="noopener">{E(mhd["zdroj"])}</a>'
-                     if mhd.get('gtfs') and mhd.get('zdroj') else '',
+        # výjezdy hasičů (functions/api/hasici.js) a výluky (functions/api/vyluky.js): jen přes prostředníka na Cloudflaru
+        'HASICI': json.dumps(M['hasici'] if isinstance(M.get('hasici'), dict) and M['hasici'].get('kraj') else None),
+        'VYLUKY': json.dumps({**M['vyluky'], 'mesto': M['nazev']} if isinstance(M.get('vyluky'), dict) and M['vyluky'].get('oblast') else None, ensure_ascii=False),
+        # přehled „Dnes v …“ (nadpis v 6. pádě píše člověk, z názvu města se odvodit nedá)
+        'DNES': json.dumps(M['dnes'] if isinstance(M.get('dnes'), dict) else None, ensure_ascii=False),
+        'ZIVE_ZDROJ': (', výjezdy hasičů © <a href="https://udalosti.firebrno.cz/" target="_blank" rel="noopener">HZS Jihomoravského kraje</a>'
+                       if isinstance(M.get('hasici'), dict) else '')
+                      + (', výluky © <a href="https://www.idsjmk.cz/lockouts/all/current" target="_blank" rel="noopener">KORDIS JMK</a>'
+                         if isinstance(M.get('vyluky'), dict) else ''),
+        'MHD_ZDROJ': (f', jízdní řády MHD © <a href="{E(mhd["zdroj_url"])}" target="_blank" rel="noopener">{E(mhd["zdroj"])}</a>'
+                      if mhd.get('gtfs') and mhd.get('zdroj') else '')
+                     + (f', živé polohy a zpoždění MHD © <a href="{E(mhd["live"].get("zdroj_url", ""))}" target="_blank" rel="noopener">'
+                        f'{E(mhd["live"].get("zdroj", ""))}</a> ({E(mhd["live"].get("licence", ""))})'
+                        if isinstance(mhd.get('live'), dict) and mhd['live'].get('url') else ''),
+        # živé polohy vozidel (WebSocket, formát „kordis“ = proud KORDIS JMK): spoje z jízdního řádu se posunou podle skutečné polohy
+        'MHD_LIVE': json.dumps({k: mhd['live'][k] for k in ('url', 'format') if k in mhd['live']}
+                               if isinstance(mhd.get('live'), dict) and mhd['live'].get('url') else None),
     }
     app = re.sub(r'\{\{(\w+)\}\}', lambda m: fill[m.group(1)], SABLONA)
     og = f'''<meta property="og:image" content="{E(obrazek_url)}">
@@ -140,6 +164,9 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
 
 ikony_a_manifest(MESTO)
 postav_stranku(MESTO)
+for f in os.listdir('web'):                           # vlastní vzhled vedle šablony (např. web/nase.css, nase.js) jde do site/ k ní
+    if f != 'app.html' and os.path.isfile(f'web/{f}'):
+        open(f'site/{f}', 'wb').write(open(f'web/{f}', 'rb').read())
 SITE_URL = (MESTO.get('url') or '').rstrip('/')
 open('site/robots.txt', 'w').write('User-agent: *\nAllow: /\n' + (f'Sitemap: {SITE_URL}/sitemap.xml\n' if SITE_URL else ''))
 if SITE_URL:

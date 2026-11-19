@@ -16,20 +16,36 @@ COST = {'motorway': 1.0, 'trunk': 1.0, 'primary': 1.0, 'secondary': 1.0, 'tertia
 SNAP = 80.0
 
 
+def oneway(acc):
+    """jednosměrka z Overture access_restrictions (jako prep.py _oneway): 1 jen po směru geometrie, -1 jen proti, 0 obousměrná.
+    Bez tohohle vedla trasa autobusu kruhovým objezdem kratší cestou i proti směru (Hodonín 2026-11-17)."""
+    if acc is None or isinstance(acc, float): return 0
+    nic = lambda v: v is None or (not isinstance(v, str) and hasattr(v, '__len__') and len(v) == 0)
+    for a in acc:
+        w_ = a.get('when') or {}
+        if a.get('access_type') == 'denied' and a.get('between') is None and nic(w_.get('mode')) and nic(w_.get('using')) and nic(w_.get('recognized')):
+            if w_.get('heading') == 'backward': return 1
+            if w_.get('heading') == 'forward': return -1
+    return 0
+
+
 class Graph:
     def __init__(self, parquet):
-        t = pq.read_table(parquet, columns=['subtype', 'class', 'geometry']).to_pylist()
+        cols = pq.read_schema(parquet).names
+        t = pq.read_table(parquet, columns=['subtype', 'class', 'geometry'] + (['access_restrictions'] if 'access_restrictions' in cols else [])).to_pylist()
         self.xy, self.idx, self.adj = [], {}, []
         for r in t:
             c = COST.get(r['class'])
             if r['subtype'] != 'road' or c is None: continue
+            ow = oneway(r.get('access_restrictions'))
             g = transform(lambda x, y, z=None: to_local(x, y), shapely.from_wkb(r['geometry'])).segmentize(20.0)
             for ls in getattr(g, 'geoms', [g]):
                 ids = [self.node(p) for p in ls.coords]
                 for a, b in zip(ids, ids[1:]):
                     if a == b: continue
                     w = c * float(np.hypot(*np.subtract(self.xy[a], self.xy[b])))
-                    self.adj[a].append((b, w)); self.adj[b].append((a, w))
+                    if ow >= 0: self.adj[a].append((b, w))
+                    if ow <= 0: self.adj[b].append((a, w))
         self.arr = np.array(self.xy) if self.xy else np.zeros((0, 2))
         self.cache, self.fails = {}, 0
 

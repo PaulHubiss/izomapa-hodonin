@@ -1,0 +1,28 @@
+# Hlavičky pro Cloudflare Pages (Pavel + Claude 2026-11-18). build_html.py kopíruje web/* do site/, takže tenhle soubor
+# platí na obou Macích. Dřív ležel jen ručně v site/ na M2, mimo git – nasazení z M5 by zákaz pro vyhledávače ztratilo.
+#   X-Robots-Tag     ZKUŠEBNÍ NASAZENÍ: vyhledávače nemají stránku indexovat. Při ostrém spuštění řádek smazat
+#                    (aktualizuj.sh podle něj vrací Disallow do robots.txt, UKOLY.md „Ostré spuštění“).
+#   frame-ancestors  mapu nejde vložit do cizí stránky (ochrana proti podvržení kliknutí). Kdyby ji chtěl město
+#                    vložit na svůj web, přidat jeho adresu: frame-ancestors 'self' https://www.hodonin.eu
+#   Permissions      mapa nepotřebuje kameru ani mikrofon zařízení (ověřeno v kódu 2026-11-18). Polohu jen vlastní stránka
+#                    pro tlačítko Moje poloha (web/js/66-poloha.js, od 2026-11-18), cizí vložené stránky ne.
+#   HSTS             od 2026-11-19 (HTTPS ověřené: certifikát, 301 z http). Jen tahle subdoména, bez includeSubDomains
+#                    (jiné projekty na paulhubiss.cz se to netýká) a bez preload; 180 dní.
+#   /tiles, /preview dlaždice a náhledy mají v adrese verzi renderu (?v=, 10-vrstvy.js VER) → prohlížeč je smí držet rok
+#                    a neptat se (immutable). Nový render = nová verze = nová adresa. Dřív 4 h a dotaz na server.
+# Úplnou Content-Security-Policy zatím ne: šablona má vložené skripty a styly a mapa se připojuje k řadě služeb.
+# Platí na Cloudflare Pages i ve Workeru (statické soubory čtou _headers stejně).
+/*
+  X-Robots-Tag: noindex, nofollow
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'self'
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=15552000
+
+/tiles/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/preview/*
+  Cache-Control: public, max-age=31536000, immutable

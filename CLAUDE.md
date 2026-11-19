@@ -198,3 +198,6 @@ Ukazuj uživateli výřezy před a po.
   CSS: `00-zaklad-panel`, `10-karta-napoveda`, `20-vilda` (sledování), `30-mapa-ovladani`, `40-mobil`. Stejná čísla jako v Liberci = stejný oddíl,
   změny jde přebírat po souborech. Nový soubor = nové číslo na správném místě. Texty `{{…}}` doplní `build_html.py` z `mesto.json`
   (příp. `obce/<obec>.json`).
+
+<!-- Pavlova kopie: kontext projektu Hodonín. Jediný řádek navíc proti upstreamu, ať merge nekonfliktuje. -->
+@PROJEKT.md

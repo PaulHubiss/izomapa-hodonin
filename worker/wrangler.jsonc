@@ -1,0 +1,29 @@
+{
+  // Cloudflare Worker mapy (Pavel + Claude 2026-11-19), nasazení: npx wrangler deploy -c worker/wrangler.jsonc
+  // V gitu záměrně (autorův wrangler.jsonc v kořeni je v .gitignore): nasazuje i automat na M2.
+  // Nic tajného tu není: heslo, sůl a e-mail jsou tajné hodnoty Workeru (npx wrangler secret list -c worker/wrangler.jsonc).
+  // Cesty jsou relativní k téhle složce.
+  "name": "hodonin-mapa",
+  "main": "index.js",
+  "compatibility_date": "2026-11-01",
+  // Ostrá adresa (od 2026-11-19, dřív Pages). DNS záznam vytvoří Cloudflare sám.
+  "routes": [{ "pattern": "hodonin.paulhubiss.cz", "custom_domain": true }],
+  // Zkušební adresa hodonin-mapa.paul-hubiss.workers.dev vypnutá: Access hlídá jen hodonin.paulhubiss.cz a tudy by šel obejít.
+  // Náhledové adresy verzí (preview_urls) jsou na workers.dev taky, proto vypnuté. Zkoušet lokálně (nahled_server.py).
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "../site",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",   // naše 404.html (Pages ji bralo samo, Worker jen s touhle volbou; 2026-11-19)
+    // Worker se spouští jen pro tyhle cesty; statické soubory podává Cloudflare rovnou, zdarma a bez limitu volání
+    "run_worker_first": ["/api/*", "/admin", "/admin.html"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "hodonin-hlaseni", "database_id": "ae2c0b38-8c81-4c21-b618-1f334f75f22f",
+      "migrations_dir": "../hlaseni/migrations" }
+  ],
+  // e-mail o novém hlášení; adresát musí být ověřený v Email Routing (Cloudflare → paulhubiss.cz → Email → Destination addresses)
+  "send_email": [{ "name": "EMAIL" }],
+  "observability": { "enabled": true }
+}

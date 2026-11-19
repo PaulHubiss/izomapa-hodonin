@@ -17,6 +17,8 @@ if info['mpp'] != MPP_OVERLAY:          # detailní rozlišení: dlaždice jsou 
 im = Image2D(info)
 W, H = info['width'], info['height']
 OFF = (0.0, 0.0)          # posun aktuálně zpracovávaného čtverce (lokální -> společné souřadnice)
+# údaje o stavbách z katastru do karty budovy (nastroje/ruian_karta.py): rok dokončení, podlaží, byty, konstrukce…
+KAT = json.load(open('assets/ruian_karta.json', encoding='utf-8')) if os.path.exists('assets/ruian_karta.json') else {}
 
 
 def px(x, y, h):
@@ -215,7 +217,7 @@ for chunk in chunks:
             'pl': pl,
             'id': f"{K}:{b['id']}", 'oid': b.get('oid'), 'hull': [[round(x), round(y)] for x, y in list(hull.exterior.coords)[:-1]], 'd': d, 'dm': dm, 'fb': fb,
             'name': name, 'text': text, 'cls': b['cls'], 'floors': b['floors'], 'h': None if church else b['h'], 'roof': b['roof'], 'addr': b['addr'],
-            'lon': b['lon'], 'lat': b['lat'], 'k': K,
+            'lon': b['lon'], 'lat': b['lat'], 'k': K, 'kat': KAT.get(b.get('oid')),
         }.items() if v not in (None, [], '')})
 
     chimneys += [list(px(x, y, z)[:2]) + [f'{K}:{bid}'] for x, y, z, bid in src['chimneys']]
@@ -280,9 +282,11 @@ for chunk in chunks:
 OBCE = [json.load(open(f'obce/{f}', encoding='utf-8')) for f in sorted(os.listdir('obce')) if f.endswith('.json')] if os.path.isdir('obce') else []
 # místa s krátkým popisem (fakta z dat + ověřené zdroje)
 # místa s krátkým příběhem: mista.json [{"nazev", "lat", "lon", "text"}, ...] (fakta z ověřených zdrojů)
-PLACES = [(m['nazev'], m['lat'], m['lon'], m['text'], m.get('obec')) for m in json.load(open('mista.json', encoding='utf-8'))] if os.path.exists('mista.json') else []
+# volitelně "odkaz" (web místa, tlačítko v kartě) a "program" (zdroj aktuálního programu, functions/api/program.js)
+_EXTRA = lambda m: {k: m[k] for k in ('odkaz', 'program') if m.get(k)}
+PLACES = [(m['nazev'], m['lat'], m['lon'], m['text'], m.get('obec'), _EXTRA(m)) for m in json.load(open('mista.json', encoding='utf-8'))] if os.path.exists('mista.json') else []
 for o in OBCE:
-    PLACES += [(m['nazev'], m['lat'], m['lon'], m['text'], m.get('obec') or o.get('nazev')) for m in o.get('mista', [])]
+    PLACES += [(m['nazev'], m['lat'], m['lon'], m['text'], m.get('obec') or o.get('nazev'), _EXTRA(m)) for m in o.get('mista', [])]
 
 # sousední mapy: assets/upresneni.json nebo mesto.json (pole "sousedi" / "neighbors"), případně obce/*.json
 UP = json.load(open('assets/upresneni.json', encoding='utf-8')) if os.path.exists('assets/upresneni.json') else {}
@@ -308,12 +312,37 @@ def gz(x, y):
 # co je potřeba dodat ručně (fotky): klíčové objekty z assets/dominanty.json, žluté značky v režimu „vč. rozpracovaného“
 NEEDS = []     # fotky ke všem dominantám jsou dodané (dřív žluté značky 📷)
 places = []
-for name, lat, lon, text, obec in PLACES:
+for name, lat, lon, text, obec, extra in PLACES:
     x, y = to_local(lon, lat)
     c = chunk_of(float(x), float(y))
     if c not in CKEY: continue
     OFF = (0.0, 0.0)
-    places.append({'name': name, 'text': text, 'lon': lon, 'lat': lat, 'k': CKEY[c], 'xy': list(px(float(x), float(y), gz(x, y))[:2]), **({'obec': obec} if obec else {})})
+    places.append({'name': name, 'text': text, 'lon': lon, 'lat': lat, 'k': CKEY[c], 'xy': list(px(float(x), float(y), gz(x, y))[:2]), **({'obec': obec} if obec else {}), **extra})
+
+# kulturní památky z Wikidat (nastroje/pamatky.py): fotka, číslo ÚSKP, odkaz do katalogu NPÚ a na Wikipedii
+pamatky = []
+for p in (json.load(open('assets/pamatky.json', encoding='utf-8')) if os.path.exists('assets/pamatky.json') else []):
+    x, y = to_local(p['lon'], p['lat'])
+    c = chunk_of(float(x), float(y))
+    if c not in CKEY: continue
+    OFF = (0.0, 0.0)
+    pamatky.append({**{k: v for k, v in p.items() if v is not None}, 'k': CKEY[c], 'xy': list(px(float(x), float(y), gz(x, y))[:2])})
+
+# restaurace, kavárny a hospody (nastroje/podniky.py): OSM + potvrzené z Overture, otevírací doba, web
+podniky = []
+for p in (json.load(open('assets/podniky.json', encoding='utf-8')) if os.path.exists('assets/podniky.json') else []):
+    x, y = to_local(p['lon'], p['lat'])
+    c = chunk_of(float(x), float(y))
+    if c not in CKEY: continue
+    podniky.append({**{k: v for k, v in p.items() if v is not None}, 'k': CKEY[c], 'xy': list(px(float(x), float(y), gz(x, y))[:2])})
+
+# veřejná místa (nastroje-pavel/verejna_mista.py): úřady a služby, kultura, zdraví, školy a sport; otevírací doba i sezónní
+verejna = []
+for p in (json.load(open('assets/verejna_mista.json', encoding='utf-8')) if os.path.exists('assets/verejna_mista.json') else []):
+    x, y = to_local(p['lon'], p['lat'])
+    c = chunk_of(float(x), float(y))
+    if c not in CKEY: continue
+    verejna.append({**{k: v for k, v in p.items() if v is not None}, 'k': CKEY[c], 'xy': list(px(float(x), float(y), gz(x, y))[:2])})
 
 neighbors = []
 for s in SOUS_RAW:
@@ -456,7 +485,8 @@ def _plugin_xy(a, b, is_world=False):
     global OFF; OFF = (0.0, 0.0); x, y = (float(a), float(b)) if is_world else to_local(float(b), float(a)); return list(px(float(x), float(y), gz(x, y))[:2])
 _doplnky = _plugins.load_and_run_plugins(MESTO, {**cam, 'w': W, 'h': H}, _plugin_xy)
 json.dump({'w': W, 'h': H, 'cam': cam, 'districts': districts, 'needs': needs, 'xmas': nam, 'chunks': {CKEY[c]: CHUNKS[c] for c in chunks}, 'bus': bus_route, 'trams': trams, 'decks': decks,
-           'streets': streets, 'places': places, 'neighbors': neighbors, **({'signals': signals} if signals else {}), **({'doplnky': _doplnky} if _doplnky else {})},
+           'streets': streets, 'places': places, 'neighbors': neighbors, 'pamatky': pamatky, 'podniky': podniky, 'verejna': verejna,
+           **({'signals': signals} if signals else {}), **({'doplnky': _doplnky} if _doplnky else {})},
           open('site/overlay.json', 'w'), separators=(',', ':'), ensure_ascii=False)
 json.dump(addr_index, open('site/search.json', 'w'), separators=(',', ':'), ensure_ascii=False)   # adresy pro hledání, načte se až při psaní
 print('čtverců', len(chunks), 'budov', sum(len(v['buildings']) for v in per_chunk.values()), 'adres', len(addr_index),

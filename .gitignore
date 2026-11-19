@@ -60,3 +60,59 @@ output/
 hlaseni/wrangler.jsonc
 wrangler.toml
 !hlaseni/migrations/*.sql
+
+# ── Pavlova soukromá kopie (PaulHubiss/Izomapa), doplněno 2026-11-12 ──
+# Autor tyhle soubory ignoruje, protože do jeho VEŘEJNÉHO repa nepatří.
+# Tohle repo je ale soukromé a slouží k synchronizaci M5 ↔ M2: jsou to
+# ruční úpravy Hodonína, které se nedají znovu vygenerovat → musí do gitu.
+# (Vygenerovaná data – build/, data_*/, site/, dmp_vysky… – dál ne:
+#  dají se znovu stáhnout a postavit přes ./postav.sh.)
+# snimky/ = výřezy před/po z nastroje-pavel/vyrez.py, pokaždé se generují znovu → ne do gitu.
+# fotky/ (autorovo pravidlo výš) tu obsahuje jen fotky z Commons, znovu je stáhne nastroje-pavel/commons_fotky.py.
+snimky/
+# ladeni/ = záznamy ladicího nástroje (mapa s ?ladeni → Uložit záznam), jen na rozbor, pokaždé nové → ne do gitu.
+ladeni/
+!/mesto.json
+!/mista.json
+!/obce/
+!assets/custom_prep.py
+!assets/custom_models.js
+!assets/upresneni.json
+!assets/dominanty.json
+!assets/oblasti.json
+# ── Drahé mezivýsledky, doplněno 2026-11-15 (M2) ──
+# Dají se vygenerovat znovu, ale stojí ~5 GB stahování z ČÚZK a desítky minut, přitom mají dohromady
+# jen ~4,3 MB textu a dvou masek a mění se jen při přestavbě → do gitu, druhý Mac stavbu přeskočí.
+# Soubory z build/ jsou přidané přes `git add -f` (build/ ignoruje autor celou, výjimka uvnitř nejde):
+# build/dmpok_vysky.json, build/dmp_vysky_2013.json, build/les_maska.png, build/zelen_maska.png, build/scitani.json.
+# ⚠️ Maska = obrázek + poloha: build/les_maska.json a build/zelen_maska.json patří do gitu VŽDY s obrázkem
+# (2026-11-18: na M5 zůstala stará poloha lesní masky z doby před posunem středu, maska ležela 5 km mimo mapu
+# a z lesa u zoo zbyla louka – 63 stromů místo 132 838).
+!assets/dmp_vysky.json
+!assets/strechy_orto.json
+!assets/hrebeny.json
+!assets/zabaged.json
+!assets/ruian_budovy.json
+!assets/kominy.json
+!assets/prejezdy.json
+!assets/potrubi.json
+
+# videa je zástupce na Google Disk (Spolecne-nastroje/disk) — na každém stroji
+# vlastní, proto mimo git; záloha po napojení taky
+/videa
+/videa.zaloha-*/
+
+# plakaty je zástupce na Google Disk (Spolecne-nastroje/disk) — na každém stroji
+# vlastní, proto mimo git; záloha po napojení taky
+/plakaty
+/plakaty.zaloha-*/
+
+# snimky je zástupce na Google Disk (Spolecne-nastroje/disk) — na každém stroji
+# vlastní, proto mimo git; záloha po napojení taky
+/snimky
+/snimky.zaloha-*/
+
+# podklady je zástupce na Google Disk (Spolecne-nastroje/disk) — na každém stroji
+# vlastní, proto mimo git; záloha po napojení taky
+/podklady
+/podklady.zaloha-*/

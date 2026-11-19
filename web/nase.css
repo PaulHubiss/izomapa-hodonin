@@ -1,0 +1,471 @@
+/* Naše vrstva vzhledu nad autorovým web/app.html (Pavel + Claude, 2026-11-16). Načítá se ZA jeho styly.
+   ✅ Pavel 2026-11-15: písmo Source Sans 3 · paleta Tekuté sklo, ale bez stínu písma v tlačítkách a popiskách mapy ·
+   zaoblení (panely 10 px, prvky 6 px), ostré rohy jen mapě · menu B (lišta s ikonami + vysouvací panel).
+   Návrh: navrhy/menu.html (kolo 2, B), navrhy/barvy.html (Tekuté sklo). Rozložení dělá web/nase.js. */
+:root {
+  --nb-sklo: rgba(20, 30, 44, .5);
+  --nb-plocha: rgba(255, 255, 255, .08);
+  --nb-plocha-2: rgba(255, 255, 255, .16);
+  --nb-hrana: rgba(255, 255, 255, .22);
+  /* mapa pod sklem ztmavená na 55 % (Pavel 2026-11-18, varianta C z navrhy/sklo.html): v zimě nad sněhem bylo 196 ze 670
+     textů pod kontrastem 4,5 : 1, teď 19 (měří nastroje-pavel/kontrast.mjs). Dřív blur(18px) saturate(1.8). */
+  --nb-rozmaz: blur(18px) saturate(1.5) brightness(.55);
+  --nb-lesk: linear-gradient(160deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 45%);
+  --nb-odlesk: inset 0 1px 1px rgba(255, 255, 255, .38), inset 0 -1px 1px rgba(255, 255, 255, .08);
+  --nb-stin: 0 1px 2px rgba(10, 20, 30, .22), 0 6px 18px -4px rgba(10, 20, 30, .32);
+  --nb-akcent: #80d6f7;
+  --nb-zlata: #f2c66d;
+  --nb-na-zlate: #101a26;
+  --nb-r: 10px;
+  --nb-r2: 6px;
+  --nb-okraj: 16px;
+  --nb-lista: 66px;
+  --nb-panel: 320px;
+  --ink: #fff;
+  --muted: #d2dbe4;
+  --display: "Source Sans 3", system-ui, sans-serif;     /* pixelové písmo patří do mapy, ne do ovládání */
+  --body: "Source Sans 3", system-ui, sans-serif;
+}
+body { font-size: 15px; line-height: 1.4; }
+
+/* ---------- sklo ---------- */
+.nb-sklo {
+  background: var(--nb-lesk), var(--nb-sklo) !important;
+  border: 1px solid var(--nb-hrana) !important;
+  border-radius: var(--nb-r) !important;
+  -webkit-backdrop-filter: var(--nb-rozmaz); backdrop-filter: var(--nb-rozmaz);
+  box-shadow: var(--nb-odlesk), var(--nb-stin) !important;
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);              /* text přímo na skle */
+}
+.nb-sklo button, .nb-sklo input, .nb-sklo .px-btn, .nb-sklo summary { text-shadow: none; }   /* Pavel: stín v tlačítkách rozmazává */
+.nb-ik { width: 18px; height: 18px; display: block; flex: none; }
+
+/* ---------- tlačítka, pole, přepínače ---------- */
+.px-btn {
+  background: var(--nb-plocha); border: 1px solid var(--nb-hrana); border-radius: var(--nb-r2);
+  box-shadow: none; font-family: var(--body); font-weight: 600; font-size: 14px; color: var(--ink);
+  min-height: 34px; padding: 5px 8px; transition: background .12s;
+}
+.px-btn:hover { background: var(--nb-plocha-2); }
+.px-btn:active { transform: none; box-shadow: none; background: var(--nb-plocha-2); }
+.px-btn[aria-pressed="true"] { background: var(--nb-zlata); border-color: var(--nb-zlata); color: var(--nb-na-zlate); }
+.px-btn .ico, .px-btn .nb-ik { margin: auto; }
+:focus-visible { outline: 2px solid var(--nb-akcent); outline-offset: 2px; }
+
+/* roční období, počasí a „hotovo / rozpracované“ jako jeden segmentový ovladač */
+.chips4, .chips2 { gap: 3px; background: var(--nb-plocha); border-radius: var(--nb-r2); padding: 3px; }
+.chips4 .px-btn, .chips2 .px-btn { background: none; border: 0; border-radius: 4px; min-height: 30px; padding: 4px 0; font-weight: 400; }
+.chips4 .px-btn:hover, .chips2 .px-btn:hover { background: var(--nb-plocha-2); }
+.chips4 .px-btn[aria-pressed="true"], .chips2 .px-btn[aria-pressed="true"], .nb-zalozky .px-btn[aria-selected="true"] { background: var(--nb-zlata); color: var(--nb-na-zlate); font-weight: 700; }
+
+.label, details summary {
+  font-family: var(--body); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--nb-akcent); margin: 0 0 6px;
+}
+.search input {
+  border: 1px solid var(--nb-hrana); border-radius: var(--nb-r2); background: var(--nb-plocha);
+  padding: 8px 10px; color: var(--ink);
+}
+.search input:focus { background: var(--nb-plocha-2); }
+.results button, .places button, .dnes-list button { border-radius: var(--nb-r2); font-size: 14px; }
+.results button:hover, .results button.on, .results button:focus-visible,
+.places button:hover, .places button:focus-visible,
+.dnes-list button:hover, .dnes-list button:focus-visible { background: var(--nb-plocha); outline: 0; }
+.results small, .dnes-list .misto, .dnes-list time, .vyluky .kdy { font-size: 12.5px; }
+
+/* počasí v sekci Dnes (app.html pocasiRender, Pavel 2026-11-16): teď velkým písmem, pod tím dvě řady po 6 sloupcích
+   (hodiny a dny) ve stejné mřížce, aby sloupce seděly pod sebou */
+.pc { display: grid; gap: 0; }
+.pc-ted { display: flex; align-items: center; gap: 12px; }
+.pc-ted .pc-ik svg { width: 44px; height: 44px; display: block; }
+.pc-hlavni { display: grid; gap: 2px; }
+.pc-teplota { font-size: 34px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
+.pc-slovy { color: var(--muted); font-size: 14px; }
+.pc-slovy::first-letter { text-transform: uppercase; }
+.pc-detail { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 8px 0 0 !important; color: var(--muted); font-size: 12.5px; }
+.pc-nadpis { margin: 14px 0 6px !important; }
+.pc-rada { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.pc-rada li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; border-radius: var(--nb-r2);
+  background: var(--nb-plocha); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.pc-rada .pc-ik svg { width: 22px; height: 22px; display: block; }
+.pc-rada b { font-size: 14px; line-height: 1; color: var(--ink); }
+.pc-kdy, .pc-min { color: var(--muted); line-height: 1; }
+.pc-sr { color: #8cc4ff; font-size: 11.5px; line-height: 1; }
+.pc-sun, .pc-cloud-sun, .pc-cloud-lightning { color: #ffd36a; }
+.pc-moon, .pc-cloud-moon { color: #c9d4ff; }
+.pc-cloud, .pc-cloud-fog { color: var(--muted); }
+.pc-cloud-rain, .pc-cloud-drizzle { color: #8cc4ff; }
+.pc-cloud-snow { color: #fff; }
+
+/* sekce Kamery (web/nase.js, mesto.json "kamery"): obraz přes celou šířku panelu, pod ním název, popis a odkazy */
+.nb-kamera { margin: 0; display: grid; gap: 6px; }
+.nb-kamera + .nb-kamera { border-top: 1px solid var(--nb-hrana); padding-top: 12px; }
+.nb-kamera img { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; border-radius: var(--nb-r2); background: var(--nb-plocha); display: block; }
+.nb-kamera.chyba img { opacity: .35; }
+.nb-kamera-cas { font-size: 12.5px; color: var(--muted); }
+.nb-kamera figcaption { display: grid; gap: 2px; font-size: 14px; }
+.nb-kamera figcaption > span:not(.nb-kamera-odkazy) { color: var(--muted); font-size: 13px; }
+.nb-kamera-odkazy { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; font-size: 13px; }
+.nb-kamera-odkazy a, .nb-odkaz { color: var(--nb-akcent); }
+.nb-odkaz { all: unset; cursor: pointer; color: var(--nb-akcent); text-decoration: underline; }
+.nb-kamera-mimo { margin: 0; padding: 18px 12px; border-radius: var(--nb-r2); background: var(--nb-plocha); color: var(--muted); font-size: 13px; text-align: center; }
+
+/* ikonka kategorie (web/kategorie.js) v menu: Vrstvy, nadpisy skupin v Místech, nápověda; barva = rámeček ikonky v mapě */
+.kat-ik { display: inline-flex; flex: none; width: 16px; height: 16px; color: var(--kat); }
+.kat-ik svg { width: 16px; height: 16px; display: block; }
+/* sekce Místa: pod příběhy sbalitelné skupiny všech kategorií (app.html #verSkupiny, Pavel 2026-11-16).
+   Nadpis skupiny = tlačítko přes celou šířku: ikonka, název, počet, vpravo šipka. Položky začínají pod názvem skupiny
+   (8 px okraj + 16 px ikonka + 8 px mezera = 32 px). */
+/* Příběhy (#placesBox) a skupiny jsou jedna řada bez mezer (Pavel 2026-11-16: Místa roztahaná), otevřená vždy jen jedna (nase.js) */
+#panel > #nb-mista:not([hidden]) { gap: 0; }
+.ver-skupiny, .ver-skupiny:not([hidden]) { display: grid; gap: 0; }
+.ver-sk > summary { list-style: none; display: flex; align-items: center; gap: 8px; margin: 0; padding: 5px 8px; border-radius: var(--nb-r2);
+  cursor: pointer; color: var(--ink); font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; }   /* jako přepínače ve Vrstvách */
+.ver-sk .places button { padding: 3px 8px 3px 32px; line-height: 1.25; }
+.ver-sk > summary::-webkit-details-marker { display: none; }
+.ver-sk > summary:hover, .ver-sk > summary:focus-visible { background: var(--nb-plocha); outline: 0; }
+.ver-sk > summary::after { content: ''; margin-left: auto; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; }
+.ver-sk[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.ver-sk .lay-n { color: var(--muted); font-weight: 400; letter-spacing: 0; }
+.ver-sk .places { margin: 0 0 6px; gap: 0; }
+.ver-sk:not(.ver-pribehy) .places button { display: flex; align-items: baseline; gap: 8px; text-align: left; }
+.ver-nazev { min-width: 0; }
+.ver-kde { color: var(--muted); font-size: 12.5px; }   /* ulice u stejných názvů (4× Veřejné WC) */
+.ver-stav { margin-left: auto; flex: none; font-size: 12px; font-weight: 700; }
+.ver-stav.otevreno { color: #6fdc9a; } .ver-stav.zavreno { color: #ff8a7a; }
+
+/* denní doba: přechod den → zlatá hodinka → noc */
+input#night { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; margin: 8px 0 4px;
+  background: linear-gradient(90deg, #ffe7a3, #f29a5b 50%, #2b3b6b); }
+input#night::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); cursor: pointer; }
+input#night::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); cursor: pointer; }
+.daynight .ends { font-family: var(--body); font-size: 12px; }
+.realtime { font-size: 14px; color: var(--ink); }
+
+/* zaškrtávátka „podle skutečného času / počasí“ a vrstvy jako vypínače */
+.realtime input, .nb-layers input {
+  -webkit-appearance: none; appearance: none; width: 34px; height: 20px; margin: 0; flex: none; cursor: pointer;
+  border-radius: 10px; background: var(--nb-plocha-2); position: relative; transition: background .15s;
+}
+.realtime input::after, .nb-layers input::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .3); transition: left .15s;
+}
+.realtime input:checked, .nb-layers input:checked { background: var(--nb-akcent); }
+.realtime input:checked::after, .nb-layers input:checked::after { left: 16px; }
+.realtime { justify-content: space-between; flex-direction: row-reverse; gap: 10px; }
+.nb-layers { display: grid; gap: 0; }
+.nb-layers label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; padding: 1px 0; min-height: 24px; }   /* 26 px řádek (Pavel 2026-11-16: Vrstvy roztahané) */
+.nb-layers label[hidden] { display: none; }
+.nb-layers input { order: 9; margin-left: auto; }
+.nb-tecka { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--night); flex: none; }
+.lay-n { color: var(--muted); font-weight: 400; }
+.nb-sek + .nb-sek { margin-top: 2px; }
+.nb-sek:not(.nb-sek-predvolby):not(:has(label:not([hidden]))) { display: none; }   /* skupina bez dostupné vrstvy (např. bez hasičů) */
+
+/* ---------- lišta (počítač: svisle vlevo) ---------- */
+.nb-rail {
+  position: fixed; z-index: 4;
+  top: calc(env(safe-area-inset-top, 0px) + var(--nb-okraj)); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nb-okraj));
+  left: max(var(--nb-okraj), env(safe-area-inset-left, 0px)); width: var(--nb-lista); box-sizing: border-box;
+  padding: 8px 6px; display: flex; flex-direction: column; gap: 4px;
+}
+.nb-rail button {
+  all: unset; box-sizing: border-box; cursor: pointer; display: grid; justify-items: center; gap: 2px;
+  padding: 8px 0 6px; border-radius: var(--nb-r2); font-size: 11.5px; line-height: 1.2; color: var(--ink); text-align: center;
+}
+.nb-rail button[hidden] { display: none; }
+.nb-rail button:hover { background: var(--nb-plocha); }
+.nb-rail button:focus-visible { outline: 2px solid var(--nb-akcent); outline-offset: -2px; }
+/* vybraná sekce = zlatý podklad a tmavý text jako vybraná volba v panelu (Pavel 2026-11-18, varianta Y; zlatý text
+   na světlejším podkladu měl jen 3,0–4,1 : 1) */
+.nb-rail button.on, .nb-rail button.on:hover { background: var(--nb-zlata); color: var(--nb-na-zlate); font-weight: 700; }
+.nb-rail .nb-ik { width: 21px; height: 21px; }
+.nb-logo { display: grid; place-items: center; padding: 2px 0 8px; margin-bottom: 4px; border-bottom: 1px solid var(--nb-hrana); }
+.nb-logo img { width: 34px; height: 34px; border-radius: var(--nb-r2); display: block; }
+.nb-vice { margin-top: auto !important; }
+
+/* ---------- panel (vysouvá se vedle lišty) ---------- */
+#panel {
+  top: calc(env(safe-area-inset-top, 0px) + var(--nb-okraj));
+  left: calc(max(var(--nb-okraj), env(safe-area-inset-left, 0px)) + var(--nb-lista) + 10px);
+  width: var(--nb-panel); max-height: calc(100% - 2 * var(--nb-okraj) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 14px; gap: 12px; align-content: start; transform: none !important;
+  scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .3) transparent;
+}
+#fold, #menu, #mbar, .about { display: none !important; }
+#panel > .nb-pane[hidden] { display: none !important; }
+#panel > .nb-pane:not([hidden]) { display: grid !important; gap: 14px; align-content: start; }
+.nb-pane > * { margin: 0; }
+.nb-otevreny > summary { list-style: none; cursor: default; pointer-events: none; }
+.nb-otevreny > summary::-webkit-details-marker { display: none; }
+.places, .dnes-list, .vyluky { margin-top: 2px; }
+.nb-prazdno { display: none; color: var(--muted); font-size: 14px; }
+.nb-pane.prazdna .nb-prazdno { display: block; }
+
+/* hlavička: „Izometrický“ obyčejně, název města tučně (Pavel 2026-11-15) */
+.head { align-items: flex-start; gap: 10px; flex-wrap: nowrap; }
+.head > div:first-child { display: block; flex: 1; min-width: 0; }
+h1 { font-family: var(--body); font-weight: 400; font-size: 24px; line-height: 1.1; text-wrap: wrap; }
+h1 span { color: var(--ink); font-weight: 700; }
+@media (min-width: 641px) { .head h1 { font-size: 24px; } }
+.head .sub { margin: 3px 0 0; font-size: 14px; color: var(--muted); }
+/* oddělovač pod hlavičkou v otevřeném panelu (Pavel 2026-11-16): linka, která se doprava ztrácí. Opticky (pixely
+   písma, ne rámečky) stejně nad i pod ní: pod podnadpisem je ~4 px prázdného místa řádku, proto padding 8 px proti
+   mezeře panelu 12 px. Zavřený panel a hlavička na telefonu linku nemají. */
+#panel > .head { padding-bottom: 8px; border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .14) 60%, rgba(255, 255, 255, 0)) 1; }
+.nb-zavreno #panel > .head { padding-bottom: 0; border-bottom: 0; }
+.search .label { display: block; }   /* <label> je řádkový: bez toho sedí o 3 px níž než nadpisy ostatních záložek (<p class="label">) */
+.head-btns { gap: 6px; }
+.head-btns .px-btn { width: 34px; height: 34px; min-height: 34px; padding: 0; display: grid; place-items: center; }
+#help { display: none; }                                  /* na počítači je nápověda dole v liště („Více“) */
+
+/* zavřený panel na počítači = skleněný štítek s nadpisem vedle lišty */
+.nb-zavreno #panel { width: auto; max-width: calc(100vw - var(--nb-lista) - 3 * var(--nb-okraj)); padding: 9px 14px; cursor: pointer; }
+.nb-zavreno #panel .sub, .nb-zavreno #panel .nb-zavrit, .nb-zavreno #panel > .nb-pane { display: none !important; }
+.nb-zavreno #panel h1 { white-space: nowrap; font-size: 20px; }
+.nb-zavreno #panel:hover { background: var(--nb-lesk), rgba(20, 30, 44, .62) !important; }
+
+/* ---------- karta, ovládání mapy, lišta Dnes, nápověda ---------- */
+.card { right: calc(max(var(--nb-okraj), env(safe-area-inset-right, 0px)) + 48px + 10px); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nb-okraj));
+  width: min(340px, calc(100vw - 32px)); max-height: calc(100% - 2 * var(--nb-okraj) - 64px); padding: 14px; gap: 10px; }
+.card h2 { font-family: var(--body); font-weight: 700; font-size: 20px; line-height: 1.15; text-wrap: wrap; padding-right: 80px; }
+.card dl, .card p, .card .links, .card .program ul, .card .vyl-note { font-size: 14px; }
+.card .close, .card .cshare { top: 10px; width: 34px; height: 34px; min-height: 34px; display: grid; place-items: center; }
+.card .close { right: 10px; }
+.card .cshare { right: 54px; }                            /* mezera ke křížku = jeho odstup od okraje (10 + 34 + 10) */
+.card a, .card .program a, .card .vyl-note a { color: var(--nb-akcent); }
+.card figure img { border: 1px solid var(--nb-hrana); border-radius: var(--nb-r2); }
+.card .program h3 { font-family: var(--body); font-weight: 700; font-size: 15px; }
+.card .vyl-note { border-left-color: var(--nb-zlata); }
+
+.controls { flex-direction: column; gap: 2px; padding: 4px; }
+.controls .px-btn { width: 38px; height: 38px; min-height: 38px; background: none; border: 0; display: grid; place-items: center; }
+.controls .px-btn:hover { background: var(--nb-plocha); }
+
+/* moje poloha (web/js/66-poloha.js, Pavel 2026-11-18): zapnuté tlačítko v barvě tečky, při hledání pulzuje;
+   v mapě modrá tečka s bílým okrajem jako v telefonu a průsvitný kroužek přesnosti (elipsa na zemi) */
+.controls #poloha[aria-pressed="true"] { color: #2f80ed; }
+.controls #poloha.nb-hleda .nb-ik { animation: poloha-hleda 1s ease-in-out infinite; }
+@keyframes poloha-hleda { 50% { opacity: .35; } }
+/* bílý okraj stínem, ne rámečkem: OpenSeadragon středí overlay podle clientWidth (bez rámečku), s rámečkem by tečka ujela o 3 px */
+.poloha-tecka { width: 10px; height: 10px; border-radius: 50%; background: #2f80ed;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 4px rgba(0, 0, 0, .25), 0 1px 5px 3px rgba(0, 0, 0, .35); pointer-events: none; position: relative; }
+.poloha-tecka::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid #2f80ed;
+  animation: poloha-vlna 2s ease-out infinite; }
+@keyframes poloha-vlna { from { transform: scale(1); opacity: .8; } to { transform: scale(2.6); opacity: 0; } }
+.poloha-kruh { border-radius: 50%; background: rgba(47, 128, 237, .14); border: 1px solid rgba(47, 128, 237, .55); box-sizing: border-box; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .poloha-tecka::after, .controls #poloha.nb-hleda .nb-ik { animation: none; } }
+
+/* nabídka sdílení na počítači (web/js/60-navigace.js shOpen, Pavel 2026-11-18): sklo jako ovládání, položky pod sebou */
+.share-menu { position: fixed; z-index: 60; display: grid; gap: 2px; padding: 4px; min-width: 190px; border-radius: 10px; }
+.share-menu[hidden] { display: none; }
+.share-menu a, .share-menu button { display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 10px; border: 0; border-radius: var(--nb-r2);
+  background: none; color: var(--ink); font: inherit; font-size: 14px; text-decoration: none; cursor: pointer; text-align: left; }
+.share-menu a:hover, .share-menu button:hover, .share-menu a:focus-visible, .share-menu button:focus-visible { background: var(--nb-plocha-2); outline: 0; }
+.share-menu svg { width: 18px; height: 18px; flex: none; }
+
+/* předvolby vrstev (web/nase.js, F16): pět ikonek v jednom řádku jako segmentový ovladač (stejně jako roční období),
+   zapnutá zlatá; její název je za nadpisem „Předvolby“ (telefon nemá bublinu po najetí) */
+.nb-predvolby { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; background: var(--nb-plocha); border-radius: var(--nb-r2); padding: 3px; }
+.nb-predvolby .px-btn { background: none; border: 0; border-radius: 4px; min-height: 32px; padding: 0; display: grid; place-items: center; }
+.nb-predvolby .px-btn:hover { background: var(--nb-plocha-2); }
+.nb-predvolby .px-btn[aria-pressed="true"] { background: var(--nb-zlata); color: var(--nb-na-zlate); }
+.nb-predvolba-jmeno { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+
+/* odjezdy v kartě zastávky (app.html showStop, 2026-11-16): štítek linky · směr + další odjezdy · čas a „za N min“.
+   Časy mají vlastní úzký sloupec, který se neláme; dlouhý směr se zalomí jen ve svém sloupci. */
+.card dl.odjezdy { display: flex; flex-direction: column; gap: 0; }
+.odj { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: start; padding: 7px 0; border-top: 1px solid var(--nb-hrana); }
+.odj:first-child { border-top: 0; padding-top: 2px; }
+.odj dt { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; align-items: baseline; color: var(--ink); }
+.odj .linka { grid-row: span 2; align-self: start; min-width: 34px; padding: 1px 6px; border-radius: 4px; text-align: center;
+  background: #f4f6f8; color: #101a26; font-weight: 700; font-variant-numeric: tabular-nums; }
+.odj .linka.tram { background: #b5302c; color: #fff; }
+.odj .smer { font-weight: 600; line-height: 1.25; }
+.odj .dalsi { grid-column: 2; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.odj dd { text-align: right; white-space: nowrap; line-height: 1.25; }
+.odj dd b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+.odj dd small { display: block; color: var(--muted); font-size: 13px; }
+/* sledování vozidla dole: při otevřené kartě na střed plochy vlevo od ní, ať do karty nezasahuje (karta 340 px + 74 px od okraje) */
+@media (min-width: 641px) { body:has(#card:not([hidden])) .follow { left: calc((100vw - 414px) / 2); max-width: calc(100vw - 446px); } }
+.follow .px-btn { width: 30px; height: 30px; min-height: 30px; border: 0; background: none; font-size: 18px; font-weight: 400; }
+.follow .px-btn:hover { background: var(--nb-plocha); }
+.follow b { font-family: var(--body); font-weight: 700; }
+.toast { font-size: 14px; }
+.vyluky .lin { font-family: var(--body); font-weight: 700; color: var(--nb-zlata); }
+
+dialog.help { padding: 20px 22px; font-size: 14px; line-height: 1.45; }
+dialog.help h2, dialog.help h3 { font-family: var(--body); font-weight: 700; }
+dialog.help h3 { color: var(--nb-akcent); font-size: 14px; }
+dialog.help a { color: var(--nb-akcent); }
+dialog.help::backdrop { background: rgba(10, 14, 24, .45); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+dialog.help .close { top: 10px; right: 10px; width: 34px; height: 34px; min-height: 34px; }
+.coffee { font-size: 14px; }
+/* záložky nápovědy: okno je ukotvené nahoře a výšku má podle obsahu → záložky zůstávají při přepínání pod kurzorem
+   a pod krátkou záložkou nezůstane prázdno (stejná výška pro všechny by nechala pod Ovládáním ~200 px prázdna) */
+/* Oprava 2026-11-19 (Pavel: dlouhý text nešel doposouvat, na mobilu mimo střed): okno přetékalo spodní okraj
+   (margin-top 8vh + výška bez paddingu) a na telefonu pravý okraj (šířka bez paddingu, vpravo −14 px).
+   Teď border-box, výška do okna se stejným okrajem, nadpis a záložky stojí, posouvá se jen obsah (.nb-napo-telo). */
+#helpDlg {
+  box-sizing: border-box; width: min(520px, calc(100% - 32px)); max-width: none;
+  margin: max(16px, 6vh) auto 16px; max-height: calc(100dvh - max(16px, 6vh) - 16px); overflow: hidden;
+}
+#helpDlg[open] { display: flex; flex-direction: column; }
+dialog.help #helpTitle { margin-bottom: 12px; flex: none; }
+.nb-zalozky { grid-template-columns: repeat(4, 1fr); margin-bottom: 12px; flex: none; }   /* 4. záložka Napište nám (2026-11-19) */
+.nb-napo-telo { overflow-y: auto; min-height: 0; margin: 0 -22px -20px; padding: 0 22px 20px; overscroll-behavior: contain; }
+.nb-napo-okno { display: none; }
+.nb-napo-okno.on { display: block; }
+.nb-napo-okno > :first-child { margin-top: 0; }
+.nb-napo-okno h3 { margin: 14px 0 2px; }
+.nb-napo-okno p { margin: 4px 0; color: var(--ink); font-size: 14px; line-height: 1.45; }
+.nb-napo-okno .muted { color: var(--muted); font-size: 13px; margin-top: 4px; }
+ul.nb-napo { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+ul.nb-napo li { margin: 0; line-height: 1.45; }
+.nb-napo-vrstvy li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start; }
+.nb-napo-vrstvy .kat-ik { margin-top: 4px; }
+.nb-napo-kat { margin-bottom: 8px !important; }
+.nb-tecka-prazdna { box-sizing: border-box; width: 10px; height: 10px; border: 2px solid var(--nb-hrana); background: none; }
+.nb-napo-pozn { color: var(--muted) !important; font-size: 13px !important; margin-top: 10px !important; }
+.nb-ik-radek { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; }
+dialog.help kbd { display: inline-block; min-width: 1.5em; padding: 0 5px; margin: 0 1px; box-sizing: border-box; text-align: center;
+  font: 600 13px/1.5 var(--body); background: var(--nb-plocha-2); border: 1px solid var(--nb-hrana); border-radius: 4px; text-shadow: none; }
+.nb-napo-okno p:has(> .app-btn) { text-align: center; margin: 16px 0 2px; }   /* Přidat na plochu na střed (Pavel 2026-11-19) */
+.nb-napo-okno .app-btn { padding: 6px 18px; }
+.nb-plocha-pozn { text-align: center; margin-top: 2px !important; }
+/* nápověda podle navrhy/napoveda.html (2026-11-19) */
+dl.nb-ovl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 0; }
+dl.nb-ovl dt { font-weight: 700; }
+dl.nb-ovl dd { margin: 0; }
+@media (max-width: 480px) { dl.nb-ovl { grid-template-columns: 1fr; gap: 0; } dl.nb-ovl dd { margin-bottom: 6px; } }
+.nb-kat-tecky { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0 2px; font-size: 13px; }
+.nb-kat-tecky span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.nb-kat-tecky i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+details.nb-sbal { margin: 10px 0 0; border-top: 1px solid var(--nb-hrana); padding-top: 8px; }
+details.nb-sbal > summary { margin: 0; cursor: pointer; }
+details.nb-sbal .nb-sbal-seznam { margin-top: 6px; }
+details.nb-sbal .muted { margin-top: 6px; }
+.nb-zdroje-kratce { margin-top: 14px !important; }
+
+/* ---------- Napište nám (Pavel 2026-11-19): pole jako vyhledávání, druh jako segmentový ovladač ---------- */
+.nb-zprava { display: grid; gap: 12px; }
+.nb-zprava > .nb-napo-pozn { margin: 0 !important; }
+.nb-zprava-druh { grid-template-columns: repeat(4, 1fr); }
+.nb-pole { display: grid; gap: 4px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.nb-pole i { font-style: normal; font-weight: 400; }
+.nb-pole input, .nb-pole textarea {
+  box-sizing: border-box; width: 100%; font: 400 16px/1.4 var(--body); color: var(--ink);   /* 16 px: iPhone pak nepřibližuje */
+  background: var(--nb-plocha); border: 1px solid var(--nb-hrana); border-radius: var(--nb-r2); padding: 8px 10px; text-shadow: none;
+}
+.nb-pole textarea { resize: vertical; min-height: 6.5em; }
+.nb-pole input:focus, .nb-pole textarea:focus { background: var(--nb-plocha-2); }
+.nb-pole ::placeholder { color: var(--muted); opacity: .75; }
+.nb-zprava-radek { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .nb-zprava-radek { grid-template-columns: 1fr; } }
+.nb-zprava-poloha { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--ink); cursor: pointer; }
+.nb-zprava-poloha input { margin: 0; accent-color: var(--nb-zlata); width: 16px; height: 16px; }
+.nb-zprava-misto { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 !important; padding: 6px 6px 6px 10px;
+  background: var(--nb-plocha); border-radius: var(--nb-r2); font-size: 14px !important; }
+.nb-zprava-misto[hidden] { display: none; }
+.nb-zprava-misto .px-btn { min-height: 26px; padding: 0 9px; font-size: 16px; line-height: 1; }
+.nb-zprava-ts:empty { display: none; }
+.nb-zprava-odeslat { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.nb-zprava-odeslat .px-btn { padding: 5px 18px; }
+.nb-zprava-stav { font-size: 14px; color: var(--muted); }
+.nb-zprava-stav.ok { color: var(--nb-zlata); font-weight: 700; }
+.nb-zprava-stav.err { color: #ff9b85; font-weight: 700; }
+/* Nahlásit nepřesnost v kartě: stejné pole a tlačítko jako Napište nám (Pavel 2026-11-19, dřív autorův styl) */
+.card .report form { gap: 10px; margin-top: 8px; }
+.card .report textarea {
+  box-sizing: border-box; width: 100%; font: 400 16px/1.4 var(--body); color: var(--ink); resize: vertical; min-height: 5em;
+  background: var(--nb-plocha); border: 1px solid var(--nb-hrana); border-radius: var(--nb-r2); padding: 8px 10px; text-shadow: none;
+}
+.card .report textarea:focus { background: var(--nb-plocha-2); }
+.card .report textarea::placeholder { color: var(--muted); opacity: .75; }
+.card .report form .px-btn { justify-self: start; padding: 5px 18px; }
+.card .report #repMsg { font-size: 14px; color: var(--muted); }
+.card .report #repMsg.rep-ok { color: var(--nb-zlata); font-weight: 700; font-size: 14px; }
+.card .report #repMsg.rep-err { color: #ff9b85; font-weight: 700; }
+/* odkaz v kartě místa */
+.nb-karta-napiste { margin: 8px 0 0; }
+.nb-odkaz { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; color: var(--nb-akcent); text-decoration: underline;
+  text-underline-offset: 2px; cursor: pointer; text-align: left; }
+.nb-odkaz:hover { color: var(--ink); }
+
+/* ---------- popisky v mapě: sklo bez rozmazání (je jich hodně) a bez stínu písma ---------- */
+.pin {
+  font-family: var(--body); font-size: 13px; font-weight: 600; color: #fff; padding: 3px 9px;
+  background: rgba(20, 30, 44, .78); border: 1.5px solid rgba(255, 255, 255, .55); border-radius: var(--nb-r2);
+  box-shadow: 0 1px 2px rgba(10, 20, 30, .3), 0 4px 10px -3px rgba(10, 20, 30, .4);
+}
+.pin::after { background: rgba(255, 255, 255, .7); }
+/* místo s otevřenou kartou (app.html oznacPin, Pavel 2026-11-17): plná barva kategorie, bílá ikonka a prstenec,
+   o čtvrtinu větší, nad ostatními; prstenec třikrát pulzne, pak zůstane */
+.pin.ikp.vybrany { background: var(--kat); z-index: 5; scale: 1.25; transform-origin: 50% 100%;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--kat); animation: pin-blik .45s ease-in-out 6 alternate; }
+.pin.ikp.vybrany svg { color: #fff; }
+.pin.ikp.vybrany:hover, .pin.ikp.vybrany:focus-visible { background: var(--kat); }
+@keyframes pin-blik { from { box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--kat); } to { box-shadow: 0 0 0 2px #fff, 0 0 0 14px transparent; } }
+@media (prefers-reduced-motion: reduce) { .pin.ikp.vybrany { animation: none; } }
+/* ikonky míst (app.html .pin.ikp, barva kategorie --kat z web/kategorie.js); název po najetí ve stejném skle jako dřív popisky */
+.pin.ikp:hover, .pin.ikp:focus-visible { background: rgba(20, 30, 44, .92); }
+.pin.ikp::before { font-family: var(--body); font-size: 13px; font-weight: 600; color: #fff; padding: 3px 9px;
+  background: rgba(20, 30, 44, .92); border: 1.5px solid var(--kat); border-radius: var(--nb-r2);
+  box-shadow: 0 1px 2px rgba(10, 20, 30, .3), 0 4px 10px -3px rgba(10, 20, 30, .4); }
+.card .oh-ted.otevreno { color: #8fe08a; }
+.card .oh-ted.zavreno { color: #ffa898; }
+.pin.need { border-radius: var(--nb-r2); }
+.pin.neighbor { border-radius: var(--nb-r2); font-weight: 700; }
+.far .pin:not(.need):not(.neighbor) { border-radius: 50%; }
+.card-neighbor-btn { font-family: var(--body); border-radius: var(--nb-r2); box-shadow: none; }
+
+/* ---------- telefon: spodní lišta s pěti ikonami, sekce a karta nad ní ---------- */
+@media (max-width: 640px) {
+  :root { --nb-okraj: 8px; --nb-nad-listou: calc(env(safe-area-inset-bottom, 0px) + 82px); }
+  .nb-rail { top: auto; width: auto; right: max(8px, env(safe-area-inset-right, 0px)); display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; gap: 2px; }   /* tolik sloupců, kolik je viditelných položek (od 2026-11-16 šest s Kamerami) */
+  .nb-rail button { padding: 6px 0 5px; min-height: 48px; }
+  .nb-logo, .nb-vice { display: none !important; }
+
+  #panel { top: auto; left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); width: auto;
+    bottom: var(--nb-nad-listou); max-height: calc(100% - 150px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); padding: 14px; }
+  .nb-zavreno #panel { display: none !important; }
+
+  .nb-hlava-mobil { position: fixed; z-index: 4; top: calc(env(safe-area-inset-top, 0px) + 8px); left: max(8px, env(safe-area-inset-left, 0px));
+    max-width: calc(100vw - 16px); box-sizing: border-box; padding: 6px 6px 6px 12px; align-items: center; }
+  .nb-hlava-mobil h1 { font-size: 18px; white-space: nowrap; }
+  .nb-hlava-mobil .sub, .nb-hlava-mobil .nb-zavrit, .nb-hlava-mobil #menu { display: none !important; }
+  .nb-hlava-mobil #help { display: grid; width: 36px; height: 36px; min-height: 36px; border: 0; background: none; }
+
+  .card { left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); width: auto;
+    bottom: var(--nb-nad-listou); max-height: 55%; border-width: 1px !important; padding: 6px 14px 14px; }
+  .card .grab { background: rgba(255, 255, 255, .45); border-radius: 3px; width: 38px; }
+  .card .close { top: 10px; right: 10px; width: 40px; height: 40px; }
+  .card .cshare { top: 10px; right: 60px; width: 40px; height: 40px; }   /* 10 + 40 + 10 */
+  .card h2 { padding-right: 100px; }
+
+  .controls { right: max(8px, env(safe-area-inset-right, 0px)); bottom: calc(var(--nb-nad-listou) + 0px); }
+  .controls #zin, .controls #zout { display: none; }       /* na telefonu přibližují prsty (plán B) */
+  .controls #share { display: grid; }
+  .controls .px-btn { width: 40px; height: 40px; opacity: 1; }
+  .card:not([hidden]) ~ .controls, body:not(.nb-zavreno) .controls { display: none; }   /* sekce i karta leží nad lištou tam, kde jsou tlačítka */
+
+  .follow, .toast { bottom: calc(var(--nb-nad-listou) + 8px); }
+  .nb-layers label, .realtime { min-height: 40px; }
+}
+/* Diorama (2026-11-16): po oddálení za výchozí pohled je mapa ostrůvek se stínem na tlumeném pozadí.
+   #podlozka (SVG se stínem, app.html kresliPodlozku) leží pod plátnem mapy: z-index −1 v rámci #map (fixed = vlastní vrstva). */
+/* Barvu pozadí podle denní doby dává autorův applyTime() do stylu #map i #osd. #osd musí být průhledné, jinak zakryje
+   stín i ztmavení (první verze 2026-11-16 je proto neukazovala vůbec). Ztmavení ke krajům je obrázek přes tu barvu
+   (background-image), takže se s denní dobou mění i ono. */
+#osd { background: transparent !important; }
+#map { background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, .045) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, .3) 100%) !important; }
+#podlozka { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; transform-origin: 0 0; will-change: transform; }
+#podlozka-stin { fill: rgba(4, 7, 14, .55); }
+@media (max-height: 500px) and (min-width: 641px) {
+  .nb-rail button span { display: none; }                   /* nízké okno: lišta jen s ikonami */
+  .nb-rail button { padding: 7px 0; }
+}

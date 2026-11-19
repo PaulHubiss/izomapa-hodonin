@@ -371,7 +371,7 @@
       const isHovered = PLANES.hover && PLANES.hover.id === id;
       const isFollowed = PLANES.follow === id;
       if (isHovered || isFollowed || sx > 0.42) {
-        ctx.font = '700 12px "Atkinson Hyperlegible", system-ui, sans-serif';
+        ctx.font = '700 12px "Source Sans 3", system-ui, sans-serif';
         const txt = `✈️ ${p.callsign}${p.model ? ' · ' + p.model : ''} · ${Math.round(p.alt)} m`;
         const tw = Math.ceil(ctx.measureText(txt).width) + 12;
         const tagX = X_pl, tagY = Y_pl - Math.round(sH / 2) - 14;

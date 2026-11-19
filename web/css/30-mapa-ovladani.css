@@ -11,6 +11,13 @@
 .card .report #repMsg.rep-ok { color: #ff9a3c; font-weight: 700; font-size: .95rem; }
 .card .report #repMsg.rep-err { color: #ff7a5c; font-weight: 700; }
 .card .links { display: flex; gap: 12px; flex-wrap: wrap; font-size: .86rem; }
+/* aktuální program místa (mista.json "program", functions/api/program.js) */
+.card .program h3 { margin: 0 0 4px; font-family: var(--display); font-weight: 500; font-size: .95rem; }
+.card .program ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .86rem; }
+.card .program li { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; }
+.card .program time { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card .program a { color: var(--ink); }
+.card .program .vse { display: inline-block; margin-top: 6px; font-size: .86rem; }
 
 .controls {
   position: fixed; z-index: 3; right: max(16px, env(safe-area-inset-right, 0px));
@@ -21,6 +28,7 @@
   position: fixed; z-index: 3; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
   background: var(--panel); border: 2px solid var(--edge); box-shadow: 4px 4px 0 rgba(0, 0, 0, .35); padding: 4px; display: grid; gap: 4px;
 }
+#minimap { display: none !important; }   /* Pavel 2026-11-15: minimapa zbytečná (mapa se neztratí, celek ukáže „domů“); kreslení se samo vypne (offsetParent) */
 .minimap canvas { display: block; width: 220px; image-rendering: pixelated; cursor: pointer; touch-action: none; }
 .minimap .scale { font-family: var(--display); font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; padding: 0 2px; }
 .pin {
@@ -53,7 +61,51 @@
   transition: transform .1s ease, background .1s ease;
 }
 .card-neighbor-btn:hover, .card-neighbor-btn:focus-visible { background: #ffe08a; transform: translateY(-1px); }
-.nolabels .pin, .far .pin:not(.need):not(.neighbor), body.plugins-hide-pins .pin { display: none !important; }
+.nolabels .pin:not(.ikp) { display: none !important; }   /* kategorie míst mají vlastní přepínače */
+/* oddálená mapa: ikonky jako tečky v barvě kategorie (schované vypadaly jako nefunkční vrstva) */
+.far .pin:not(.need):not(.neighbor) { font-size: 0; padding: 0; width: 10px; height: 10px; border: 2px solid var(--night); transform: translate(-50%, -50%); box-shadow: 1px 1px 0 rgba(0, 0, 0, .5); }
+.far .pin:not(.need):not(.neighbor)::after, .far .pin:not(.need):not(.neighbor) svg { display: none; }
+.far .pin:not(.ikp):not(.need):not(.neighbor) { background: var(--ink); }
+.far .pin.ikp { background: var(--kat); }
+.lay-n { color: var(--muted); font-variant-numeric: tabular-nums; }
+/* místa všech kategorií (web/kategorie.js: příběhy, památky, podniky, veřejná místa): ikonka v barvě kategorie (--kat),
+   název po najetí (Pavel 2026-11-16: jednotné zobrazení místo textových popisků), kliknutí otevře kartu */
+.pin.ikp { pointer-events: auto; cursor: pointer; padding: 3px; line-height: 0; border-color: var(--kat); transform: translate(-50%, -150%); }
+.pin.ikp::after { background: var(--kat); height: 8px; }
+.pin.ikp svg { width: 18px; height: 18px; display: block; color: var(--ink); }
+.pin.ikp:hover, .pin.ikp:focus-visible { background: var(--panel-2); outline: none; z-index: 3; }
+.pin.ikp:hover::before, .pin.ikp:focus-visible::before {
+  content: attr(data-nazev); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+  font-family: var(--display); font-size: .8rem; line-height: 1.3; white-space: nowrap; color: var(--ink);
+  background: var(--panel); border: 2px solid var(--kat); padding: 2px 6px; box-shadow: 2px 2px 0 rgba(0, 0, 0, .4); pointer-events: none;
+}
+.far .pin.ikp:hover::before, .far .pin.ikp:focus-visible::before { bottom: calc(100% + 4px); }
+/* výluky (functions/api/vyluky.js): seznam v panelu, upozornění v kartě a lišta nahoře */
+.vyluky { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; font-size: .86rem; }
+.vyluky a { color: var(--ink); }
+.vyluky .kdy { display: block; color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
+.vyluky .lin { font-family: var(--display); color: var(--lamp); }
+.card .vyl-note { font-size: .86rem; border-left: 3px solid var(--lamp); padding: 2px 0 2px 8px; display: grid; gap: 4px; }
+.card .vyl-note a { color: var(--ink); }
+/* Dnes v <městě> (mesto.json "dnes"): seznam v panelu a lišta nahoře se střídajícími se zprávami */
+.dnes-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 1px; }
+.dnes-list button { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; padding: 5px 8px; display: grid; grid-template-columns: 18px 1fr auto; gap: 0 8px; align-items: start; font-size: .86rem; }
+.dnes-list button:hover, .dnes-list button:focus-visible { background: var(--panel-2); outline: 1px solid var(--edge); }
+.dnes-list .misto { display: block; color: var(--muted); font-size: .78rem; }
+.dnes-list time { color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; white-space: nowrap; padding-top: 1px; }
+.dnes-ico svg { width: 16px; height: 16px; display: block; margin-top: 1px; color: var(--muted); }
+.dnes-ico.zive svg { color: #ff8a6a; }
+.dnes-ico.vyluka svg { color: var(--lamp); }
+.dnes-ico.kat svg { color: var(--kat); }   /* program = barva Kultury z web/kategorie.js (Pavel 2026-11-18: sjednotit) */
+/* vypnutá kategorie: třída nokat-<k> na #map (pravidla pro každou kategorii vygeneruje skript podle web/kategorie.js) */
+.card .oh-ted { font-weight: 700; }
+.card .oh-ted.otevreno { color: #8cd17d; }
+.card .oh-ted.zavreno { color: #ff9a8a; }
+.card figure { margin: 0 0 10px; }
+.card figure img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border: 2px solid var(--edge); background: var(--panel-2); }
+.card figcaption { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+.card figcaption a { color: inherit; }
+body.plugins-hide-pins .pin { display: none !important; }   /* doplněk si vyžádal mapu bez špendlíků (autor) */
 #pluginLayers { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; pointer-events: none; z-index: 2; }
 .izomapa-slot-tabs { position: fixed; z-index: 3; top: calc(env(safe-area-inset-top, 0px) + 88px); left: calc(max(16px, env(safe-area-inset-left, 0px)) + var(--pw, 356px)); transition: left .2s ease; display: flex; flex-direction: column; gap: 6px; }
 .folded .izomapa-slot-tabs { left: 0; }

@@ -8,12 +8,14 @@
   padding: 12px 14px; display: grid; gap: 8px;
 }
 .card .grab { display: none; }
-.card h2 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 1.2rem; line-height: 1.1; padding-right: 34px; text-wrap: balance; }
+.card h2 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 1.2rem; line-height: 1.1; padding-right: 68px; text-wrap: balance; }
 .card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: .86rem; }
 .card dt { color: var(--muted); }
 .card dd { margin: 0; font-variant-numeric: tabular-nums; }
 .card p { margin: 0; font-size: .86rem; line-height: 1.45; }
 .card .close { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; padding: 0; }
+.card .cshare { position: absolute; top: 6px; right: 44px; width: 32px; height: 32px; padding: 0; }   /* mezera ke křížku = jeho odstup od okraje */
+.card .cshare .ico { width: 16px; height: 16px; }
 .head { flex-wrap: wrap; row-gap: 0; }
 .head > div:first-child { display: contents; }
 .head h1 { flex: 1 1 0; min-width: 0; }

@@ -928,7 +928,7 @@ def roof_parts(p, ang):
 
 
 addr = load('address')
-addr = addr[addr.geom.map(lambda g: EXT_P.contains(g))]
+addr = addr[addr.geom.map(lambda g: EXT_P.contains(g)).astype(bool)]   # astype: u prázdné tabulky (čtverec bez adres) by pandas bral prázdný „object“ sloupec jako výběr sloupců a geom by zmizel
 addr_pts = list(addr.geom)
 addr_tree = shapely.STRtree(addr_pts)
 addr_txt = [f"{s} {n}" if isinstance(s, str) else f"{c} {n}" if isinstance(c, str) else str(n) for s, n, c in zip(addr.street, addr.number, addr.postal_city)]

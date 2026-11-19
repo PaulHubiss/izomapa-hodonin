@@ -90,9 +90,9 @@
     return out;
   }
   const occC = document.createElement('canvas'), occX = occC.getContext('2d');
-  function drawBehindTrees(img, ix, iy, iw, ih, x, y, z, sx, ox, oy) {
+  // sh: tvary předem spočítané volajícím (chodci si je drží mezi snímky); jinak se spočítají tady
+  function drawBehindTrees(img, ix, iy, iw, ih, x, y, z, sx, ox, oy, sh = treeShapes(x, y, z, [ix, iy, ix + iw, iy + ih])) {
     const X0 = Math.round(ox + ix * sx), Y0 = Math.round(oy + iy * sx), w = Math.round(iw * sx), h = Math.round(ih * sx);
-    const sh = treeShapes(x, y, z, [ix, iy, ix + iw, iy + ih]);
     if (!sh.length) { ctx.drawImage(img, X0, Y0, w, h); return; }
     if (occC.width < w || occC.height < h) { occC.width = Math.max(occC.width, w); occC.height = Math.max(occC.height, h); }
     occX.clearRect(0, 0, w, h); occX.imageSmoothingEnabled = false; occX.globalCompositeOperation = 'source-over';

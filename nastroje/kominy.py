@@ -59,10 +59,7 @@ def potrubi(prvky):
 if __name__ == '__main__':
     x0, y0, x1, y1 = geo.extent(geo.MARGIN + 20)
     lo0, la0 = geo.to_lonlat(x0, y0); lo1, la1 = geo.to_lonlat(x1, y1); b = f'{la0},{lo0},{la1},{lo1}'
-    def dotaz(q):
-        t = subprocess.run(['curl', '-s', '-f', '-m', '120', '-A', 'izomapa-tools/1.0', '--data-urlencode', f'data={q}', 'https://overpass-api.de/api/interpreter'],
-                           check=True, capture_output=True, text=True).stdout
-        return json.loads(t)['elements']
+    from nastroje.overpass import dotaz          # opakuje při přetížení serveru, umí zrcadlo a OVERPASS_URL
     v = vyber(dotaz(f'[out:json][timeout:60];(nwr["man_made"="chimney"]({b});nwr["tower:type"~"^(stack|cooling|communication|observation)$"]({b});nwr["man_made"="storage_tank"]({b}););out tags center bb;'))
     json.dump(v, open('assets/kominy.json', 'w'), indent=0)
     tr = potrubi(dotaz(f'[out:json][timeout:60];way["man_made"="pipeline"]({b});out tags geom;'))

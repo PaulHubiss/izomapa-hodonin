@@ -1,0 +1,58 @@
+{
+ "rozsah_mesta": [[48.84397, 17.09199], [48.84712, 17.08997], [48.86489, 17.10614], [48.87515, 17.11688], [48.87441, 17.13624], [48.87164, 17.15107], [48.87117, 17.15177], [48.8637, 17.15373], [48.84319, 17.14414], [48.84014, 17.12736], [48.8369, 17.10255]],
+ "nazev": "Hodonín",
+ "titulek": "Izometrický Hodonín",
+ "h1": [
+  "Izometrický",
+  "Hodonín"
+ ],
+ "podtitul": "Město z otevřených dat, pixel po pixelu",
+ "popis": "Izometrická pixel-art mapa: Hodonín ve stylu SimCity 2000. Roční období, den a noc, počasí a příběhy míst.",
+ "url": "https://hodonin.paulhubiss.cz",
+ "stred": [17.12253, 48.85635],
+ "polovina": 800.0,
+ "ctverce": [
+  [-1, 1],
+  [0, 1],
+  [1, 1],
+  [-1, 0],
+  [0, 0],
+  [1, 0],
+  [-1, -1],
+  [0, -1],
+  [1, -1]
+ ],
+ "href": 164.9,
+ "dno": -42,
+ "mhd": {
+  "gtfs": "https://www.arcgis.com/sharing/rest/content/items/379d2e9a7907460c8ca7fda1f3e84328/data",
+  "zdroj": "IDS JMK (KORDIS JMK)",
+  "zdroj_url": "https://data.brno.cz/datasets/379d2e9a7907460c8ca7fda1f3e84328/about",
+  "live": {"url": "wss://gis.brno.cz/geoevent/ws/services/Kordis_stream/StreamServer/subscribe?outSR=4326", "format": "kordis",
+           "zdroj": "KORDIS JMK (data.brno.cz)", "zdroj_url": "https://data.brno.cz/", "licence": "CC BY"}
+ },
+ "potoky": true,
+ "lode": {"pristav": [48.843176, 17.14398], "jez": [48.842497, 17.142687], "reka": "Morava", "delka": 1500,
+  "ramena": [
+   {"nazev": "Stará Morava u přístavu", "bod": [48.84533, 17.14089], "typy": ["kanoe", "pramice"]},
+   {"nazev": "Stará Morava v lese", "bod": [48.84019, 17.11586], "typy": ["kanoe", "rybar"]},
+   {"nazev": "Kátovské rameno", "bod": [48.84160, 17.15132], "typy": ["rybar"]},
+   {"nazev": "rameno u Kátovského", "bod": [48.84660, 17.15161], "typy": ["pramice", "kanoe"]},
+   {"nazev": "rybník Lavor", "bod": [48.84391, 17.13517], "typy": ["pramice", "rybar", "rybar"]}]},
+ "skryte_casti": ["Brněnské náměstí", "Hodonín"],
+ "hasici": {"kraj": 116, "okres": 3706, "dni": 7},
+ "vyluky": {"oblast": "Hodonínsko"},
+ "hlaseni": true,
+ "dnes": {"nadpis": "Dnes v Hodoníně"},
+ "kamery": [
+  {"nazev": "Masarykovo náměstí", "popis": "Kostel sv. Vavřince a radnice", "obrazek": "https://www.hodonin.eu/html/muhodonin/WebCamNamesti/namesti000M.jpg",
+   "obnova": 10, "lat": 48.8487, "lon": 17.1285, "zdroj": "Město Hodonín", "zdroj_url": "https://www.hodonin.eu/vismo/webkamera.asp"},
+  {"nazev": "Zoo Hodonín", "popis": "Kamery v pavilonech zoo", "mimo_provoz": "Podle webu zoo jsou kamery teď mimo provoz (16. 11. 2026).",
+   "lat": 48.863756, "lon": 17.106957, "zdroj": "Zoo Hodonín", "zdroj_url": "https://www.zoo-hodonin.cz/kamery"}
+ ],
+ "vitr": true,
+ "pocasi": true,
+ "doprava": {"kraj": "Jihomoravský kraj"},
+ "vlak": {"vychozi": "regiopanter", "linky": {"R": "rychlik", "Ex": "rychlik", "EC": "rychlik", "IC": "rychlik", "EN": "rychlik", "rj": "rychlik", "RJ": "rychlik", "LE": "rychlik"}},
+ "vanocni_strom": [48.8487, 17.1285]
+}

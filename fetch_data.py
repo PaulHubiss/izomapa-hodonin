@@ -5,7 +5,7 @@ python fetch_data.py --chunk -1,0  # čtverec mapy s rezervou 300 m -> data_c-1_
 python fetch_data.py --places      # názvy a firmy (Overture places) pro karty budov -> data/places.parquet
 python fetch_data.py --deleni      # městské části a osady (Overture divisions) -> data_all/division_area.parquet
 """
-import math, os, subprocess, sys, time, urllib.request
+import json, math, os, subprocess, sys, time, urllib.request
 import pyarrow.dataset as ds, pyarrow.parquet as pq
 import geo
 from nastroje import overture      # vydání Overture (když vyzkoušené z S3 zmizí, vezme se nejnovější)
@@ -32,14 +32,24 @@ if sys.argv[1:2] == ['--vse']:
     # Overture se prohledává po celém světě (pomalé), proto každou vrstvu jednou pro celou mapu a čtverce se z ní vyříznou lokálně
     os.makedirs('data_all', exist_ok=True)
     X0, X1, Y0, Y1 = geo.bbox_lonlat(400)
+    # rozsah stažení si pamatovat: po rozšíření mapy (novy_mesto.py bez --max) by se jinak čtverce tiše
+    # vyřízly ze starého, menšího výřezu – nové čtverce bez budov a adres
+    ROZSAH = 'data_all/rozsah.json'
+    rozsah = [round(float(v), 6) for v in (X0, X1, Y0, Y1)]
+    stary = json.load(open(ROZSAH)) if os.path.exists(ROZSAH) else None
+    jiny = stary is not None and stary != rozsah
+    if stary is None and any(os.path.exists(f'data_all/{typ}.parquet') for _, typ in LAYERS):
+        jiny = True                                   # data z doby před pamatováním rozsahu – nevíme, pro jaký výřez jsou
+    if jiny: print('rozsah mapy se změnil, stahuji vrstvy znovu', flush=True)
     for theme, typ in LAYERS:
         out = f'data_all/{typ}.parquet'
-        if os.path.exists(out): continue
+        if os.path.exists(out) and not jiny: continue
         t = time.time()
         d = overture.dataset(theme, typ)
         f = ((ds.field('bbox', 'xmin') < X1) & (ds.field('bbox', 'xmax') > X0) & (ds.field('bbox', 'ymin') < Y1) & (ds.field('bbox', 'ymax') > Y0))
         tb = d.to_table(filter=f); pq.write_table(tb, out)
         print(typ, tb.num_rows, f'{time.time() - t:.0f}s', flush=True)
+    json.dump(rozsah, open(ROZSAH, 'w'))
     for c in sorted(geo.CHUNKS):
         D = 'data' if c == (0, 0) else f'data_c{c[0]}_{c[1]}'
         os.makedirs(f'{D}/dem', exist_ok=True)
@@ -55,8 +65,8 @@ if sys.argv[1:2] == ['--vse']:
             pq.write_table(tb.filter(m), f'{D}/{typ}.parquet')
         dem(D, x0, x1, y0, y1)
         print('čtverec', c, '->', D, flush=True)
-    if not os.path.exists('data/places.parquet'): subprocess.run([sys.executable, __file__, '--places'], check=True)
-    if not os.path.exists('data_all/division_area.parquet'): subprocess.run([sys.executable, __file__, '--deleni'], check=True)
+    if jiny or not os.path.exists('data/places.parquet'): subprocess.run([sys.executable, __file__, '--places'], check=True)
+    if jiny or not os.path.exists('data_all/division_area.parquet'): subprocess.run([sys.executable, __file__, '--deleni'], check=True)
     sys.exit()
 if sys.argv[1:2] == ['--deleni']:
     d = overture.dataset('divisions', 'division_area')

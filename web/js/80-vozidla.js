@@ -19,7 +19,8 @@
     rychlik: { h: 4.1, ...CD, nose: 1.4, cars: [{ len: 18, f: 1, loco: 1, top: 'panto' }, { len: 26.4 }, { len: 26.4 }, { len: 26.4 }] },   // lokomotiva 380 (18 m) a vozy
   };
   const VLAK = {{VLAK}};
-  const trainOf = (line) => TRAINS[VLAK.linky[line]] ? VLAK.linky[line] : TRAINS[VLAK.vychozi] ? VLAK.vychozi : 'regionova';
+  // přesná linka („Os 4123“), jinak druh vlaku z celostátního JŘ („R“, „EC“ – první slovo), jinak výchozí model
+  const trainOf = (line) => TRAINS[VLAK.linky[line]] ? VLAK.linky[line] : TRAINS[VLAK.linky[String(line).split(' ')[0]]] ? VLAK.linky[String(line).split(' ')[0]] : TRAINS[VLAK.vychozi] ? VLAK.vychozi : 'regionova';
   // col = "kabina|nástavba|druh" (druh: box = skříň, tarp = plachta)
   function truckFaces(ctx) {
     const { R, box, faces, fx_, fy_, sxv, syv, vis, sun, l, w, col, snow } = ctx;
@@ -138,6 +139,13 @@
         Pt(-l + 0.25, -0.3, -w * 0.72, w * 0.72, 0.95, 1.45, A, A);
         Pt(-l + 0.3, -0.35, -w * 0.7, w * 0.7, 1.45, 2.6, GL, GL, 2);
         Pt(-l + 0.2, -0.25, -w * 0.78, w * 0.78, 2.6, 2.75, A, sn(A), 3);
+      } else if (isBus === 11) {                                            // motorka s jezdcem: kola, nádrž, sedlo, jezdec a helma
+        axles.push([l - 0.38, 0.33, 0.08, 0.06], [-l + 0.4, 0.33, 0.08, 0.06]);
+        Pt(-l + 0.35, l - 0.3, -0.13, 0.13, 0.32, 0.62, DK, DK, 0);                                       // rám a motor
+        Pt(0.05, l - 0.45, -0.17, 0.17, 0.62, 0.92, A, A);                                                // nádrž
+        Pt(-l + 0.3, 0.05, -0.15, 0.15, 0.62, 0.8, DK, DK);                                               // sedlo
+        Pt(-0.5, 0.0, -w * 0.55, w * 0.55, 0.8, 1.45, [52, 56, 66], [60, 64, 76], 2);                    // jezdec
+        Pt(-0.32, 0.02, -0.15, 0.15, 1.45, 1.75, B, sn(B), 3);                                             // helma
       }
       const wh = (side) => { for (const [s_, r_, th, hw] of axles) box(s_ - r_ * 0.8, s_ + r_ * 0.8, side * (th - 0.08) - hw, side * (th - 0.08) + hw, 0, r_ * 1.7, DK); };
       wh(-near);

@@ -180,6 +180,10 @@
 <script id="izo-nastaveni">window.IZO_SEST = '{{SESTAVENI}}'; window.IZO_KAMERY = {{KAMERY}};   // webkamery pro položku menu Kamery (mesto.json "kamery", web/nase.js)</script>
 <script src="kategorie.js?s={{SESTAVENI}}"></script>
 <script src="nase.js?s={{SESTAVENI}}"></script>
+<!-- Cloudflare Web Analytics (Pavel 2026-11-19): bez cookies, jen na ostrém webu (zkoušky na localhost se nepočítají).
+     Token je veřejný (stránka hodonin.paulhubiss.cz ve Web Analytics, JS Snippet). Zmínka v Nápovědě › O mapě › Soukromí. -->
+<script>if (location.hostname === 'hodonin.paulhubiss.cz') { const s = document.createElement('script'); s.type = 'module'; s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+  s.dataset.cfBeacon = '{"token": "b120a0e064a94876ab0025cda54003ee"}'; document.head.append(s); }</script>
 
 <!-- OpenSeadragon 4.1.0 z našeho webu (stejný soubor jako na cdnjs, ověřeno otiskem sha384 2026-11-18): nezávislost na cizím
      serveru a IP návštěvníků nikam nejde. Verzi drží upstream (package.json); při změně stáhnout znovu a ověřit otisk. -->

@@ -266,14 +266,14 @@
     // Soukromí (napady/PRED-SPUSTENIM.md kap. 2, 2026-11-18): ověřeno v kódu – v prohlížeči jen izo-fold, izo-realtime,
     // izo-realweather (localStorage) a izo-eco (sessionStorage); přímá spojení: Open-Meteo, HZS JMK, KORDIS (gis.brno.cz),
     // Wikimedia (fotky v kartě), hodonin.eu (kamera). Program a výluky jdou přes functions/api. Písmo a knihovny jsou u nás.
-    // Při zapnutí Cloudflare Web Analytics sem doplnit větu. Hlášení nepřesností (od 2026-11-19, worker/index.js +
+    // Cloudflare Web Analytics zapnuté 2026-11-19 (web/app.html, jen na ostrém webu), věta v odrážce o službách. Hlášení nepřesností (od 2026-11-19, worker/index.js +
     // hlaseni/worker.js): text, název a poloha místa, otisk IP (SHA-256 se solí SALT, IP se neukládá), limit 3 za hodinu, e-mail Pavlovi.
     const sbal = (nadpis, ...obsah) => { const d = el('details', 'nb-sbal'); d.append(el('summary', null, nadpis), ...obsah); return d; };
     okno.projekt.append(sbal('Soukromí', el('ul', 'nb-napo nb-sbal-seznam',
       '<li>Žádné cookies, nikdo vás nesleduje. Zvolená nastavení (skutečný čas a počasí, úsporný režim) si pamatuje jen váš prohlížeč.</li>'
       + '<li>Kvůli živým datům se prohlížeč připojuje k Open-Meteo (počasí), HZS JMK (výjezdy hasičů), KORDIS JMK (poloha autobusů), '
       + 'Wikimedia Commons (fotky památek) a k webkameře města (jen při otevřených Kamerách); tyto služby vidí vaši IP adresu. '
-      + 'Program akcí a výluky stahuje náš server. Písmo i knihovny jsou u nás, web běží na Cloudflare.</li>'
+      + 'Program akcí a výluky stahuje náš server. Písmo i knihovny jsou u nás, web běží na Cloudflare. Návštěvnost měří Cloudflare Web Analytics bez cookies a jen souhrnně (kolik zobrazení, odkud přišla), nepozná, kdo jste.</li>'
       + '<li>Moje poloha: zjišťuje ji váš prohlížeč jen po vašem svolení, mapa ji jen zobrazí, nikam ji neposílá ani neukládá.</li>'
       + '<li>Hlášení nepřesnosti a zprávy: uloží se jen to, co napíšete (jméno a e-mail jsou nepovinné, e-mail slouží jen k odpovědi). '
       + 'IP adresa se neukládá, jen z ní jednosměrně odvozený kód proti zahlcení. O nové zprávě dostane autor mapy e-mail. '

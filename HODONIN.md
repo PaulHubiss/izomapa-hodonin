@@ -10,4 +10,4 @@ Tohle je **zdrojový kód mapy [Izometrický Hodonín](https://hodonin.paulhubis
 - **Není tu:** data a podklady města (`assets/`, `build/`, texty míst), pracovní poznámky a obrázky. Mapu z tohoto
   kódu postavíte podle autorova README pro svoje město.
 
-Aktualizuje se automaticky při každém nasazení webu. Poslední stav: commit `a5c9569` z 2026-11-19.
+Aktualizuje se automaticky při každém nasazení webu. Poslední stav: commit `cf6acb5` z 2026-11-19.

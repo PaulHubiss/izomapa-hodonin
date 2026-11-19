@@ -25,7 +25,7 @@ over('všechny místní soubory se načetly', !selhalo.length, selhalo.join(' ')
 
 await p.evaluate(() => document.getElementById('helpDlg').showModal());
 const projekt = await p.evaluate(() => document.querySelector('#helpDlg .nb-napo-okno[data-zal="projekt"]')?.textContent || '');
-over('Nápověda › O projektu: Soukromí (bez cookies, služby, Cloudflare)', /Soukromí/.test(projekt) && /nepoužívá cookies/.test(projekt)
+over('Nápověda › O mapě: Soukromí (bez cookies, služby, Cloudflare)', /Soukromí/.test(projekt) && /Žádné cookies/.test(projekt.replace(/ /g, ' '))
   && /Open-Meteo/.test(projekt) && /KORDIS/.test(projekt) && /Cloudflare/.test(projekt));
 
 const p4 = await ctx.newPage(); const sel4 = []; p4.on('requestfailed', (r) => sel4.push(r.url()));
@@ -38,8 +38,9 @@ await p4.setViewportSize({ width: 360, height: 640 });
 over('stránka 404 na telefonu nepřetéká', await p4.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
 const h = fs.existsSync('site/_headers') ? fs.readFileSync('site/_headers', 'utf8') : '';
-over('site/_headers: noindex, nosniff, frame-ancestors, Permissions-Policy', /X-Robots-Tag: noindex/.test(h) && /X-Content-Type-Options: nosniff/.test(h)
-  && /frame-ancestors 'self'/.test(h) && /Permissions-Policy:/.test(h) && !/Strict-Transport-Security/.test(h));
+// od ostrého spuštění 2026-11-19 bez noindex (hlídá se, že se omylem nevrátil) a s HSTS
+over('site/_headers: bez noindex, HSTS, nosniff, frame-ancestors, Permissions-Policy', !/^\s+X-Robots-Tag:.*noindex/m.test(h) && /Strict-Transport-Security/.test(h) && /X-Content-Type-Options: nosniff/.test(h)
+  && /frame-ancestors 'self'/.test(h) && /Permissions-Policy:/.test(h));
 over('chyby stránky', !chyby.length, chyby.join(' | '));
 console.log(`\n${ok} v pořádku, ${spatne} špatně`);
 await b.close();

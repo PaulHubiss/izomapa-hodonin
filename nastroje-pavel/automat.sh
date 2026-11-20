@@ -1,19 +1,25 @@
 #!/bin/sh
-# Automatická aktualizace jízdních řádů: každou neděli ve 3:00 pustí `aktualizuj.sh nasad` (launchd, i bez Clauda).
+# Automatická aktualizace jízdních řádů: každou neděli ve 3:00 PŘIPRAVÍ nový web (launchd, i bez Clauda),
+# nasadí ho ale až po Pavlově potvrzení (Pavel 2026-11-20: „ideálně ať čeká na moje potvrzení“).
 #   sh nastroje-pavel/automat.sh zapnout    nainstaluje službu cz.izomapa.aktualizace na TOMHLE Macu
 #   sh nastroje-pavel/automat.sh vypnout
-#   sh nastroje-pavel/automat.sh stav       běží? + konec posledního logu
-#   sh nastroje-pavel/automat.sh beh        jeden běh tak, jak ho pouští launchd (ruční zkouška)
-# Zapnout jen na JEDNOM Macu (Pavel 2026-11-16: M2 – má postavenou mapu a přihlášený wrangler).
+#   sh nastroje-pavel/automat.sh stav       běží? čeká něco na potvrzení? + konec posledního logu
+#   sh nastroje-pavel/automat.sh beh        příprava tak, jak ji pouští launchd: main, přestavba, jízdní řády, web
+#   sh nastroje-pavel/automat.sh nasad      POTVRZENÍ: nahraje připravený web (jen když se od přípravy nic nezměnilo)
+# Zapnout na OBOU Macích (Pavel 2026-11-20: „zapínám/vypínám je různě“). Dřív jen M2, protože automat nasazoval sám
+# a dva Macy by se přetahovaly; teď jen připravuje, nasadí se jen to, co Pavel potvrdí (na Macu, kde zrovna sedí).
 # Spí-li Mac v neděli ve 3:00, launchd běh dožene po probuzení.
-# Pojistky: rozdělaná práce v gitu (necommitnuté změny) = nenahrávat, jen ohlásit. Chyba = oznámení macOS.
-# Před nasazením stáhne main (jen fast-forward); při změně kódu přestaví mapu (novy_stroj.sh, i s kontrolou podkladů).
+# Pojistky: rozdělaná práce v gitu (necommitnuté změny) = nepřipravovat, jen ohlásit. Chyba = oznámení macOS.
+# Příprava vždy stáhne main a přestaví mapu (novy_stroj.sh: kroky s výsledkem přeskočí, render jen změněných čtverců).
+# Proč vždy (2026-11-20): main stáhl už háček při startu sezení, automat „nic nového“ neviděl a nasadil dlaždice
+# z 15. 11. přes web z M5 s 29 památkami. Nasazení navíc hlídá nastroje-pavel/kontrola_dlazdic.py.
 set -e
 cd "$(dirname "$0")/.."
 KOREN=$(pwd)
 NAZEV=cz.izomapa.aktualizace
 PLIST="$HOME/Library/LaunchAgents/$NAZEV.plist"
 LOG=build/aktualizace/automat.log
+PRIPRAVENO=build/aktualizace/pripraveno   # řádek 1 popis (čas · commit · Mac), řádek 2 celý commit
 
 oznam() { osascript -e "display notification \"$1\" with title \"Izomapa – aktualizace\"" 2>/dev/null || true; }
 
@@ -42,41 +48,57 @@ vypnout)
   rm -f "$PLIST"; echo "○ vypnuto" ;;
 stav)
   if launchctl print "gui/$(id -u)/$NAZEV" >/dev/null 2>&1; then echo "✅ zapnuto na $(scutil --get ComputerName)"; else echo "○ na tomhle Macu vypnuto"; fi
+  [ -f "$PRIPRAVENO" ] && echo "⏳ čeká na potvrzení: $(head -1 "$PRIPRAVENO") → sh nastroje-pavel/automat.sh nasad" || true
   [ -f "$LOG" ] && { echo "── konec logu ──"; tail -12 "$LOG"; } || true ;;
 beh)
+  mkdir -p build/aktualizace
   echo; echo "════ $(date '+%Y-%m-%d %H:%M') ════"
+  date '+%Y-%m-%d %H:%M' > build/aktualizace/posledni_beh   # kontrola_podkladu.py: běžel od změny automatu? (i při ručním běhu mimo log)
+  rm -f "$PRIPRAVENO"
   if [ -n "$(git status --porcelain)" ]; then
-    echo "⏸ rozdělaná práce v gitu – nenahrávám (jinak by šla na web i ona):"; git status --porcelain | head -10
+    echo "⏸ rozdělaná práce v gitu – nepřipravuji (jinak by šla na web i ona):"; git status --porcelain | head -10
     oznam "Přeskočeno: v projektu je necommitnutá práce."; exit 0
   fi
-  # Nejdřív čerstvý kód z gitu (2026-11-18: automat nahrával, co měl Mac u sebe → po nasazení z druhého Macu by web
-  # v neděli vrátil na starou verzi). Jen fast-forward na main; při změně kódu nejdřív přestavět mapu, jinak by šel
-  # na web nový prohlížeč se starými daty.
   if [ "$(git rev-parse --abbrev-ref HEAD)" != main ]; then
-    echo "⏸ projekt není na větvi main – nenahrávám"; oznam "Přeskočeno: projekt není na větvi main."; exit 0
+    echo "⏸ projekt není na větvi main – nepřipravuji"; oznam "Přeskočeno: projekt není na větvi main."; exit 0
   fi
   PRED=$(git rev-parse HEAD)
   if ! git pull -q --ff-only origin main; then
-    echo "❌ git pull selhal (rozešlé větve?) – nenahrávám"; oznam "Aktualizace selhala: git pull – viz log."; exit 1
+    echo "❌ git pull selhal (rozešlé větve?) – nepřipravuji"; oznam "Aktualizace selhala: git pull – viz log."; exit 1
   fi
   if [ "$PRED" != "$(git rev-parse HEAD)" ]; then
     echo "↓ nový kód: $(git log --oneline "$PRED"..HEAD | wc -l | tr -d ' ') commitů"
     if git diff --name-only "$PRED" HEAD | grep -q '^package-lock.json$'; then npm install > build/aktualizace/npm.txt 2>&1 || { oznam "Aktualizace selhala: npm install – viz log."; exit 1; }; fi
-    # kód nebo podklady mapy (ne jen deník a poznámky) → přestavba; novy_stroj.sh začíná kontrolou podkladů
-    if git diff --name-only "$PRED" HEAD | grep -qv -E '^(sessions/|napady/|navrhy/|[^/]*\.md$)'; then
-      echo "== přestavba mapy (novy_stroj.sh)"
-      if ! sh nastroje-pavel/novy_stroj.sh > build/aktualizace/prestavba.txt 2>&1; then
-        tail -20 build/aktualizace/prestavba.txt; oznam "Přestavba mapy selhala, web se nezměnil – viz log."; exit 1
-      fi
-    fi
   fi
+  # vždy, ne jen po změně z pull: main mohl stáhnout někdo jiný (háček při startu sezení) a dlaždice by zůstaly staré
+  echo "== přestavba mapy (novy_stroj.sh)"
+  if ! sh nastroje-pavel/novy_stroj.sh > build/aktualizace/prestavba.txt 2>&1; then
+    tail -20 build/aktualizace/prestavba.txt; oznam "Přestavba mapy selhala, web se nezměnil – viz log."; exit 1
+  fi
+  grep -E '^(hotovo|beze změny|render hotov)' build/render_par.log || true
+  if sh nastroje-pavel/aktualizuj.sh > build/aktualizace/posledni.txt 2>&1 && .venv/bin/python nastroje-pavel/kontrola_dlazdic.py >> build/aktualizace/posledni.txt 2>&1; then
+    sed -n '/Jízdní řády v mapě/,/^==/p' build/aktualizace/posledni.txt | grep -v '^==' || true
+    printf '%s · %s · %s\n' "$(date '+%Y-%m-%d %H:%M')" "$(git rev-parse --short HEAD)" "$(scutil --get ComputerName)" > "$PRIPRAVENO"
+    git rev-parse HEAD >> "$PRIPRAVENO"
+    echo "⏳ připraveno, čeká na potvrzení: sh nastroje-pavel/automat.sh nasad"
+    oznam "Nový web je připravený a čeká na tvé potvrzení (automat.sh nasad)."
+  else
+    tail -20 build/aktualizace/posledni.txt; oznam "Příprava selhala, web se nezměnil – viz build/aktualizace/automat.log"; exit 1
+  fi ;;
+nasad)
+  # potvrzení od Pavla: nahrát přesně to, co beh připravil – ne nic, co přibylo potom
+  [ -f "$PRIPRAVENO" ] || { echo "○ nic nečeká na potvrzení – nejdřív sh nastroje-pavel/automat.sh beh"; exit 1; }
+  git fetch -q origin main || true
+  if [ "$(sed -n 2p "$PRIPRAVENO")" != "$(git rev-parse HEAD)" ] || [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ] || [ -n "$(git status --porcelain)" ]; then
+    echo "❌ od přípravy se změnil kód (tady nebo na GitHubu, třeba z M5) – nenasazuji. Připrav znovu: sh nastroje-pavel/automat.sh beh"; exit 1
+  fi
+  echo "== nasazuji připravený web ($(head -1 "$PRIPRAVENO"))"
   if sh nastroje-pavel/aktualizuj.sh nasad > build/aktualizace/posledni.txt 2>&1; then
     sed -n '/Jízdní řády v mapě/,/^==/p' build/aktualizace/posledni.txt | grep -v '^==' || true
-    grep 'Deployment complete' build/aktualizace/posledni.txt || true
-    grep -q '⚠️' build/aktualizace/posledni.txt && oznam "Hotovo, ale jízdní řád brzy vyprší – viz log." || true
-    echo "✅ nahráno"
+    grep -E 'Current Version ID|custom domain' build/aktualizace/posledni.txt || true
+    rm -f "$PRIPRAVENO"; echo "✅ nahráno"
   else
-    tail -20 build/aktualizace/posledni.txt; oznam "Aktualizace selhala – viz build/aktualizace/automat.log"; exit 1
+    tail -20 build/aktualizace/posledni.txt; exit 1
   fi ;;
-*) echo "Použití: $0 {zapnout|vypnout|stav|beh}"; exit 1 ;;
+*) echo "Použití: $0 {zapnout|vypnout|stav|beh|nasad}"; exit 1 ;;
 esac

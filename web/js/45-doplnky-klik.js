@@ -10,7 +10,7 @@
   };
   viewer.addHandler('canvas-click', (e) => {
     if (!e.quick) return;
-    if (typeof ULICE !== 'undefined') ULICE.vyber = null;      // klik do mapy zruší zvýraznění ulice z hledání
+    if (typeof ULICE !== 'undefined') zrusUlici();             // klik do mapy zruší zvýraznění ulice z hledání (60-navigace.js)
     if (pluginClicks.length || pluginCapture) {
       const [ix, iy] = vpToImg(e.position);
       const evt = { x: ix, y: iy, screenX: e.position.x, screenY: e.position.y, originalEvent: e };

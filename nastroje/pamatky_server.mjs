@@ -1,6 +1,7 @@
 // místní dashboard vlastních modelů památek (před / po): node nastroje/pamatky_server.mjs  (nebo npm run pamatky)  ->  http://127.0.0.1:8792
 // Poslouchá jen na tomto počítači. Čte podklady-soukrome/pamatky/ (dashboard.json, img/, fotky z Commons) a rozhodnutí
-// ukládá do podklady-soukrome/pamatky/rozhodnuti.json. Snímky vyrobí: node pamatky/pred_po.mjs [slug …]
+// ukládá do pamatky/rozhodnuti.json (v gitu, od 2026-11-20; podklady-soukrome/pamatky je zástupce na Google Disk
+// a složka s verzovaným souborem se na Disk napojit nedá). Snímky vyrobí: node pamatky/pred_po.mjs [slug …]
 // /nastaveni.json = název města, adresa mapy (mesto.json "url") a popisky skupin (pamatky/skupiny.json, nepovinné).
 import http from 'node:http';
 import fs from 'node:fs';
@@ -11,7 +12,7 @@ const D = path.join(ROOT, 'podklady-soukrome/pamatky');
 const PAGE = path.join(ROOT, 'nastroje/pamatky.html');
 const PORT = Number(process.env.PORT || 8792);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.md': 'text/plain; charset=utf-8' };
-const RJ = path.join(D, 'rozhodnuti.json');
+const RJ = path.join(ROOT, 'pamatky/rozhodnuti.json');
 const HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 const SLUG = /^[a-z0-9-]{1,40}$/;
 const cti = (p, def) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return def; } };
@@ -42,6 +43,10 @@ http.createServer((q, r) => {
     const m = cti(path.join(ROOT, process.env.IZO_MESTO || 'mesto.json'), {});
     r.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
     r.end(JSON.stringify({ mesto: m.nazev || '', url: m.url || '', skupiny: cti(path.join(ROOT, 'pamatky/skupiny.json'), {}) }));
+    return;
+  }
+  if (u === '/rozhodnuti.json') {
+    r.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); r.end(JSON.stringify(cti(RJ, {})));
     return;
   }
   const fp = u === '/' ? PAGE : path.join(D, u);

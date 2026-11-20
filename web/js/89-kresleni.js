@@ -27,6 +27,7 @@
       vis,
     } : null;
     $('map').classList.toggle('far', sx < 0.3);
+    kresliStrany(sx, ox, oy, cw, ch);                     // S V J Z za okraji mapy při oddálení (67-svetove-strany.js)
 
     // třpyt vody (ve dne)
     if (sx > 0.25 && night < 0.6 && !snowy) {

@@ -323,7 +323,7 @@ for g in ZORNA:
     u = e1 / np.linalg.norm(e1)
     if u[0] < 0 or (u[0] == 0 and u[1] < 0): u = -u              # stejná orientace ve všech čtvercích
     v = np.array([-u[1], u[0]]); c0 = np.array(g.centroid.coords[0])
-    cr = CROPS[int(h01(wkey(c0[0] + CX, c0[1] + CY) + 'pole') * len(CROPS))]
+    cr = CROPS[int(h01(wkey(c0[0], c0[1]) + 'pole') * len(CROPS))]   # wkey sám přičte CX, CY (dřív dvakrát → jiná plodina v každém čtverci)
     for p in polys(g.intersection(DRAWBOX)):
         if p.area < 400: continue
         fill(p, C[cr])

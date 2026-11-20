@@ -19,7 +19,7 @@ krok "pole a louky (ZABAGED)";      [ -f assets/zabaged.json ] || { $PY nastroje
 krok "barvy střech z ortofota";     [ -f assets/strechy_orto.json ] || { $PY nastroje-pavel/kontrola_podkladu.py plati build/orto04 || rm -rf build/orto04; $PY nastroje/strechy.py &&$PY nastroje-pavel/kontrola_podkladu.py razitko build/orto04; }
 krok "hřiště a semafory";           [ -f assets/hriste.json ] || $PY nastroje/hriste.py; [ -f assets/semafory.json ] || $PY nastroje/semafory.py
 krok "zeleň na zpevněných plochách"; [ -f build/zelen_maska.png ] || $PY nastroje/povrchy.py
-krok "směr hřebenů z laseru";       $PY nastroje/hrebeny.py
+krok "směr hřebenů z laseru";       [ -f assets/hrebeny.json ] || $PY nastroje/hrebeny.py   # je v gitu; každý běh mění pořadí klíčů → automat by měl „rozdělanou práci“ (2026-11-20)
 krok "typy budov RÚIAN";            [ -f assets/ruian_budovy.json ] || $PY nastroje/ruian.py
 krok "komíny a potrubí";            [ -f assets/kominy.json ] || $PY nastroje/kominy.py
 krok "železniční přejezdy";         [ -f assets/prejezdy.json ] || $PY nastroje/prejezdy.py

@@ -19,7 +19,7 @@ const dnes = new Date().toISOString().slice(0, 10);
 const BALIK = opt.nazev || (vse.length === 1 ? (opravy.length ? `${vse[0]}-oprava` : vse[0]) : `davka-${dnes}`);
 const SAB = path.join(ROOT, 'nastroje-pavel/chatgpt-modely/sablona');
 const VEN = path.join(ROOT, 'predani/chatgpt'), BAL = path.join(VEN, BALIK);
-const rozhodnuti = (() => { try { return JSON.parse(fs.readFileSync(path.join(PODKLADY, 'rozhodnuti.json'), 'utf8')); } catch { return {}; } })();
+const rozhodnuti = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'pamatky/rozhodnuti.json'), 'utf8')); } catch { return {}; } })();
 for (const s of vse) {
   if (!fs.existsSync(path.join(ROOT, `pamatky/${s}.json`))) { console.log(`❌ ${s}: chybí pamatky/${s}.json – nejdřív sestav.py --novy ${s}`); process.exit(1); }
   if (!fs.existsSync(path.join(PODKLADY, s, 'podklad.md'))) { console.log(`❌ ${s}: chybí podklady – nejdřív pamatky/podklady_*.py ${s}`); process.exit(1); }

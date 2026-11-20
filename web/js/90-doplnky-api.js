@@ -56,16 +56,19 @@
   };
   if (OV.doplnky && Object.keys(OV.doplnky).length) {
     const loadedStyles = new Set(), loadedScripts = new Map();
+    // místní soubory doplňků s razítkem sestavení (jako ostatní .js/.css, test_cerstvost.mjs): Safari jinak držel starou verzi
+    // (2026-11-20, santa.js); cizí adresy a adresy s vlastním dotazem beze změny
+    const sRazitkem = (u) => (/^(https?:)?\/\//.test(u) || u.includes('?') ? u : u + DV);
     const loadStyle = (href) => {
       if (!href || loadedStyles.has(href)) return;
       loadedStyles.add(href);
-      const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
+      const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = sRazitkem(href); document.head.appendChild(l);
     };
     const loadScript = (src) => {
       if (!src) return Promise.resolve();
       if (loadedScripts.has(src)) return loadedScripts.get(src);
       const p = new Promise((resolve) => {
-        const s = document.createElement('script'); s.src = src; s.async = false;
+        const s = document.createElement('script'); s.src = sRazitkem(src); s.async = false;
         s.onload = () => resolve(true);
         s.onerror = () => { console.warn('Nepodařilo se načíst skript doplňku:', src); resolve(false); };
         document.body.appendChild(s);

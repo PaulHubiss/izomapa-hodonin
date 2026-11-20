@@ -36,6 +36,10 @@ fi
 $PY nastroje-pavel/zprava_jr.py
 
 if [ "$1" = nasad ]; then
+  # dlaždice musí být vykreslené z toho, co je v gitu (2026-11-20: M2 nasadil dlaždice z 15. 11. přes web z M5)
+  if [ "$POVOL_STARE_DLAZDICE" != 1 ]; then $PY nastroje-pavel/kontrola_dlazdic.py; fi
+  # M5 × M2: nepřepsat novější web z druhého Macu (Pavel 2026-11-21); zapíše site/nasazeno.json (commit, Mac, čas)
+  $PY nastroje-pavel/hlidac_nasazeni.py
   echo "== nahrávám na Cloudflare (Worker hodonin-mapa, od 2026-11-19 místo Pages; worker/wrangler.jsonc)"
   node nastroje-pavel/test_worker.mjs > /dev/null
   npx wrangler deploy -c worker/wrangler.jsonc

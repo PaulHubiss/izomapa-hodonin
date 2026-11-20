@@ -1119,7 +1119,7 @@
     setInterval(dnesRender, 60e3);                          // „dnes 19:00“ → „probíhá“, půlnoc
   }
 
-  if (location.hostname === 'localhost') window.__izo = { ULICE, W, HZ, VYL, showHasici, vylukyRender, showStop, trams, skiers, MHD, LIVE, showBuilding, showPamatka, PAMATKY, placeCard, PLACES: OV.places, showPodnik, PODNIKY, VEREJNA, showVerejne, budovaMista, verOteviraci, ohParse, ohTed, townRect, viewer, CHODCI, chodciAktivita, mhdActive, mhdPos, cars, roads, along: (r, s) => along(r, s), XC, busWait, ringFree: (g) => ringFree(g), get planes() { return PLANES; }, pribehu: OV.places.length, sestaveni: SEST,
+  if (location.hostname === 'localhost') window.__izo = { ULICE, W, HZ, VYL, showHasici, vylukyRender, showStop, trams, skiers, MHD, LIVE, showBuilding, showPamatka, PAMATKY, placeCard, PLACES: OV.places, showPodnik, PODNIKY, VEREJNA, showVerejne, budovaMista, verOteviraci, ohParse, ohTed, townRect, viewer, CHODCI, chodciAktivita, mhdActive, mhdPos, cars, roads, along: (r, s) => along(r, s), XC, busWait, ringFree: (g) => ringFree(g), get planes() { return PLANES; }, pribehu: OV.places.length, sestaveni: SEST, STRANY,
     // video (nastroje-pavel/video.mjs): bod obrazu ze zeměpisných souřadnic, roční období, počasí, stav
     w2img: (x, y) => toImg(x, y, gz(x, y)), set zvZvets(v) { ZV_ZVETS = v; }, set lodZvets(v) { LOD_ZVETS = v; },
     omezeniZbyva: () => { const vp = viewer.viewport, b = vp.getBounds(true), c = vp.getCenter(true), q = clampCenter(c); return Math.hypot(q.x - c.x, q.y - c.y) * vp.getContainerSize().x / b.width; },

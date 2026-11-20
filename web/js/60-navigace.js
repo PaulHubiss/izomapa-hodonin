@@ -20,6 +20,14 @@
       if (isMobile()) setMenu(false);
     });
   }
+  // Zvýraznění patří k hledání (Pavel 2026-11-20: „ulice byla označená pořád, i když jsem už nebyl ve vyhledávání“):
+  // zmizí po kliknutí do mapy, po úpravě hledaného textu a po kliknutí kamkoli do panelu mimo hledání. Název ulice
+  // zmizí z hledání s ním, ať pole neukazuje něco, co mapa už neoznačuje.
+  function zrusUlici() {
+    if (!ULICE.vyber) return;
+    if ($('q').value === ULICE.vyber.nazev) $('q').value = '';
+    ULICE.vyber = null;
+  }
   function kresliUlici(sx, ox, oy, now) {
     const U = ULICE.vyber; if (!U) return;
     const t = (now - U.t0) / 1000, puls = t < 3 ? 0.55 + 0.45 * Math.abs(Math.cos(t * Math.PI * 1.2)) : 1;
@@ -125,7 +133,9 @@
     });
   }
   function pick(r) { ULICE.vyber = null; r.go(); $('q').value = r.label; res = []; cur = -1; renderResults(); }
+  $('panel').addEventListener('pointerdown', (e) => { if (!e.target.closest('.search')) zrusUlici(); });
   $('q').addEventListener('input', (e) => {
+    ULICE.vyber = null;                                    // píše se nové hledání (text v poli nechat)
     const q = norm(e.target.value.trim());
     cur = -1;
     if (q.length < 2) { res = []; renderResults(); return; }

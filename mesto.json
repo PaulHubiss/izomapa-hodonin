@@ -9,8 +9,8 @@
  "podtitul": "Město z otevřených dat, pixel po pixelu",
  "popis": "Izometrická pixel-art mapa: Hodonín ve stylu SimCity 2000. Roční období, den a noc, počasí a příběhy míst.",
  "url": "https://hodonin.paulhubiss.cz",
- "stred": [17.12253, 48.85635],
- "polovina": 800.0,
+ "stred": [17.123964, 48.857299],
+ "polovina": 835.0,
  "ctverce": [
   [-1, 1],
   [0, 1],
@@ -32,6 +32,7 @@
            "zdroj": "KORDIS JMK (data.brno.cz)", "zdroj_url": "https://data.brno.cz/", "licence": "CC BY"}
  },
  "potoky": true,
+ "rozliseni": "detailni",
  "doplnky": {"santa": {"enabled": true, "pauza_s": 25, "polomer": 2000}},
  "lode": {"pristav": [48.843176, 17.14398], "jez": [48.842497, 17.142687], "reka": "Morava", "delka": 1500,
   "ramena": [

@@ -18,8 +18,9 @@ const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 if (!pouzijArg) {
   let zip = args.find((a) => a.endsWith('.zip'));
   if (!zip) {
-    const DL = path.join(os.homedir(), 'Downloads');
-    const kand = fs.readdirSync(DL).filter((f) => f.startsWith(balik + '-od-chatgpt') && f.endsWith('.zip')).map((f) => path.join(DL, f));
+    // Stažené soubory, nebo predani/chatgpt (zástupce na Google Disk, 2026-11-20: zip stažený na jiném Macu)
+    const kand = [path.join(os.homedir(), 'Downloads'), path.join(ROOT, 'predani/chatgpt')].filter((d) => fs.existsSync(d))
+      .flatMap((d) => fs.readdirSync(d).filter((f) => f.startsWith(balik + '-od-chatgpt') && f.endsWith('.zip')).map((f) => path.join(d, f)));
     kand.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
     zip = kand[0];
   }

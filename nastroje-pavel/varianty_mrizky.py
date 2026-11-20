@@ -114,12 +114,25 @@ T = (-TEZ[0], -TEZ[1])                           # posun mřížky: střed čtve
 T4 = lambda h: (T[0] - h, T[1] - h)              # sudý počet: těžiště v rohu mezi čtyřmi prostředními
 
 VARIANTY = [
-    ('Dnes', 'čtverec 2,3 km · střed 880 m severně od náměstí', geo.HALF, dnes,
+    ('Dnes', f'čtverec {2 * geo.HALF / 1000:g}'.replace('.', ',') + ' km · 3 × 3 · skutečná mapa (mesto.json)', geo.HALF, dnes,
      (-loc(*geo.to_lonlat(0, 0))[0], -loc(*geo.to_lonlat(0, 0))[1])),
     ('B', 'čtverec 2 km · 3 × 3 · střed v těžišti zástavby', 1000.0, ctverec3, T),
     ('B1', 'čtverec 1,8 km · 3 × 3 · střed v těžišti zástavby', 900.0, ctverec3, T),
     ('B2', 'čtverec 1,6 km · 3 × 3 · střed v těžišti zástavby', 800.0, ctverec3, T),
+    # 2026-11-20 (Pavel): celý hřbitov – čtverce větší, jihozápadní roh na místě (Nesyt, Morava), mapa roste k SV
+    # posun od skutečného středu (Dnes), ne od T: těžiště počítané tady se od středu v mesto.json liší o ~85 m
+    ('C', 'čtverec 1,668 km · 3 × 3 · JZ roh jako dnes, roste na S a V', 834.0, ctverec3,
+     (-loc(*geo.to_lonlat(0, 0))[0] - 3 * (834 - geo.HALF), -loc(*geo.to_lonlat(0, 0))[1] - 3 * (834 - geo.HALF))),
 ]
+# výběr a výstup: --varianty B2,C --vystup snimky/mrizka-5km.png (bez nich všechny do snimky/varianty-mrizky.png)
+if '--varianty' in sys.argv:
+    _chci = sys.argv[sys.argv.index('--varianty') + 1].split(',')
+    VARIANTY = [v for v in VARIANTY if v[0] in _chci]
+VYSTUP = sys.argv[sys.argv.index('--vystup') + 1] if '--vystup' in sys.argv else 'snimky/varianty-mrizky.png'
+# hřbitovy (Overture land_use) – fialový obrys, ať je vidět, co v mapě je a co ne
+HRBITOVY = [shapely.transform(shapely.from_wkb(r['geometry']), lambda c: np.stack(loc(c[:, 0], c[:, 1]), -1))
+            for r in pq.read_table('data_all/land_use.parquet', columns=['subtype', 'geometry']).to_pylist()
+            if r['subtype'] == 'cemetery']
 _ZO = B_A[_v].sum()                              # zastavěná plocha obce (budovy uvnitř hranice)
 
 F = lambda s: ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', s, index=1)
@@ -136,6 +149,11 @@ for kod, popis, h, ctverce, posun in VARIANTY:
     d = ImageDraw.Draw(im, 'RGBA')
     for gg in getattr(obec, 'geoms', [obec]):
         d.line([px(x, y) for x, y in gg.exterior.coords], (255, 200, 40, 230), 3)
+    for hb in HRBITOVY:
+        for gg in getattr(hb, 'geoms', [hb]):
+            if gg.area > 2000:
+                d.polygon([px(x, y) for x, y in gg.exterior.coords], fill=(230, 80, 255, 90))
+                d.line([px(x, y) for x, y in gg.exterior.coords], (230, 80, 255, 255), 4)
     zast = 0.0
     for i, j in ctverce:
         cx, cy = st(i, j); a, b = px(cx - h, cy + h), px(cx + h, cy - h)
@@ -169,13 +187,15 @@ for kod, popis, h, ctverce, posun in VARIANTY:
 W = 2 * PX + 20
 leg = ['Rozsvícené = plocha mapy, ztlumené = co v mapě nebude. Žlutě hranice obce. Červená tečka = Masarykovo náměstí,',
        'modrý křížek = těžiště zástavby obce. Stejný výřez (10,4 × 10,4 km) a měřítko ve všech panelech.',
-       'Za Moravou vpravo dole je Slovensko (ortofoto ÚGKK SR, ZBGIS); v mapě se kreslí z OSM (pole, les, budovy).',
-       'Sever je tady nahoře, v izometrické mapě vpravo nahoře.']
-sit = Image.new('RGB', (W, 2 * (PX + 110) + 20 + 30 + 36 * len(leg)), (24, 24, 24))
+       'Za Moravou vpravo dole je Slovensko (ortofoto ÚGKK SR, ZBGIS); v mapě se kreslí z OSM (pole, les, budovy). Fialově hřbitovy.',
+       # 2026-11-20: dřív tu stálo „vpravo nahoře“ – špatně; spočítáno z kamery (geo.view, pohled od JZ)
+       'Sever je tady nahoře; v izometrické mapě vlevo nahoře (východ vpravo nahoře, jih vpravo dole, západ vlevo dole).']
+radku = (len(panely) + 1) // 2
+sit = Image.new('RGB', (W, radku * (PX + 130) - 20 + 30 + 36 * len(leg)), (24, 24, 24))
 for k, p in enumerate(panely):
     sit.paste(p, ((k % 2) * (PX + 20), (k // 2) * (PX + 130)))
 ds = ImageDraw.Draw(sit)
 for k, s in enumerate(leg):
-    ds.text((20, 2 * (PX + 110) + 40 + 36 * k), s, font=F(22), fill=(230, 230, 230))
-sit.save('snimky/varianty-mrizky.png')
-print('snimky/varianty-mrizky.png', sit.size)
+    ds.text((20, radku * (PX + 130) - 20 + 20 + 36 * k), s, font=F(22), fill=(230, 230, 230))
+sit.save(VYSTUP)
+print(VYSTUP, sit.size)

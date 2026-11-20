@@ -94,14 +94,24 @@ zmeny = [r.split(None, 1)[-1] for r in git('status', '--porcelain', '--', 'asset
 if zmeny: varovani.append('nezacommitované podklady: ' + ', '.join(zmeny[:6]) + (' …' if len(zmeny) > 6 else ''))
 
 # ── 6b. automat zapnutý na TOMHLE Macu, ale od změny automat.sh ještě neběžel (2026-11-18: nová verze stahuje main;
-#        stará by v neděli nahrála starou mapu) → připomenout ruční běh. Ozve se jen na Macu s automatem (M2).
-if os.path.exists(os.path.expanduser('~/Library/LaunchAgents/cz.izomapa.aktualizace.plist')):
+#        stará by v neděli nahrála starou mapu) → připomenout ruční běh.
+#        Od 2026-11-20 má automat běžet na OBOU Macích (Pavel: „zapínám/vypínám je různě“; nenasazuje sám, jen připraví),
+#        takže Mac bez něj se ozve.
+if not os.path.exists(os.path.expanduser('~/Library/LaunchAgents/cz.izomapa.aktualizace.plist')):
+    varovani.append('automat na tomhle Macu není zapnutý (má běžet na M5 i M2) → sh nastroje-pavel/automat.sh zapnout')
+else:
     zmena = git('log', '-1', '--format=%cs', '--', 'nastroje-pavel/automat.sh')
     LOG = 'build/aktualizace/automat.log'
     behy = re.findall(r'════ (\d{4}-\d{2}-\d{2})', open(LOG, encoding='utf-8').read()) if os.path.exists(LOG) else []
-    if zmena and (not behy or behy[-1] < zmena):
+    # ruční běh píše do terminálu, ne do logu → od 2026-11-20 si čas běhu zapisuje i sám (posledni_beh)
+    if os.path.exists('build/aktualizace/posledni_beh'): behy.append(open('build/aktualizace/posledni_beh').read()[:10])
+    if zmena and (not behy or max(behy) < zmena):
         varovani.append(f'automat se změnil {zmena} a od té doby neběžel – spusť jednou ručně: sh nastroje-pavel/automat.sh beh '
-                        '(stáhne main, přestaví mapu, nasadí; ~15–30 min)')
+                        '(stáhne main, přestaví mapu a připraví web k potvrzení; render jen změněných čtverců)')
+# ── 6c. automat připravil nový web a čeká na Pavlovo potvrzení (2026-11-20: nenasazuje sám) ──
+if os.path.exists('build/aktualizace/pripraveno'):
+    kdy = open('build/aktualizace/pripraveno', encoding='utf-8').readline().strip()
+    varovani.append(f'automat připravil nový web ({kdy}) a čeká na potvrzení – zeptej se Pavla, pak: sh nastroje-pavel/automat.sh nasad')
 
 # ── 7. aktuálnost (jen v plném výpisu) ──
 if not TISE:

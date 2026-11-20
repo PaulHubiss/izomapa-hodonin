@@ -27,7 +27,10 @@ mesto = shapely.Polygon([lok(la, lo) for la, lo in M['rozsah_mesta']]).buffer(15
 x0, y0, x1, y1 = geo.extent(0.0)
 oblast = shapely.box(x0, y0, x1, y1)
 if mesto is not None: oblast = oblast.intersection(mesto)
-stred = lok(*M['vanocni_strom']) if M.get('vanocni_strom') else (0.0, 0.0)
+# střed města = vánoční strom; s assets/vanoce.json ho geo.py přepíše na SEZNAM stromů [[lat, lon], …] (bere se první)
+_strom = M.get('vanocni_strom') or []
+if _strom and isinstance(_strom[0], (list, tuple)): _strom = _strom[0]
+stred = lok(*_strom[:2]) if _strom else (0.0, 0.0)
 pod = np.array([lok(p['lat'], p['lon']) for p in json.load(open('assets/podniky.json'))]) if os.path.exists('assets/podniky.json') else np.zeros((0, 2))
 
 t = pq.read_table('data_all/segment.parquet', columns=['subtype', 'class', 'geometry']).to_pylist()

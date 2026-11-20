@@ -31,6 +31,17 @@ await p.evaluate(() => { document.getElementById('panel').style.visibility = 'hi
 await p.screenshot({ path: path.join(KOREN, 'snimky', 'ulice-zvyrazneni.png') });
 await p.mouse.click(1100, 450); await p.waitForTimeout(500);
 over('klik do mapy zvýraznění zruší', await p.evaluate(() => window.__izo.ULICE.vyber === null));
+// klik do panelu mimo hledání zruší zvýraznění i název v poli (Pavel 2026-11-20)
+await p.evaluate(() => { document.getElementById('panel').style.visibility = ''; });
+await p.evaluate((u) => { const q = document.getElementById('q'); q.focus(); q.value = u; q.dispatchEvent(new Event('input')); }, ULICE);
+await p.waitForTimeout(500);
+await p.evaluate((i) => document.querySelectorAll('#results li button')[i].click(), i);
+await p.waitForTimeout(1500);
+const pred = await p.evaluate(() => !!window.__izo.ULICE.vyber);
+await p.evaluate(() => { const el = document.querySelector('#panel .label:not(.search .label)') || document.querySelector('#panel h1');
+  el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); });
+const po = await p.evaluate(() => ({ vyber: window.__izo.ULICE.vyber, q: document.getElementById('q').value }));
+over('klik do panelu mimo hledání zvýraznění zruší', pred && po.vyber === null && po.q === '', JSON.stringify({ pred, q: po.q }));
 over('chyby stránky', !chyby.length, chyby.join(' | '));
 console.log(`\n${ok} v pořádku, ${spatne} špatně`);
 await b.close();

@@ -64,7 +64,9 @@
   };
   let xmasUser = null;                                         // ruční přepnutí v menu (jen v tomto prohlížeči)
   const xmasOn = () => !!VANOCE && (xmasUser ?? inXmasDates());
-  const xmasShow = () => xmasOn() && (state.season === 'winter' || state.season === 'autumn');   // ručně zvolené jaro nebo léto výzdobu nemá
+  // výzdoba jen v zimní mapě (Pavel 2026-11-20: jarmark do podzimní mapy nepatří; autor ji kreslí i na podzim),
+  // v době výzdoby proto mapa sama otevře zimu (níž u setSeason)
+  const xmasShow = () => xmasOn() && state.season === 'winter';
   function applyExtras() {
     if (!ready && !LAYERS.some((l) => l.day)) return;
     $('l-xmas').checked = xmasOn();
@@ -671,7 +673,11 @@
   }
   document.querySelectorAll('[data-wip]').forEach((b) => b.addEventListener('click', () => { state.wip = b.dataset.wip === '1'; applyVisibility(); viewer.viewport.fitBounds(homeBounds()); }));
   document.querySelectorAll('[data-wip]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.wip === '1') === state.wip)));
-  setSeason(state.season); setWeather(state.weather); applyRealWeather();
+  // v době vánoční výzdoby (assets/vanoce.json od–do) mapa sama otevře zimu s jarmarkem, ale bez padajícího sněhu
+  // (Pavel 2026-11-20); odkaz s ročním obdobím si drží svoje, skutečné počasí (když je zapnuté) sníh přidá samo
+  const xmasZima = !!VANOCE && inXmasDates() && !hashTokens.some((t) => SEASON_TOKEN[t]);
+  if (xmasZima) state.season = 'winter';
+  setSeason(state.season); setWeather(xmasZima ? 'clear' : state.weather); applyRealWeather();
   $('night').value = Math.round(state.night * 100);
   $('night').addEventListener('input', (e) => { state.night = e.target.value / 100; $('realTime').checked = false; saveRT(false); applyTime(); });
   // denní doba podle skutečné výšky slunce nad městem (zapíná se volitelně, pamatuje si to prohlížeč)

@@ -7,6 +7,9 @@ export const UA = 'izomapa (program v karte mista na mape mesta)';   // hlavičk
 export const ZDROJE = {
   // Dům kultury Hodonín: seznam akcí je v HTML (<div class="event">…), strojový výstup nemá
   dkhodonin: { url: 'https://www.dkhodonin.eu/program', zaklad: 'https://www.dkhodonin.eu', cti: parseDkHodonin },
+  // Kino Svět (patří pod DK Hodonín, Pavel 2026-11-20): úvodní stránka má celý „Aktuální program“ po dnech (h4.movie-day
+  // „20. 11. 2026 | pátek“, pod ním a.movie__link s časem „16:50 | Velký sál“ a názvem), strojový výstup nemá
+  kinosvet: { url: 'https://www.kinosvet.eu/', zaklad: 'https://www.kinosvet.eu', cti: parseKinoSvet },
 };
 
 const ent = (s) => s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -29,6 +32,21 @@ export function parseDkHodonin(html, zaklad) {
     akce.push({ nazev: ent(nazev[1]), od: datum(od[1]), do: doo ? datum(doo[1]) : null, url: new URL(ent(odkaz[1]), zaklad).href, druh: druh ? druh[1] : null });
   }
   return akce.filter((a) => a.od);
+}
+
+export function parseKinoSvet(html, zaklad) {
+  const i = html.indexOf('Aktuální program');
+  if (i < 0) return [];
+  const akce = [], re = /class="movie-day[^"]*">\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})|<a href="(\/program\/[^"]+)" class="movie__link">[\s\S]*?class="movie__time">\s*(\d{1,2}):(\d{2})[^<]*<[\s\S]*?class="movie__title-text">([\s\S]*?)<\/span>/g;
+  const p = (x) => String(x).padStart(2, '0');
+  const s = html.slice(i);
+  let den = null, m;
+  while ((m = re.exec(s))) {
+    if (m[1]) { den = `${m[3]}-${p(m[2])}-${p(m[1])}`; continue; }
+    if (!den) continue;
+    akce.push({ nazev: ent(m[7]), od: `${den}T${p(m[5])}:${m[6]}`, do: null, url: new URL(m[4], zaklad).href, druh: 'film' });
+  }
+  return akce;
 }
 
 export async function onRequest({ request }) {

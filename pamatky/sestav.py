@@ -61,13 +61,23 @@ def sestav(slug):
     gx, gy = geo.to_local(d['lon'], d['lat']); gx, gy = float(gx), float(gy)
     c = geo.chunk_of(gx, gy); cx, cy = geo.chunk_center(c)
     full = []
+    # památka na hranici čtverců: budova patří čtverci, kde má těžiště, proto se hledá i v sousedních (2026-11-20, Dům kultury
+    # v Hodoníně leží přes hranici x = 800 m); ring se převede středem toho čtverce, kde se budova našla
+    okoli = [c] + [(c[0] + di, c[1] + dj) for di in (-1, 0, 1) for dj in (-1, 0, 1) if (di, dj) != (0, 0) and (c[0] + di, c[1] + dj) in geo.CHUNKS]
     for o in d.get('oids', []):                                            # oid stačí zkrácené (začátek), musí být jednoznačné
-        hit = [b for b in info(c) if o and b['oid'].startswith(o)]
-        if not hit: print(f'  ! {slug}: budova {o} ve čtverci {c} není'); continue
-        if len({b['oid'] for b in hit}) > 1: print(f'  ! {slug}: {o} není jednoznačné'); continue
+        hit = []
+        for cc in okoli:
+            if not os.path.exists(f'{geo.chunk_dir(cc)}/info_src.json'): continue
+            hit = [(b, cc) for b in info(cc) if o and b['oid'].startswith(o)]
+            if hit: break
+        if not hit: print(f'  ! {slug}: budova {o} ve čtverci {c} ani v sousedních není'); continue
+        if len({b['oid'] for b, _ in hit}) > 1: print(f'  ! {slug}: {o} není jednoznačné'); continue
         full += hit
-    bud = [{'oid': b['oid'], 'ring': [[round(x + cx, 2), round(y + cy, 2)] for x, y in b['ring']], 'base': b['base'], 'top': b['top'],
-            'addr': (b.get('addr') or [None])[0], 'name': b.get('name')} for b in full]
+    bud = []
+    for b, cc in full:
+        ox, oy = geo.chunk_center(cc)
+        bud.append({'oid': b['oid'], 'ring': [[round(x + ox, 2), round(y + oy, 2)] for x, y in b['ring']], 'base': b['base'], 'top': b['top'],
+                    'addr': (b.get('addr') or [None])[0], 'name': b.get('name')})
     d['ctverec'] = list(c); d['bod'] = [round(gx, 2), round(gy, 2)]; d['budovy'] = bud
     if bud:
         U = unary_union([Polygon(b['ring']).buffer(0) for b in bud]); o = U.minimum_rotated_rectangle

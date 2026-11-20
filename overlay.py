@@ -140,6 +140,11 @@ tram_lines, tram_stops = [], []
 decks = []                # mostovky silnic a tratí (svět, výška): MHD z jízdních řádů po nich jede nahoře
 # linky tramvají, když chybí jízdní řády (site/mhd.json): [konečná, konečná, počet vozů na lince]
 TRAM_LINES = [tuple(t) for t in MESTO.get('mhd', {}).get('tramvaje', [])]
+# ruční názvy budov (zastaralý nebo chybějící název v datech): assets/upresneni.json
+# "nazvy_budov": [{"oid": "začátek ID budovy z Overture", "nazev": "Nový název"}]
+NAZVY_BUDOV = (json.load(open('assets/upresneni.json', encoding='utf-8')) if os.path.exists('assets/upresneni.json') else {}).get('nazvy_budov', [])
+def rucni_nazev(oid):
+    return next((n['nazev'] for n in NAZVY_BUDOV if str(oid).startswith(n['oid'])), None)
 for chunk in chunks:
     src = json.load(open(f'{chunk_dir(chunk)}/info_src.json'))
     OFF = chunk_center(chunk)
@@ -190,7 +195,7 @@ for chunk in chunks:
         cx, cy = ring.mean(axis=0)
         d = px(cx, cy, b['base'])[2]
         church = b['cls'] == 'kostel'
-        name, text = b['name'], None
+        name, text = rucni_nazev(b['oid']) or b['name'], None
         if b['cls'] == 'kaple' and not name:
             name = 'Hřbitovní kaple'
         inside = []

@@ -216,7 +216,7 @@
     const nadpis = $('helpTitle'), plocha = $('plochaBtn')?.closest('p'), popis = plocha?.nextElementSibling;
     const zdroje = dlg.querySelector('.muted');
     // Přeskládáno podle navrhy/napoveda.html (Pavel 2026-11-19: „OK“): ~950 → ~330 viditelných slov, Soukromí a zdroje sbalené
-    const ZAL = { ovladani: 'Ovládání', vrstvy: 'V mapě', projekt: 'O mapě', napiste: 'Napište nám' };
+    const ZAL = { ovladani: 'Ovládání', vrstvy: 'V mapě', projekt: 'O mapě', napiste: 'Kontakt' };   // Pavel 2026-11-20: „Napište nám“ se na mobilu lámalo na dva řádky
     const klav = (k) => `<kbd>${k}</kbd>`;
     // krátké názvy kategorií pro tečky (celé názvy jsou ve Vrstvách a Místech)
     const KRATCE = { kostely: 'Kostely', jidlo: 'Restaurace', priroda: 'Příroda' };
@@ -358,9 +358,16 @@
       if (tsId !== null) { tsToken = ''; window.turnstile.reset(tsId); }   // token platí jen jednou
     });
     // odkaz v kartě místa: otevře záložku s předvyplněným místem a druhem „Místo“
-    const karta = $('card'), odkaz = el('p', 'nb-karta-napiste');
-    odkaz.innerHTML = '<button type="button" class="nb-odkaz">Víte o tomhle místě víc? Napište nám</button>';
-    if (karta) karta.append(odkaz);
+    // spodní řádek karty (Pavel 2026-11-20, varianta C): Napište nám · Nahlásit nepřesnost, tlumeně s ikonkami; formulář hlášení
+    // se rozbalí pod řádkem přes celou šířku
+    const karta = $('card'), pata = el('div', 'nb-pata'), odkaz = el('p', 'nb-karta-napiste');
+    const IK_POSTA = '<svg viewBox="0 0 24 24" aria-hidden="true" class="nb-kik"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
+    const IK_VLAJKA = '<svg viewBox="0 0 24 24" aria-hidden="true" class="nb-kik"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>';
+    odkaz.innerHTML = `<button type="button" class="nb-odkaz" title="Víte o tomhle místě víc? Napište nám">${IK_POSTA}Napište nám</button>`;
+    const rep = $('report'), repSum = rep?.querySelector('summary');
+    if (repSum) repSum.innerHTML = `${IK_VLAJKA}Nahlásit nepřesnost`;
+    pata.append(odkaz); if (rep) pata.append(rep);
+    if (karta) karta.append(pata);
     // autorův obsah, který jsme do záložek nerozdělili (návod na ovládání, případné novinky), z okna zmizí jen ten starý návod
     for (const n of [...dlg.children]) if (n.parentElement === dlg && n !== nadpis && !n.classList.contains('close')) {
       if (n.tagName === 'H3' && /Ovládání/.test(n.textContent)) { n.nextElementSibling?.tagName === 'UL' && n.nextElementSibling.remove(); n.remove(); }

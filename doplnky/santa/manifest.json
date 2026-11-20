@@ -1,0 +1,8 @@
+{
+  "id": "santa",
+  "name": "Santa se soby",
+  "version": "1.0.0",
+  "description": "V době vánoční výzdoby (assets/vanoce.json) a v zimní mapě občas přeletí nad městem Santa na saních se soby; svítící nos, třpytivá stopa, stín na zemi, po kliknutí ho kamera sleduje a pouští dárky do komínů.",
+  "hook": "overlay_hook.py",
+  "scripts": ["santa.js"]
+}

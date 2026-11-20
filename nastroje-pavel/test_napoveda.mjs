@@ -16,7 +16,7 @@ const s = await p.evaluate(() => {
     plocha: !!d.querySelector('.nb-napo-okno[data-zal="ovladani"] #plochaBtn') };
 });
 // od 2026-11-19 přeskládáno podle navrhy/napoveda.html
-over('záložky Ovládání, V mapě, O mapě, Napište nám', JSON.stringify(s.zalozky) === JSON.stringify(['Ovládání', 'V mapě', 'O mapě', 'Napište nám']), JSON.stringify(s.zalozky));
+over('záložky Ovládání, V mapě, O mapě, Kontakt', JSON.stringify(s.zalozky) === JSON.stringify(['Ovládání', 'V mapě', 'O mapě', 'Kontakt']), JSON.stringify(s.zalozky));
 over('O mapě: kdo za ní stojí (Paul Hubiss a kredit Adama Klatovského)', s.projekt.includes('upravil a doplnil Paul Hubiss.') && s.projekt.includes('od Adama Klatovského'));
 over('O mapě: upozornění „Jak mapu brát“', s.projekt.includes('Jak mapu brát') && s.projekt.includes('ne úřední podklad'));
 over('O mapě: Soukromí a Zdroje dat sbalené', JSON.stringify(s.sbalene) === JSON.stringify([['Soukromí', false], ['Zdroje dat', false]]), JSON.stringify(s.sbalene));

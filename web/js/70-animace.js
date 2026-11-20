@@ -502,7 +502,7 @@
     // odjezdy jako seznam (Pavel 2026-11-16: ve dvou sloupcích dt/dd se dlouhý směr a časy lámaly do úzkých pruhů):
     // štítek linky · směr (pod ním další odjezdy) · vpravo čas a „za N min“
     const dl = $('cardDl'), mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-    dl.classList.add('odjezdy');
+    dl.classList.add('odjezdy'); dl.hidden = !odj.length;   // showCard prázdnou tabulku schová (karty po oddílech, 2026-11-20)
     for (const [key, v] of odj) {
       const [druh, line] = key.split(' '), smer = key.slice(key.indexOf('→') + 2);
       const radek = mk('div', 'odj'), dt = mk('dt'), dd = mk('dd');
@@ -1012,8 +1012,8 @@
   const WMO = (c) => (c === 0 ? 'jasno' : c === 1 ? 'skoro jasno' : c === 2 ? 'polojasno' : c === 3 ? 'zataženo' : c <= 48 ? 'mlha' : c <= 57 ? 'mrholení'
     : c <= 67 ? 'déšť' : c <= 77 ? 'sněžení' : c <= 82 ? 'přeháňky' : c <= 86 ? 'sněhové přeháňky' : 'bouřka');
   const stupne = (v) => String(Math.round(v)).replace('-', '−');
-  // počasí v sekci Dnes (Pavel 2026-11-16: „větší, s ikonkami a předpovědí“): teď velkým písmem, pak 6 sloupců po 2 hodinách
-  // a 6 sloupců na další dny (stejná mřížka, sloupce pod sebou). Ikonky Lucide (ISC), barva podle druhu počasí.
+  // počasí v sekci Dnes (Pavel 2026-11-16: „větší, s ikonkami a předpovědí“): teď velkým písmem, pak 5 sloupců po 2 hodinách
+  // a 5 sloupců na další dny (Pavel 2026-11-20: 5 místo 6) (stejná mřížka, sloupce pod sebou). Ikonky Lucide (ISC), barva podle druhu počasí.
   const PC_IK = {
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
     moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
@@ -1048,9 +1048,9 @@
     const sr = dy.precipitation_probability_max[0];
     // hodiny: od příští celé hodiny po 2 h (časy z Open-Meteo jsou místní, bez zóny)
     const ted = new Date(), od = h.time.findIndex((t) => new Date(t) > ted);
-    const hod = od < 0 ? [] : [0, 2, 4, 6, 8, 10].map((i) => od + i).filter((i) => i < h.time.length);
+    const hod = od < 0 ? [] : [0, 2, 4, 6, 8].map((i) => od + i).filter((i) => i < h.time.length);   // 5 bloků (Pavel 2026-11-20)
     const srazky = (p) => (p >= 30 ? `${p}&nbsp;%` : '');
-    const maSr = hod.some((i) => h.precipitation_probability[i] >= 30), maSrD = dy.time.slice(1, 7).some((_, j) => dy.precipitation_probability_max[j + 1] >= 30);
+    const maSr = hod.some((i) => h.precipitation_probability[i] >= 30), maSrD = dy.time.slice(1, 6).some((_, j) => dy.precipitation_probability_max[j + 1] >= 30);
     const bunka = (popis, ik, t1, t2, s, sMa) => `<li><span class="pc-kdy">${popis}</span>${ik}<b>${t1}</b>${t2 != null ? `<span class="pc-min">${t2}</span>` : ''}${sMa ? `<span class="pc-sr">${s || '&nbsp;'}</span>` : ''}</li>`;
     box.innerHTML = `<div class="pc-ted">${pcSvg(c.weather_code, !!c.is_day)}
         <div class="pc-hlavni"><span class="pc-teplota">${stupne(c.temperature_2m)}&nbsp;°C</span><span class="pc-slovy">${WMO(c.weather_code)}</span></div></div>
@@ -1059,14 +1059,17 @@
       <p class="label pc-nadpis">Během dne</p>
       <ol class="pc-rada">${hod.map((i) => bunka(`${new Date(h.time[i]).getHours()}:00`, pcSvg(h.weather_code[i], !!h.is_day[i]), `${stupne(h.temperature_2m[i])}°`, null, srazky(h.precipitation_probability[i]), maSr)).join('')}</ol>
       <p class="label pc-nadpis">Další dny</p>
-      <ol class="pc-rada">${dy.time.slice(1, 7).map((t, j) => { const i = j + 1, den = new Date(t);
+      <ol class="pc-rada">${dy.time.slice(1, 6).map((t, j) => { const i = j + 1, den = new Date(t);
         return bunka(j === 0 ? 'Zítra' : DNY_KR[den.getDay()], pcSvg(dy.weather_code[i], true), `${stupne(dy.temperature_2m_max[i])}°`, `${stupne(dy.temperature_2m_min[i])}°`, srazky(dy.precipitation_probability_max[i]), maSrD); }).join('')}</ol>`;
   }
   async function dnesProgram() {
-    const out = [];
+    const out = [], souhrn = [];
     for (const p of OV.places.filter((q) => q.program)) { const d = await programAkce(p.program); if (d) for (const a of d.akce) out.push({ ...a, misto: p }); }
-    DNES.program = out; dnesRender();
+    // veřejná místa s programem (Kino Svět, Pavel 2026-11-20): denně několik představení, proto jedna souhrnná položka
+    for (const v of VEREJNA.filter((q) => q.program)) { const d = await programAkce(v.program); if (d) souhrn.push({ misto: v, akce: d.akce }); }
+    DNES.program = out; DNES.souhrn = souhrn; dnesRender();
   }
+  const filmu = (n) => `${n} ${n === 1 ? 'film' : n < 5 ? 'filmy' : 'filmů'}`;
   const hodiny = (t) => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
   function dnesPolozky() {
     const d0 = new Date(); d0.setHours(0, 0, 0, 0);
@@ -1080,6 +1083,13 @@
       akce: () => window.open(v.url, '_blank', 'noopener') });
     for (const a of DNES.program) if (a.t0 < pozitri && (a.t0 >= Date.now() - 3 * 3600e3)) out.push({ ik: 'program', text: a.nazev, misto: a.misto.name, poradi: 4, t: a.t0,
       cas: `${a.t0 < zitra ? 'dnes' : 'zítra'} ${hodiny(a.t0)}`, akce: () => { goTo(a.misto.xy[0], a.misto.xy[1], 1.4); placeCard(a.misto); } });
+    for (const { misto: v, akce } of DNES.souhrn || []) {      // „4 filmy dnes · Kino Svět · od 16:50“; když dnes už nic, zítřek
+      const ted = Date.now(), dnes = akce.filter((a) => a.t0 >= ted - 15 * 60e3 && a.t0 < zitra), zit = akce.filter((a) => a.t0 >= zitra && a.t0 < pozitri);
+      const [kdy, ak] = dnes.length ? ['dnes', dnes] : ['zítra', zit];
+      if (!ak.length) continue;
+      out.push({ ik: 'program', text: `${filmu(ak.length)} ${kdy}`, misto: v.nazev, poradi: 4, t: ak[0].t0, cas: `od ${hodiny(ak[0].t0)}`,
+        akce: () => { const p = geoImg(v.lat, v.lon); goTo(p[2], p[3], 1.4); showVerejne(v); } });
+    }
     return out.sort((a, b) => a.poradi - b.poradi || a.t - b.t);
   }
   const dnesDen = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
@@ -1109,7 +1119,7 @@
     setInterval(dnesRender, 60e3);                          // „dnes 19:00“ → „probíhá“, půlnoc
   }
 
-  if (location.hostname === 'localhost') window.__izo = { ULICE, W, HZ, VYL, showHasici, vylukyRender, showStop, trams, skiers, MHD, LIVE, showBuilding, showPamatka, PAMATKY, showPodnik, PODNIKY, VEREJNA, showVerejne, verOteviraci, ohParse, ohTed, townRect, viewer, CHODCI, chodciAktivita, mhdActive, mhdPos, cars, roads, along: (r, s) => along(r, s), XC, busWait, ringFree: (g) => ringFree(g), get planes() { return PLANES; }, pribehu: OV.places.length, sestaveni: SEST,
+  if (location.hostname === 'localhost') window.__izo = { ULICE, W, HZ, VYL, showHasici, vylukyRender, showStop, trams, skiers, MHD, LIVE, showBuilding, showPamatka, PAMATKY, placeCard, PLACES: OV.places, showPodnik, PODNIKY, VEREJNA, showVerejne, budovaMista, verOteviraci, ohParse, ohTed, townRect, viewer, CHODCI, chodciAktivita, mhdActive, mhdPos, cars, roads, along: (r, s) => along(r, s), XC, busWait, ringFree: (g) => ringFree(g), get planes() { return PLANES; }, pribehu: OV.places.length, sestaveni: SEST,
     // video (nastroje-pavel/video.mjs): bod obrazu ze zeměpisných souřadnic, roční období, počasí, stav
     w2img: (x, y) => toImg(x, y, gz(x, y)), set zvZvets(v) { ZV_ZVETS = v; }, set lodZvets(v) { LOD_ZVETS = v; },
     omezeniZbyva: () => { const vp = viewer.viewport, b = vp.getBounds(true), c = vp.getCenter(true), q = clampCenter(c); return Math.hypot(q.x - c.x, q.y - c.y) * vp.getContainerSize().x / b.width; },

@@ -32,6 +32,7 @@
            "zdroj": "KORDIS JMK (data.brno.cz)", "zdroj_url": "https://data.brno.cz/", "licence": "CC BY"}
  },
  "potoky": true,
+ "doplnky": {"santa": {"enabled": true, "pauza_s": 25, "polomer": 2000}},
  "lode": {"pristav": [48.843176, 17.14398], "jez": [48.842497, 17.142687], "reka": "Morava", "delka": 1500,
   "ramena": [
    {"nazev": "Stará Morava u přístavu", "bod": [48.84533, 17.14089], "typy": ["kanoe", "pramice"]},

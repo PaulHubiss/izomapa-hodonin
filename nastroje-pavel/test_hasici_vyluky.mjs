@@ -48,7 +48,13 @@ let dotazProstrednik = 0;
 await ctx.route('https://udalosti.firebrno.cz/**', (r) => r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(SUROVE_HZS) }));
 await ctx.route('**/api/hasici*', (r) => { dotazProstrednik++; r.abort(); });
 await ctx.route('**/api/vyluky*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(VYLUKY) }));
-await ctx.route('**/api/program*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(PROGRAM) }));
+// Kino Svět (2026-11-20): v Dnes jedna souhrnná položka „2 filmy dnes · Kino Svět · od 23:00“
+const KINO = { zdroj: 'https://www.kinosvet.eu/', akce: [
+  { nazev: 'Film 1', od: mistni(d0), do: null, url: 'https://www.kinosvet.eu/program/1', druh: 'film' },
+  { nazev: 'Film 2', od: mistni(new Date(d0.getTime() + 30 * 60e3)), do: null, url: 'https://www.kinosvet.eu/program/2', druh: 'film' },
+  { nazev: 'Film zítra', od: mistni(new Date(d0.getTime() + 20 * 3600e3)), do: null, url: 'https://www.kinosvet.eu/program/3', druh: 'film' },
+] };
+await ctx.route('**/api/program*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(/zdroj=kinosvet/.test(r.request().url()) ? KINO : PROGRAM) }));
 await ctx.route('https://api.open-meteo.com/**', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(POCASI) }));
 // Firefox (BiDi) hlásí schválně přerušený dotaz na HZS (řádek výš, záložní cesta přes prostředníka) jako chybu stránky
 // „požadavek CORS nebyl úspěšný“; Chromium a WebKit ho mlčky přejdou. Ta hláška se nepočítá (2026-11-17).
@@ -81,7 +87,7 @@ over('Chystané výluky: jen S91 (probíhající je ve Ve městě), Kyjov ne', p
 // probíhající zásah → probíhající výluka → program dnes a zítra; stará nehoda a S91 za 3 dny ne
 const dnes = await p.evaluate(() => ({ videt: !document.querySelector('#dnesBox').hidden, nadpis: document.querySelector('#dnesNadpis').textContent,
   pol: [...document.querySelectorAll('#dnes li')].map((l) => l.textContent) }));
-const ocek = [/^Požár, Masarykovo náměstíprobíhá/, /^Výluka v Hodoníně/, /^Koncert dnesDům kultury Hodoníndnes 23:00/, /^Divadlo zítraDům kultury Hodonínzítra 19:00/];
+const ocek = [/^Požár, Masarykovo náměstíprobíhá/, /^Výluka v Hodoníně/, /^Koncert dnesDům kultury Hodoníndnes 23:00/, /^2 filmy dnesKino Světod 23:00/, /^Divadlo zítraDům kultury Hodonínzítra 19:00/];
 over('Dnes v Hodoníně: položky a pořadí', dnes.videt && dnes.nadpis === 'Dnes v Hodoníně' && dnes.pol.length === ocek.length && ocek.every((r, i) => r.test(dnes.pol[i])), dnes);
 await p.click('#nbRail [data-tab=dnes]'); await p.waitForTimeout(300);
 // ikonka programu v barvě Kultury (Pavel 2026-11-18: sjednotit s Vrstvami, Místy a mapou)
@@ -99,7 +105,7 @@ const pc = await p.evaluate(() => { const box = document.querySelector('#dnesPoc
     sirka: box.scrollWidth <= box.clientWidth, mesto: !document.querySelector('#dnesUdalosti').hidden }; });
 over('počasí: velká teplota s ikonkou, pocitově, vítr, dnes od–do, srážky', pc.videt && /^−2\s°C$/.test(pc.teplota) && pc.velikost >= 30 && pc.ikona >= 40
   && /pocitově −6/.test(pc.detail) && /vítr 3/.test(pc.detail) && /dnes −3 až 4/.test(pc.detail) && /srážky 60/.test(pc.detail), pc);
-over('počasí: 6 hodin a 6 dní s ikonkami, sloupce pod sebou, nic nepřetéká', pc.hodiny === 6 && pc.dny?.length === 6 && /^Zítra/.test(pc.dny[0]) && pc.ikon === 12
+over('počasí: 5 hodin a 5 dní s ikonkami, sloupce pod sebou, nic nepřetéká', pc.hodiny === 5 && pc.dny?.length === 5 && /^Zítra/.test(pc.dny[0]) && pc.ikon === 10   // 5 bloků (Pavel 2026-11-20)
   && pc.sloupcePodSebou && pc.sirka && pc.mesto, pc);
 // horní lišta se zprávami je zrušená (Pavel 2026-11-16: totéž je v sekci Dnes)
 over('lišta Dnes nahoře není', await p.evaluate(() => !document.querySelector('#dnesBar') && !document.querySelector('.dnes-bar')));

@@ -51,6 +51,15 @@ for e in EL:
         'telefon': t.get('phone') or t.get('contact:phone'), 'zdroj': 'osm', 'osm': f"https://www.openstreetmap.org/{e['type']}/{e['id']}",
     }.items() if v})
 
+# ---------- ruční opravy (assets/podniky_rucne.json, Pavel 2026-11-20: Westy → Stejkárna Na Budvarce) ----------
+# klíč = OSM id ("node/…", "way/…"): údaje přepíšou ty z OSM, "skryt": true podnik vynechá. Po opravě v OSM položku smazat.
+RUCNE = 'assets/podniky_rucne.json'
+rucne = {k: v for k, v in json.load(open(RUCNE, encoding='utf-8')).items() if not k.startswith('_')} if os.path.exists(RUCNE) else {}
+for p in osm:
+    r = rucne.get(p['osm'].split('openstreetmap.org/')[1], {})
+    p.update({k: v for k, v in r.items() if not k.startswith('_')})
+osm = [p for p in osm if not p.pop('skryt', False)]
+
 # ---------- Overture: jen co v OSM chybí ----------
 SLOVA = {'restaurace', 'restaurant', 'pivnice', 'hospoda', 'hospudka', 'hostinec', 'bar', 'cafe', 'caffe', 'kafe', 'kavarna', 'bistro',
          'hodonin', 'pizzeria', 'pizzerie', 'pizza', 'pub', 'na', 'u', 'a', 'the', 'minipivovar', 'minibrewery', 'pivovar', 'club', 'klub'}

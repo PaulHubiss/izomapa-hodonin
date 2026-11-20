@@ -13,7 +13,7 @@
   --nb-lesk: linear-gradient(160deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 45%);
   --nb-odlesk: inset 0 1px 1px rgba(255, 255, 255, .38), inset 0 -1px 1px rgba(255, 255, 255, .08);
   --nb-stin: 0 1px 2px rgba(10, 20, 30, .22), 0 6px 18px -4px rgba(10, 20, 30, .32);
-  --nb-akcent: #80d6f7;
+  --nb-akcent: #92dcf8;   /* 2026-11-20 o kousek světlejší: bez stínu textu nad sněhem pod 4,5 : 1 */
   --nb-zlata: #f2c66d;
   --nb-na-zlate: #101a26;
   --nb-r: 10px;
@@ -36,9 +36,8 @@ body { font-size: 15px; line-height: 1.4; }
   -webkit-backdrop-filter: var(--nb-rozmaz); backdrop-filter: var(--nb-rozmaz);
   box-shadow: var(--nb-odlesk), var(--nb-stin) !important;
   color: var(--ink);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);              /* text přímo na skle */
+  text-shadow: none;              /* Pavel 2026-11-20: stín dělal písmo tučné; sklo je dost tmavé i bez něj (kontrast.mjs) */
 }
-.nb-sklo button, .nb-sklo input, .nb-sklo .px-btn, .nb-sklo summary { text-shadow: none; }   /* Pavel: stín v tlačítkách rozmazává */
 .nb-ik { width: 18px; height: 18px; display: block; flex: none; }
 
 /* ---------- tlačítka, pole, přepínače ---------- */
@@ -85,13 +84,13 @@ body { font-size: 15px; line-height: 1.4; }
 .pc-slovy::first-letter { text-transform: uppercase; }
 .pc-detail { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 8px 0 0 !important; color: var(--muted); font-size: 12.5px; }
 .pc-nadpis { margin: 14px 0 6px !important; }
-.pc-rada { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.pc-rada { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }   /* Pavel 2026-11-20: 5 bloků místo 6 */
 .pc-rada li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; border-radius: var(--nb-r2);
   background: var(--nb-plocha); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .pc-rada .pc-ik svg { width: 22px; height: 22px; display: block; }
 .pc-rada b { font-size: 14px; line-height: 1; color: var(--ink); }
 .pc-kdy, .pc-min { color: var(--muted); line-height: 1; }
-.pc-sr { color: #8cc4ff; font-size: 11.5px; line-height: 1; }
+.pc-sr { color: #a6d2ff; font-size: 11.5px; line-height: 1; }   /* bez stínu světlejší (kontrast v zimě nad sněhem) */
 .pc-sun, .pc-cloud-sun, .pc-cloud-lightning { color: #ffd36a; }
 .pc-moon, .pc-cloud-moon { color: #c9d4ff; }
 .pc-cloud, .pc-cloud-fog { color: var(--muted); }
@@ -243,6 +242,46 @@ h1 span { color: var(--ink); font-weight: 700; }
   width: min(340px, calc(100vw - 32px)); max-height: calc(100% - 2 * var(--nb-okraj) - 64px); padding: 14px; gap: 10px; }
 .card h2 { font-family: var(--body); font-weight: 700; font-size: 20px; line-height: 1.15; text-wrap: wrap; padding-right: 80px; }
 .card dl, .card p, .card .links, .card .program ul, .card .vyl-note { font-size: 14px; }
+/* karta po oddílech (Pavel 2026-11-20, varianta C z navrhy/karty.html): tři velikosti písma (20 nadpis · 14 text · 12,5 drobné),
+   jedna mezera 12 px, oddíly s malým nadpisem verzálkami jako v menu a tenkou linkou, štítky v pevném sloupci */
+.card { gap: 0; }
+#card > * + * { margin-top: 12px; }                       /* přes id: autorovo .card p / .card dl { margin: 0 } by vyhrálo */
+#card > .close, #card > .cshare, #card > .grab, #card > h2 { margin-top: 0; }
+.card p { line-height: 1.45; }
+.card dl { grid-template-columns: 104px minmax(0, 1fr); gap: 4px 10px; }
+.card dt { color: var(--muted); font-size: 13px; padding-top: 1px; }
+.card .nb-oddil { padding-top: 12px; display: grid; gap: 6px; }
+/* oddělovač jako pod hlavičkou menu (Pavel 2026-11-20: „stejný styl jako v menu, tlumený“): linka, která se doprava ztrácí */
+.card .nb-oddil, .nb-pata { border-top: 1px solid transparent;
+  border-image: linear-gradient(90deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .14) 60%, rgba(255, 255, 255, 0)) 1; }
+.card .nb-oddil-nadpis { margin: 0; font-size: 11.5px; line-height: 1.3; letter-spacing: .07em; text-transform: uppercase; font-weight: 700; color: var(--nb-akcent); }
+.card .nb-drob { font-size: 12.5px; color: var(--muted); }
+.nb-kik { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.card .nb-oddil details > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+  font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); }   /* ne styl rozbalovacích skupin z menu (verzálky) */
+.card .nb-oddil details > summary::-webkit-details-marker { display: none; }
+.card .nb-oddil details > summary .nb-kik { transition: transform .15s; }
+.card .nb-oddil details[open] > summary .nb-kik { transform: rotate(180deg); }
+.card .nb-tyden { margin-top: 6px; grid-template-columns: 52px minmax(0, 1fr); gap: 1px 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.card .nb-tyden dt { font-size: 13px; padding: 0; }
+.card .program h3 { display: none; }                      /* nadpis je .nb-oddil-nadpis */
+.card .program ul { gap: 3px; }
+.card .program li { grid-template-columns: 98px minmax(0, 1fr); gap: 8px; font-size: 13.5px; line-height: 1.3; }
+.card .program time { font-size: 12.5px; padding-top: 1px; }
+.card .program .vse { font-size: 12.5px; margin-top: 2px; }
+.card .program a, .card .program .vse { text-decoration: none; }
+.card .program a:hover { text-decoration: underline; }
+.card .links.nb-oddil { display: grid; }
+.nb-odkazy { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 13.5px; }
+.nb-odkazy a { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; min-width: 0; }
+.nb-odkazy a:hover { text-decoration: underline; }
+.nb-pata { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding-top: 10px; }
+.nb-pata .nb-karta-napiste { margin: 0; }
+.nb-pata .nb-odkaz, .card .nb-pata .report > summary { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted);
+  text-decoration: none; letter-spacing: 0; text-transform: none; font-weight: 400; list-style: none; cursor: pointer; }
+.card .nb-pata .report > summary::-webkit-details-marker { display: none; }
+.nb-pata .nb-odkaz:hover, .card .nb-pata .report > summary:hover { color: var(--ink); }
+.card .nb-pata .report[open] { flex-basis: 100%; }
 .card .close, .card .cshare { top: 10px; width: 34px; height: 34px; min-height: 34px; display: grid; place-items: center; }
 .card .close { right: 10px; }
 .card .cshare { right: 54px; }                            /* mezera ke křížku = jeho odstup od okraje (10 + 34 + 10) */
@@ -400,7 +439,6 @@ details.nb-sbal .muted { margin-top: 6px; }
 .card .report #repMsg.rep-ok { color: var(--nb-zlata); font-weight: 700; font-size: 14px; }
 .card .report #repMsg.rep-err { color: #ff9b85; font-weight: 700; }
 /* odkaz v kartě místa */
-.nb-karta-napiste { margin: 8px 0 0; }
 .nb-odkaz { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; color: var(--nb-akcent); text-decoration: underline;
   text-underline-offset: 2px; cursor: pointer; text-align: left; }
 .nb-odkaz:hover { color: var(--ink); }

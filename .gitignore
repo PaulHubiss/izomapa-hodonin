@@ -118,6 +118,12 @@ ladeni/
 /snimky
 /snimky.zaloha-*/
 
+# predani = balíčky pro ChatGPT a jeho výsledky (nastroje-pavel/chatgpt-modely): fotky z Commons a podklady,
+# vyrobí se znovu příkazem zabal.mjs, proto mimo git
+/predani
+# obrázky srovnání Claude × ChatGPT (porovnej.mjs), vyrobí se znovu
+/navrhy/porovnani
+
 # podklady je zástupce na Google Disk (Spolecne-nastroje/disk) — na každém stroji
 # vlastní, proto mimo git; záloha po napojení taky
 /podklady

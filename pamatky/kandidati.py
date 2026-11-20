@@ -142,6 +142,14 @@ if __name__ == '__main__':
             if kusy and (tuple(C), kusy[0]['oid']) not in maji:
                 K_.append({'nazev': d['name'], 'druh': 'dominanta', 'lat': d['lat'], 'lon': d['lon'], 'popis': d.get('text'), 'ctverec': list(C), 'kusy': kusy})
                 maji |= {(tuple(C), b['oid']) for b in kusy}
+    # 4) ruční doplnění pamatky/navic.json [{"nazev", "lat", "lon"}]: známé budovy, které v datech nemají název (nádraží, školy, kino)
+    if os.path.exists('pamatky/navic.json'):
+        for d in json.load(open('pamatky/navic.json', encoding='utf-8')):
+            C, kusy = najdi(d['lon'], d['lat'])
+            if not kusy: print(f"  navic.json: {d['nazev']} – v bodě ani do 6 m není budova (posunout bod do půdorysu)"); continue
+            if (tuple(C), kusy[0]['oid']) in maji: print(f"  navic.json: {d['nazev']} – budovu už má jiný kandidát"); continue
+            K_.append({'nazev': d['nazev'], 'druh': 'vybraná budova', 'lat': d['lat'], 'lon': d['lon'], 'popis': d.get('text'), 'ctverec': list(C), 'kusy': kusy})
+            maji |= {(tuple(C), b['oid']) for b in kusy}
     for C, D in byoid.items():
         for o, kusy in D.items():
             if kusy[0]['name'] and (C, o) not in maji and sum(b['poly'].area for b in kusy) >= MINA:

@@ -14,12 +14,47 @@
     return best;
   }
   window.IZO_OZNAC = (lat, lon, dosah = 60) => oznacPin(lat, lon, dosah);
-  function showCard({ title, text, rows, lon, lat, k, link, linkText, target, extra, foto, kind = 0 }) {
+  // karta po oddílech (Pavel 2026-11-20, varianta C z navrhy/karty.html): údaje bez nadpisu, pak Otevírací doba (sbalená
+  // na řádek „Teď“), Z katastru, Program, Odkazy (mřížka s ikonkami) a dole tenký řádek Nahlásit · Napište nám (web/nase.js)
+  const KIK = {                                            // ikonky Lucide (ISC)
+    web: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+    mapa: '<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>',
+    letecky: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+    hod: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    kniha: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    pamatka: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+    data: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
+    fb: '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+    chev: '<path d="m6 9 6 6 6-6"/>',
+  };
+  const kik = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true" class="nb-kik">${KIK[n]}</svg>`;
+  window.IZO_KIK = kik;
+  const OH_DEN = /^(Po|Út|St|Čt|Pá|So|Ne)(–(Po|Út|St|Čt|Pá|So|Ne))?$/, OH_PRED = new Set(['Teď', 'Otevřeno', 'Platí']);
+  const KATASTR = new Set(['Využití', 'Dokončeno', 'Podlaží', 'Bytů', 'Výška', 'Zastavěná plocha', 'Konstrukce', 'Vytápění', 'Výtah']);
+  const odkazTyp = (href, txt) => {                       // ikonka a krátký název odkazu
+    if (/pamatkovykatalog|Památkový katalog/.test(href + txt)) return ['pamatka', 'Památkový katalog'];
+    if (/wikipedia/.test(href)) return ['kniha', 'Wikipedie'];
+    if (/openstreetmap/.test(href)) return ['data', 'OpenStreetMap'];
+    if (/cuzk\.gov\.cz/.test(href)) return ['data', 'Katastr (RÚIAN)'];
+    if (/facebook\.com/.test(href)) return ['fb', 'Facebook'];
+    if (/Zdroj otevírací/.test(txt)) return ['hod', 'Zdroj otevírací doby'];
+    return ['web', txt === 'Web podniku' ? 'Web' : txt];
+  };
+  const sekce = (id, nadpis) => {                         // oddíl karty s malým nadpisem (vytvoří se jednou, za #cardDl)
+    let s = $(id);
+    if (!s) { s = document.createElement('div'); s.id = id; s.className = 'nb-oddil';
+      if (id === 'cardVBudove') $('cardLinks').before(s); else (id === 'cardKat' ? $('cardOh') : $('cardDl')).after(s); }   // místa v budově: nad Odkazy
+    s.replaceChildren(); const h = document.createElement('p'); h.className = 'nb-oddil-nadpis'; h.textContent = nadpis; s.append(h);
+    return s;
+  };
+  const dlZ = (radky) => { const dl = document.createElement('dl'); for (const [a, b] of radky) { const dt = document.createElement('dt'); dt.textContent = a; const dd = document.createElement('dd'); dd.textContent = b; dl.append(dt, dd); } return dl; };
+  function showCard({ title, text, rows, lon, lat, k, link, linkText, target, extra, foto, kind = 0, ohPozn }) {
     oznacPin(lat, lon);
     state.card = kind ? { lat, lon, kind } : null;
     $('cardShare').hidden = !kind;                          // zastávka: odkaz na kartu by nic neotevřel
     $('cardProgram').hidden = true; $('cardProgram').replaceChildren();
     $('cardVyl').hidden = true; $('cardVyl').replaceChildren();
+    if ($('cardVBudove')) $('cardVBudove').hidden = true;  // seznam míst v budově vyplní až showBuilding / showVerejne / showPodnik
     $('cardTitle').textContent = title;
     // fotka (památky z Wikimedia Commons): autor a licence pod ní, odkaz na stránku souboru
     $('cardFoto').hidden = !foto;
@@ -30,9 +65,30 @@
     } else $('cardFotoImg').removeAttribute('src');
     if (k && !(LAYERS.find((l) => l.key === k) || {}).status?.startsWith('hotovo')) { const t = document.createElement('span'); t.className = 'wip-tag'; t.textContent = 'Rozpracováno'; $('cardTitle').append(' ', t); }
     $('cardText').hidden = !text; $('cardText').textContent = text || '';
+    // řádky do oddílů: otevírací doba (Teď, dny, Platí, Poznámka), údaje z katastru, zbytek nahoře bez nadpisu
+    const plne = rows.filter(([, v]) => v !== undefined && v !== null && v !== '');
+    const maOh = plne.some(([k]) => k === 'Teď' || k === 'Otevřeno');
+    const jeOh = (k) => maOh && (OH_PRED.has(k) || OH_DEN.test(k) || k === 'Poznámka');
     const dl = $('cardDl'); dl.replaceChildren(); dl.classList.remove('odjezdy');
-    for (const [k, v] of rows) { if (v === undefined || v === null || v === '') continue; const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; dl.append(dt, dd); }
-    const links = $('cardLinks'); links.replaceChildren();
+    for (const [k, v] of plne.filter(([k]) => !jeOh(k) && !KATASTR.has(k))) { const x = dlZ([[k, v]]); dl.append(...x.childNodes); }
+    dl.hidden = !dl.children.length;
+    const oh = sekce('cardOh', 'Otevírací doba'), ohR = plne.filter(([k]) => jeOh(k));
+    oh.hidden = !ohR.length;
+    if (ohR.length) {
+      const ted = ohR.find(([k]) => k === 'Teď'), dny = ohR.filter(([k]) => OH_DEN.test(k));
+      if (ted) {                                             // sbalené na „Teď“, týden po kliknutí
+        const d = document.createElement('details'), s = document.createElement('summary'), t = document.createElement('span');
+        t.id = 'cardOhTed'; t.className = 'oh-ted'; t.textContent = ted[1]; s.append(t); s.insertAdjacentHTML('beforeend', kik('chev'));
+        d.append(s, Object.assign(dlZ(dny), { className: 'nb-tyden' })); oh.append(d);
+      } else { const p = document.createElement('p'); p.textContent = (ohR.find(([k]) => k === 'Otevřeno') || [, ''])[1]; oh.append(p); }
+      const drob = [ohR.find(([k]) => k === 'Platí'), ohR.find(([k]) => k === 'Poznámka')].filter(Boolean).map(([k, v]) => (k === 'Platí' ? `platí ${v}` : v));
+      if (ohPozn) drob.push(ohPozn);
+      if (drob.length) { const p = document.createElement('p'); p.className = 'nb-drob'; p.textContent = drob.join(' · '); oh.append(p); }
+    }
+    const katR = plne.filter(([k]) => KATASTR.has(k)), kat = sekce('cardKat', 'Z katastru');
+    kat.hidden = !katR.length; if (katR.length) kat.append(dlZ(katR));
+    const links = $('cardLinks'); links.replaceChildren(); links.classList.add('nb-oddil');
+    const lh = document.createElement('p'); lh.className = 'nb-oddil-nadpis'; lh.textContent = 'Odkazy'; links.append(lh);
     if (link) {
       const btn = document.createElement('a'); btn.href = link; btn.className = 'card-neighbor-btn';
       if (target) btn.target = target;
@@ -40,15 +96,12 @@
       btn.textContent = linkText || `Přejít na mapu ${title} ↗`;
       links.append(btn);
     }
-    const a = document.createElement('a'); a.target = '_blank'; a.rel = 'noopener';
-    a.href = `https://mapy.cz/zakladni?x=${lon.toFixed(6)}&y=${lat.toFixed(6)}&z=19&source=coor&id=${lon.toFixed(6)}%2C${lat.toFixed(6)}`;
-    a.textContent = 'Ukázat ve skutečnosti (Mapy.cz)';
-    const s = document.createElement('a'); s.target = '_blank'; s.rel = 'noopener';
-    s.href = `https://mapy.cz/letecka?x=${lon.toFixed(6)}&y=${lat.toFixed(6)}&z=19`; s.textContent = 'Letecký snímek';
-    links.append(a, s);
-    for (const [href, txt] of extra || []) {                 // další odkazy (budova: údaje v katastru)
-      const e = document.createElement('a'); e.target = '_blank'; e.rel = 'noopener'; e.href = href; e.textContent = txt; links.append(e);
-    }
+    const mriz = document.createElement('div'); mriz.className = 'nb-odkazy';
+    const odkaz = (href, ik, txt, titul) => { const e = document.createElement('a'); e.target = '_blank'; e.rel = 'noopener'; e.href = href; e.innerHTML = kik(ik); e.append(txt); if (titul) e.title = titul; mriz.append(e); };
+    for (const [href, txt] of extra || []) { const [ik, kr] = odkazTyp(href, txt); odkaz(href, ik, kr, txt !== kr ? txt : ''); }   // web místa první
+    odkaz(`https://mapy.cz/zakladni?x=${lon.toFixed(6)}&y=${lat.toFixed(6)}&z=19&source=coor&id=${lon.toFixed(6)}%2C${lat.toFixed(6)}`, 'mapa', 'Mapy.cz', 'Ukázat ve skutečnosti (Mapy.cz)');
+    odkaz(`https://mapy.cz/letecka?x=${lon.toFixed(6)}&y=${lat.toFixed(6)}&z=19`, 'letecky', 'Letecký snímek');
+    links.append(mriz);
     $('card').style.transform = '';
     $('card').hidden = false;
     setReport(`pt:${lat.toFixed(5)},${lon.toFixed(5)}`, title, lon, lat);     // výchozí cíl hlášení = místo, budova ho přepíše
@@ -97,19 +150,22 @@
     showCard({ title: p.nazev, rows: [['Kulturní památka', `ÚSKP ${p.uskp}`]], lon: p.lon, lat: p.lat, k: p.k,
                foto: p.foto ? { ...p.foto, alt: p.nazev } : null, extra: pamLinks(p), kind: 2 });
   }
-  function showPodnik(p) {
-    state.sel = null;
+  function showPodnik(p, b) {
+    b = b || budovaMista(p);
+    state.sel = b || null;
     const kuch = (p.kuchyne || '').split(';').map((c) => POD_KUCH[c.trim()] || c.trim().replace(/_/g, ' ')).filter(Boolean).join(', ');
     const t = ohParse(p.oteviraci), ted = t && ohTed(t);
     const rows = [['Druh', [POD_DRUH[p.druh] || 'Podnik', kuch].filter(Boolean).join(' · ')], ['Adresa', p.adresa]];
     if (ted) rows.push(['Teď', ted[1]], ...ohRadky(t));
     else if (p.oteviraci) rows.push(['Otevřeno', ohPreklad(p.oteviraci)]);
-    rows.push(['Telefon', p.telefon]);
+    rows.push(['Telefon', p.telefon], ...(b ? budovaRadky(b) : []));
+    const kt = (b && b.kat) || {};
     const extra = [p.web && [p.web, 'Web podniku'], p.facebook && [p.facebook, 'Facebook'],
-      p.osm ? [p.osm, 'Údaje v OpenStreetMap'] : null].filter(Boolean);
+      p.osm ? [p.osm, 'Údaje v OpenStreetMap'] : null,
+      kt.kod && [`https://vdp.cuzk.gov.cz/vdp/ruian/stavebniobjekty/${kt.kod}`, 'Údaje v katastru (RÚIAN)']].filter(Boolean);
     showCard({ title: p.nazev, rows, lon: p.lon, lat: p.lat, k: p.k, extra, kind: 5 });
-    if (ted) { const dd = $('cardDl').querySelectorAll('dd')[[...$('cardDl').querySelectorAll('dt')].findIndex((x) => x.textContent === 'Teď')];
-      if (dd) dd.className = `oh-ted ${ted[0] ? 'otevreno' : 'zavreno'}`; }
+    tedBarva(ted);
+    if (b) vBudove(mistaVBudove(b).filter((m) => m.p !== p), b, 'V budově také');
   }
   // karta veřejného místa: druh, adresa, otevírací doba (sezónní podle dnešního data), poznámka, telefon, web, zdroj údajů
   const MES = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
@@ -122,19 +178,23 @@
     rows.push(['Poznámka', p.poznamka]);
     return { rows, ted };
   }
-  const tedBarva = (ted) => { if (!ted) return; const dd = $('cardDl').querySelectorAll('dd')[[...$('cardDl').querySelectorAll('dt')].findIndex((x) => x.textContent === 'Teď')];
-    if (dd) dd.className = `oh-ted ${ted[0] ? 'otevreno' : 'zavreno'}`; };
-  function showVerejne(p) {
+  function tedBarva(ted) { const e = $('cardOhTed'); if (ted && e) e.className = `oh-ted ${ted[0] ? 'otevreno' : 'zavreno'}`; }
+  function showVerejne(p, b) {
     if (p.uMista) { placeCard(p.uMista); return; }
-    state.sel = null;
-    const { rows: oh, ted } = verRadky(p), pm = p.pam;
-    const rows = [['Druh', p.druh], ...(pm ? [['Kulturní památka', `ÚSKP ${pm.uskp}`]] : []), ['Adresa', p.adresa], ...oh, ['Telefon', p.telefon]];
+    b = b || budovaMista(p);
+    state.sel = b || null;                                   // budova v obrysu se zvýrazní stejně jako po kliku na ni
+    const { rows: oh, ted } = verRadky(p), pm = p.pam, kt = (b && b.kat) || {};
+    const rows = [['Druh', p.druh], ...(pm ? [['Kulturní památka', `ÚSKP ${pm.uskp}`]] : []), ['Adresa', p.adresa], ...oh, ['Telefon', p.telefon],
+      ...(b ? budovaRadky(b) : [])];
     const overeno = p.overeno ? new Date(p.overeno).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric' }) : null;
     const extra = [p.web && [p.web, 'Web'], p.zdroj && p.zdroj !== p.web && [p.zdroj, 'Zdroj otevírací doby'], ...(pm ? pamLinks(pm) : []),
-      p.osm && [p.osm, 'Údaje v OpenStreetMap']].filter(Boolean);
-    showCard({ title: p.nazev, text: overeno ? `Otevírací doba podle webu ${new URL(p.zdroj || p.web).hostname.replace(/^www\./, '')}, ověřeno ${overeno}.` : '',
+      p.osm && [p.osm, 'Údaje v OpenStreetMap'],
+      kt.kod && [`https://vdp.cuzk.gov.cz/vdp/ruian/stavebniobjekty/${kt.kod}`, 'Údaje v katastru (RÚIAN)']].filter(Boolean);
+    showCard({ title: p.nazev, ohPozn: overeno ? `podle webu ${new URL(p.zdroj || p.web).hostname.replace(/^www\./, '')}, ověřeno ${overeno}` : '',
       rows, lon: p.lon, lat: p.lat, k: p.k, extra, kind: 6, foto: pm && pm.foto ? { ...pm.foto, alt: pm.nazev } : null });
     tedBarva(ted);
+    if (b) vBudove(mistaVBudove(b).filter((m) => m.p !== p), b, 'V budově také');
+    if (p.program) showProgram(p);                           // kino (Pavel 2026-11-20), stejně jako příběh DK
   }
   // místo a památka na stejném bodě (do 30 m, nejbližší další dvojice je 83 m daleko): na mapě jen popisek místa,
   // jeho karta dostane fotku a údaje památky; památka zůstává v hledání a odkazech
@@ -171,7 +231,7 @@
     const karta = state.card, d = await programAkce(p.program);
     if (!d || !karta || state.card !== karta || $('card').hidden) return;   // mezitím jiná nebo zavřená karta
     const akce = d.akce.slice(0, 5);
-    const box = $('cardProgram'), h = document.createElement('h3'); h.textContent = 'Program';
+    const box = $('cardProgram'), h = document.createElement('p'); h.className = 'nb-oddil-nadpis'; h.textContent = 'Program'; box.classList.add('nb-oddil');
     const ul = document.createElement('ul');
     for (const a of akce) {
       const o = new Date(a.t0), li = document.createElement('li'), tm = document.createElement('time'), x = document.createElement('a');
@@ -185,15 +245,69 @@
     box.replaceChildren(h, ul, vse); box.hidden = false;
   }
   const neighborCard = (n) => showCard({ title: n.name, text: n.text || 'Sousední izometrická mapa.', lon: n.lon, lat: n.lat, k: n.k, link: neighborHref(n), linkText: `Přejít na mapu ${n.name} ↗`, target: n.target, rows: [['Sousední mapa', n.name]], kind: 3 });
+  // víc vchodů jedné ulice do jednoho údaje: „Družstevní čtvrť 3133–3142“, jinak „Ulice 1, 3, 5“ (Pavel 2026-11-20: karty uklidit)
+  function adresy(seznam) {
+    const ulice = new Map();
+    for (const a of seznam) { const m = /^(.*?)\s+(\d+)(\S*)$/.exec(a); if (!m || m[3]) { ulice.set(a, null); continue; }
+      if (!ulice.has(m[1]) || !ulice.get(m[1])) ulice.set(m[1], []); ulice.get(m[1]).push(+m[2]); }
+    return [...ulice].map(([u, c]) => {
+      if (!c) return u;
+      c = [...new Set(c)].sort((x, y) => x - y);
+      const useky = []; for (const n of c) { const s = useky[useky.length - 1]; if (s && n === s[1] + 1) s[1] = n; else useky.push([n, n]); }
+      return `${u} ${useky.map(([a, z]) => (a === z ? a : z === a + 1 ? `${a}, ${z}` : `${a}–${z}`)).join(', ')}`;
+    }).join(', ');
+  }
+  // údaje budovy z katastru (nastroje/ruian_karta.py) a výška: karta budovy i karta veřejného místa v budově
+  function budovaRadky(b) {
+    const kt = b.kat || {}, cis = (n) => n.toLocaleString('cs-CZ');
+    return [['Dokončeno', kt.rok], ['Podlaží', kt.podl], ['Výška', b.h ? `asi ${Math.round(b.h)} m` : null],
+      ['Zastavěná plocha', kt.plocha ? `${cis(kt.plocha)} m²` : null]];
+  }
+  // místa v budově (Pavel 2026-11-20): veřejná místa a podniky s bodem v obrysu a do 35 m od středu budovy.
+  // Jedno místo: klik na budovu = karta místa s údaji budovy. Víc míst (19 budov, nastroje-pavel/mista_v_budovach.py):
+  // karta budovy se seznamem „V budově“, karta místa se seznamem „V budově také“.
+  function mistaVBudove(b) {
+    const v = (p) => geoM(b.lat, b.lon, p) < 35 && inPoly(p.xy[0], p.xy[1], b.hull);
+    return [...VEREJNA.filter((p) => !p.uMista && v(p)).map((p) => ({ p, ver: true })), ...PODNIKY.filter(v).map((p) => ({ p, ver: false }))]
+      .sort((x, y) => x.p.nazev.localeCompare(y.p.nazev, 'cs'));
+  }
+  const otevriMisto = (m, b) => (m.ver ? showVerejne(m.p, b) : showPodnik(m.p, b));
+  function budovaMista(v) {                                // budova pod ikonkou: z budov, jejichž obrys bod obsahuje, ta s nejbližším středem
+    let best = null, bd = 35;
+    for (const b of grid.get(Math.floor(v.xy[0] / CELL) + ',' + Math.floor(v.xy[1] / CELL)) || []) {
+      if (!inPoly(v.xy[0], v.xy[1], b.hull)) continue;
+      const d = geoM(v.lat, v.lon, b); if (d < bd) { best = b; bd = d; }
+    }
+    return best;
+  }
+  function vBudove(ms, b, nadpis) {                         // seznam míst v kartě: ikonka kategorie, název, druh, teď otevřeno/zavřeno
+    if (!ms.length) return;
+    const s = sekce('cardVBudove', nadpis); s.hidden = false;
+    const ul = document.createElement('ul'); ul.className = 'dnes-list v-budove';
+    for (const m of ms) {
+      const p = m.p, oh = m.ver ? verRadky(p).ted : (() => { const t = ohParse(p.oteviraci); return t && ohTed(t); })();
+      const li = document.createElement('li'), btn = document.createElement('button'); btn.type = 'button';
+      const ik = document.createElement('span'); ik.className = 'dnes-ico kat'; ik.innerHTML = p.el ? p.el.innerHTML : '';
+      if (p.el) ik.style.setProperty('--kat', p.el.style.getPropertyValue('--kat'));
+      const t = document.createElement('span'); t.textContent = p.nazev;
+      const d = document.createElement('span'); d.className = 'misto'; d.textContent = m.ver ? p.druh : (POD_DRUH[p.druh] || 'Podnik'); t.append(d);
+      const st = document.createElement('span'); if (oh) { st.className = `oh-ted ${oh[0] ? 'otevreno' : 'zavreno'}`; st.textContent = oh[0] ? 'otevřeno' : 'zavřeno'; }
+      btn.append(ik, t, st); btn.addEventListener('click', () => otevriMisto(m, b));
+      li.append(btn); ul.append(li);
+    }
+    s.append(ul);
+  }
   function showBuilding(b) {
     state.sel = b;
     const pl = placeOf(b), pm = pamOf(b);
+    const ms = pl ? [] : mistaVBudove(b);
+    if (ms.length === 1) { otevriMisto(ms[0], b); return; }
     const nm = pl ? pl.name : b.name || (pm && pm.nazev);
     const story = (pl && pl.text) || b.text || (nm && placeByName[nm] ? placeByName[nm].text : null);
     const title = nm || b.cls[0].toUpperCase() + b.cls.slice(1);
     const kt = b.kat || {}, cis = (n) => n.toLocaleString('cs-CZ');   // údaje z katastru (nastroje/ruian_karta.py)
     showCard({ title, text: story, lon: b.lon, lat: b.lat, k: b.k, rows: [
-      ['Adresa', (b.addr || []).join(', ')], ['Typ', nm ? b.cls : null],
+      ['Adresa', adresy(b.addr || [])], ['Typ', nm ? b.cls : null],
       ['Využití', kt.vyuziti && kt.vyuziti.toLowerCase() !== (b.cls || '').toLowerCase() ? kt.vyuziti : null],
       ['Dokončeno', kt.rok], ['Podlaží', kt.podl], ['Bytů', kt.byty],
       ['Výška', b.h ? `asi ${Math.round(b.h)} m` : null], ['Zastavěná plocha', kt.plocha ? `${cis(kt.plocha)} m²` : null],
@@ -202,6 +316,7 @@
     ], foto: pm && pm.foto ? { ...pm.foto, alt: pm.nazev } : null,
     extra: [...(pl && pl.odkaz ? [[pl.odkaz, new URL(pl.odkaz).hostname.replace(/^www\./, '')]] : []), ...(pm ? pamLinks(pm) : []), ...(kt.kod ? [[`https://vdp.cuzk.gov.cz/vdp/ruian/stavebniobjekty/${kt.kod}`, 'Údaje v katastru (RÚIAN)']] : [])], kind: 1 });
     if (pl && pl.program) showProgram(pl);
+    vBudove(ms, b, 'V budově');
     setReport(b.oid ? 'b:' + b.oid : b.id, [title, (b.addr || [])[0]].filter(Boolean).join(', '), b.lon, b.lat);
   }
   function showPoint(ix, iy) {

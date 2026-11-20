@@ -5,13 +5,15 @@
 import { chromium, pripraveno } from './prohlizec.mjs';   // engine podle PROHLIZEC (chromium, webkit, firefox)
 import fs from 'fs';
 import { sekce } from './sekce.mjs';
-import { parseDkHodonin } from '../functions/api/program.js';
+import { parseDkHodonin, parseKinoSvet } from '../functions/api/program.js';
 const html = process.argv[2] ? fs.readFileSync(process.argv[2], 'utf8') : await (await fetch('https://www.dkhodonin.eu/program')).text();
 const akce = parseDkHodonin(html, 'https://www.dkhodonin.eu');
+const kino = parseKinoSvet(await (await fetch('https://www.kinosvet.eu/')).text(), 'https://www.kinosvet.eu');   // Kino Svět (2026-11-20)
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1200, height: 800 } });
 const chyby = []; p.on('pageerror', (e) => chyby.push(e.message));
-await p.route('**/api/program*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ akce, zdroj: 'https://www.dkhodonin.eu/program' }) }));
+await p.route('**/api/program*', (r) => { const k = /zdroj=kinosvet/.test(r.request().url());
+  r.fulfill({ contentType: 'application/json', body: JSON.stringify(k ? { akce: kino, zdroj: 'https://www.kinosvet.eu/' } : { akce, zdroj: 'https://www.dkhodonin.eu/program' }) }); });
 await p.goto('http://localhost:8000/', { waitUntil: 'load' }); await pripraveno(p);
 let ok = 0, spatne = 0;
 const over = (co, v, info) => { v ? ok++ : spatne++; console.log(v ? '✅' : '❌', co, info === undefined ? '' : `· ${typeof info === 'string' ? info : JSON.stringify(info)}`); };
@@ -30,6 +32,11 @@ await sekce(p, '#places');
 await p.locator('#places button', { hasText: 'Dům kultury Hodonín' }).click(); await p.waitForTimeout(800);
 r = await program();
 over('karta místa DK: program', r.videt && r.nadpis === 'Dům kultury Hodonín' && r.akce.length > 0, r.akce.length);
+// 2b) Kino Svět: převod webu kina a program v kartě veřejného místa
+over('převod programu kina: filmy s časem a odkazem', kino.length >= 10 && kino.every((a) => /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(a.od) && /\/program\//.test(a.url) && a.nazev), `${kino.length} představení`);
+await p.evaluate(() => window.__izo.showVerejne(window.__izo.VEREJNA.find((q) => q.program === 'kinosvet'))); await p.waitForTimeout(500);
+r = await program();
+over('karta kina: program', r.videt && r.nadpis === 'Kino Svět' && r.akce.length > 0 && r.akce.length <= 5, r.akce);
 // 3) Pomník TGM: karta místa s fotkou a ÚSKP, bez vlastní ikonky památky
 await p.locator('#places button', { hasText: 'Pomník T. G. Masaryka' }).click(); await p.waitForTimeout(800);
 const tgm = await p.evaluate(() => ({ foto: !document.querySelector('#cardFoto').hidden, radky: document.querySelector('#cardDl').textContent, program: !document.querySelector('#cardProgram').hidden }));

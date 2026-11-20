@@ -34,7 +34,8 @@ over('předvolby jsou v jednom řádku, jen ikonky', await p.evaluate(() => {
 let s = await stav();
 over('na začátku zvýrazněno „Vše“', s.zap.join() === 'Vše', s.zap.join());
 await klik('Jezdím MHD'); s = await stav();
-const zapnute = Object.entries(s.v).filter(([, on]) => on).map(([id]) => id).sort();
+// l-xmas = vánoční výzdoba, jen v sezóně (assets/vanoce.json od–do); předvolby ji nepřepínají (2026-11-20 shodila zkoušku)
+const zapnute = Object.entries(s.v).filter(([id, on]) => on && id !== 'l-xmas').map(([id]) => id).sort();
 over('Jezdím MHD: jen Doprava (místa), provoz a zvýraznění', zapnute.join() === ['l-hover', 'l-traffic', 'l-v-doprava'].sort().join(), zapnute.join());
 over('Jezdím MHD je zvýrazněná a její název u nadpisu', s.zap.join() === 'Jezdím MHD' && s.jmeno === '· Jezdím MHD', `${s.zap.join()} | ${s.jmeno}`);
 await klik('Čistá mapa'); s = await stav();

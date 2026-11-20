@@ -37,12 +37,13 @@ const n = await p.evaluate(() => ({ data: window.__izo.PODNIKY.length, ikonek: d
 over('ikonka u každého podniku a počet u přepínače', n.data > 0 && n.ikonek === n.data && n.pocet === ` (${n.data})`, n);
 const karta = await p.evaluate(() => {
   const z = window.__izo.PODNIKY.find((x) => x.oteviraci && window.__izo.ohParse(x.oteviraci)); window.__izo.showPodnik(z);
-  const dt = [...document.querySelectorAll('#cardDl dt')].map((x) => x.textContent), dd = [...document.querySelectorAll('#cardDl dd')];
-  return { nazev: z.nazev, nadpis: document.querySelector('#cardTitle').textContent, dt, ted: dd[dt.indexOf('Teď')]?.className,
-    odkazy: [...document.querySelectorAll('#cardLinks a')].map((a) => a.textContent) };
+  // karta po oddílech (2026-11-20): „Teď“ = shrnutí oddílu Otevírací doba, dny v rozbalovacím týdnu, odkazy krátce s ikonkou
+  const dt = [...document.querySelectorAll('#cardDl dt')].map((x) => x.textContent);
+  return { nazev: z.nazev, nadpis: document.querySelector('#cardTitle').textContent, dt, ted: document.querySelector('#cardOhTed')?.className,
+    dny: [...document.querySelectorAll('#cardOh .nb-tyden dt')].map((x) => x.textContent), odkazy: [...document.querySelectorAll('#cardLinks a')].map((a) => a.textContent) };
 });
-over('karta podniku: druh, teď, dny, odkazy', karta.nadpis === karta.nazev && karta.dt[0] === 'Druh' && karta.dt.includes('Teď')
-  && karta.dt.some((x) => /^(Po|Út|St|Čt|Pá|So|Ne)/.test(x)) && /oh-ted (otevreno|zavreno)/.test(karta.ted) && karta.odkazy.includes('Údaje v OpenStreetMap'), karta);
+over('karta podniku: druh, teď, dny, odkazy', karta.nadpis === karta.nazev && karta.dt[0] === 'Druh'
+  && karta.dny.some((x) => /^(Po|Út|St|Čt|Pá|So|Ne)/.test(x)) && /oh-ted (otevreno|zavreno)/.test(karta.ted) && karta.odkazy.includes('OpenStreetMap'), karta);
 
 // 3) sdílení otevře stejnou kartu
 await p.click('#cardShare'); await p.click('#shareMenu [data-k="kopirovat"]'); await p.waitForTimeout(300);   // na počítači nabídka sdílení

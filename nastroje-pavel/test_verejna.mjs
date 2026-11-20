@@ -32,9 +32,10 @@ await p.click('.kat-sk-zdravi > summary'); await p.waitForTimeout(200); const o3
 over('vždy nejvýš jedna otevřená skupina (na začátku Příběhy)', o1.join() === 'Příběhy' && o2.join() === 'Zdraví' && o3.length === 0, { o1, o2, o3 });
 // Dům kultury: v Kultuře, karta příběhu s pokladnou
 const dk = await p.evaluate(() => { window.__izo.showVerejne(window.__izo.VEREJNA.find((x) => x.nazev === 'Dům kultury Hodonín'));
-  return { nadpis: document.querySelector('#cardTitle').textContent, dt: [...document.querySelectorAll('#cardDl dt')].map((x) => x.textContent),
-    pozn: [...document.querySelectorAll('#cardDl dd')].map((x) => x.textContent).find((t) => /pokladny/.test(t)) }; });
-over('Dům kultury v Kultuře: karta příběhu s pokladnou', dk.nadpis === 'Dům kultury Hodonín' && dk.dt.includes('Teď') && !!dk.pozn, dk);
+  // karta po oddílech (2026-11-20): „Teď“ = shrnutí oddílu Otevírací doba (#cardOhTed), poznámka v drobném řádku pod ním
+  return { nadpis: document.querySelector('#cardTitle').textContent, ted: document.querySelector('#cardOhTed')?.textContent,
+    pozn: /pokladny/.test(document.querySelector('#cardOh .nb-drob')?.textContent || '') }; });
+over('Dům kultury v Kultuře: karta příběhu s pokladnou', dk.nadpis === 'Dům kultury Hodonín' && !!dk.ted && dk.pozn, dk);
 await p.click('#cardClose');
 over('příběhy přejmenované a nahoře', await p.evaluate(() => { const m = document.querySelector('#nb-mista'); return m.firstElementChild.id === 'placesBox' && /^Příběhy/.test(m.querySelector('#placesBox summary').textContent); }));
 const piny = await p.evaluate(() => { const K = window.IZO_KAT.map((c) => c.k).filter((k) => !['pribehy', 'pamatky', 'jidlo'].includes(k));
@@ -53,11 +54,12 @@ over('kostel, který je památkou: jedna ikonka (kostel)', !kostel || !kostel.pa
 // karta městského úřadu (středa 10:00 = otevřeno do 17:00)
 const muu = await p.evaluate(() => {
   const v = window.__izo.VEREJNA.find((x) => x.nazev === 'Městský úřad Hodonín'); window.__izo.showVerejne(v);
-  const dt = [...document.querySelectorAll('#cardDl dt')].map((x) => x.textContent), dd = [...document.querySelectorAll('#cardDl dd')].map((x) => x.textContent);
-  return { nadpis: document.querySelector('#cardTitle').textContent, dt, dd, text: document.querySelector('#cardText').textContent,
+  const dt = [...document.querySelectorAll('#cardDl dt')].map((x) => x.textContent);
+  return { nadpis: document.querySelector('#cardTitle').textContent, dt, ted: document.querySelector('#cardOhTed')?.textContent,
+    dny: [...document.querySelectorAll('#cardOh .nb-tyden dt')].map((x) => x.textContent), drob: document.querySelector('#cardOh .nb-drob')?.textContent || '',
     odkazy: [...document.querySelectorAll('#cardLinks a')].map((a) => a.textContent) };
 });
-over('karta MěÚ: teď, dny, poznámka, telefon, zdroj', muu.dt.includes('Teď') && muu.dt.includes('Poznámka') && muu.dt.includes('Telefon') && /ověřeno/.test(muu.text) && muu.odkazy.includes('Zdroj otevírací doby'), muu);
+over('karta MěÚ: teď, dny, poznámka, telefon, zdroj', !!muu.ted && muu.dny.length > 0 && muu.dt.includes('Telefon') && /ověřeno/.test(muu.drob) && muu.odkazy.includes('Zdroj otevírací doby'), muu);
 
 // sezónní rozvrhy
 const sez = await p.evaluate(() => {
@@ -71,8 +73,8 @@ over('sezóny přes Nový rok: TIC v lednu zimní, v srpnu letní', /Sa 08:30-12
 
 // zoo: karta příběhu s otevírací dobou
 const zoo = await p.evaluate(() => { window.__izo.showVerejne(window.__izo.VEREJNA.find((x) => x.nazev === 'Zoo Hodonín'));
-  return { nadpis: document.querySelector('#cardTitle').textContent, dt: [...document.querySelectorAll('#cardDl dt')].map((x) => x.textContent) }; });
-over('zoo: karta příběhu s otevírací dobou', zoo.nadpis === 'Zoo Hodonín' && zoo.dt.includes('Teď') && zoo.dt.includes('Platí'), zoo);
+  return { nadpis: document.querySelector('#cardTitle').textContent, ted: document.querySelector('#cardOhTed')?.textContent, drob: document.querySelector('#cardOh .nb-drob')?.textContent || '' }; });
+over('zoo: karta příběhu s otevírací dobou', zoo.nadpis === 'Zoo Hodonín' && !!zoo.ted && /platí/.test(zoo.drob), zoo);
 
 // skupina v seznamu: klik na místo otevře kartu
 await p.click('.kat-sk-kultura > summary'); await p.waitForTimeout(300);   // sekce Místa je otevřená z kontroly výš
@@ -84,6 +86,26 @@ await p.click('#cardClose'); await p.waitForTimeout(200);
 const poZavreni = await p.evaluate(() => document.querySelectorAll('.pin.ikp.vybrany').length);
 over('vybrané místo: ikonka zvýrazněná (jen jedna), po zavření karty normální', vyb.pocet === 1 && /Galerie/.test(vyb.nazev) && vyb.scale === '1.25' && poZavreni === 0, { ...vyb, poZavreni });
 await p.context().close();
+
+// místa v budově (Pavel 2026-11-20): víc míst = karta budovy se seznamem „V budově“, karta místa se seznamem
+// „V budově také“ (Jump Street + Pivnice U Haryho); jiné karty seznam nemají
+const p4 = await (await b.newContext({ viewport: { width: 1200, height: 800 } })).newPage(); p4.on('pageerror', (e) => chyby.push(e.message));
+await p4.goto('http://localhost:8000/#leto@48.84674,17.12594,0.4', { waitUntil: 'load' }); await pripraveno(p4); await p4.waitForTimeout(1500);
+const jump = await p4.evaluate(() => {
+  const I = window.__izo, v = I.VEREJNA.find((x) => x.nazev === 'Jump Street Hodonín');
+  const seznam = () => { const s = document.querySelector('#cardVBudove'); return s && !s.hidden ? [s.querySelector('.nb-oddil-nadpis').textContent, ...[...s.querySelectorAll('li')].map((e) => e.firstChild.childNodes[1].firstChild.textContent)] : []; };
+  const karta = () => ({ nadpis: document.querySelector('#cardTitle').textContent, dt: [...document.querySelectorAll('#card dt')].map((e) => e.textContent), seznam: seznam() });
+  I.showVerejne(v); const ikonka = karta();
+  const bud = I.budovaMista(v); if (bud) I.showBuilding(bud); const budova = karta();
+  document.querySelector('#cardVBudove li:last-child button')?.click(); const klik = karta();
+  I.showPamatka(I.PAMATKY[0]); const jina = karta();
+  return { ikonka, budova, klik, jinaSeznam: jina.seznam };
+});
+over('místo v budově s dalším: karta místa + „V budově také“, s telefonem i výškou', jump.ikonka.nadpis === 'Jump Street Hodonín' && jump.ikonka.dt.includes('Telefon')
+  && jump.ikonka.dt.includes('Výška') && JSON.stringify(jump.ikonka.seznam) === JSON.stringify(['V budově také', 'Pivnice U Haryho']), jump);
+over('budova s víc místy: karta budovy se seznamem „V budově“, klik otevře místo', JSON.stringify(jump.budova.seznam) === JSON.stringify(['V budově', 'Jump Street Hodonín', 'Pivnice U Haryho'])
+  && jump.klik.nadpis === 'Pivnice U Haryho' && jump.klik.seznam[1] === 'Jump Street Hodonín' && jump.jinaSeznam.length === 0, jump);
+await p4.context().close();
 
 // odkaz bez úřadů, hledání
 const p2 = await (await b.newContext({ viewport: { width: 1200, height: 800 } })).newPage(); p2.on('pageerror', (e) => chyby.push(e.message));

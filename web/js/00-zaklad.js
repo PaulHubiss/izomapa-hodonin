@@ -93,7 +93,8 @@
   const $ = (id) => document.getElementById(id);
   const isMobile = () => matchMedia('(max-width: 640px)').matches;
   let uiDepth = 0, uiPop = false, uiBackAt = 0, uiSelf = 0;
-  // výchozí vzhled (Pavel 2026-11-19): podzim, den, jasno; skutečný čas a počasí vypnuté (10-vrstvy.js), volby se pamatují
+  // výchozí vzhled (Pavel 2026-11-19, 2026-11-21): roční období podle kalendáře (10-vrstvy.js, obdobiKalendar), den, jasno;
+  // skutečný čas a počasí vypnuté, volby se pamatují. 'autumn' tady jen do nastavení podle kalendáře.
   const state = { season: 'autumn', night: 0, weather: 'clear', sel: null, hover: null, wip: false };
   const hashTokens = (location.hash || '').slice(1).split('@')[0].split('-');
   const SEASON_TOKEN = { jaro: 'spring', leto: 'summer', podzim: 'autumn', zima: 'winter' };

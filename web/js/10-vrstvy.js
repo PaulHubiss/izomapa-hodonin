@@ -53,19 +53,13 @@
       for (const e of Object.values(l.extra || {})) if (e.it && viewer.world.getIndexOfItem(e.it) >= 0) viewer.world.setItemIndex(e.it, k++);   // výzdoba hned nad svým čtvercem
     }
   };
-  // ---------- přídavná vrstva čtverců: vánoční výzdoba (assets/vanoce.json), zapnutá podle data od/do ----------
-  // varianta v zimě se sněhem, jinak bez (listopad bývá podzimní)
+  // ---------- přídavná vrstva čtverců: vánoční výzdoba (assets/vanoce.json) ----------
+  // Zimní mapa = výzdoba a Santa, bez ohledu na datum (Pavel 2026-11-21: „nechci žádné datumy u vzhledu, zima je zima“).
+  // Od–do ve vanoce.json prohlížeč nepoužívá (autor podle nich výzdobu zapíná a kreslí ji i na podzim).
   const VANOCE = {{VANOCE}};
-  const inXmasDates = (d = new Date()) => {
-    if (!VANOCE) return false;
-    const md = (d.getMonth() + 1) * 100 + d.getDate(), p = (v) => { const [m, dd] = v.split('-').map(Number); return m * 100 + dd; };
-    const a = p(VANOCE.od), b = p(VANOCE.do);
-    return a <= b ? md >= a && md <= b : md >= a || md <= b;       // přes Nový rok
-  };
   let xmasUser = null;                                         // ruční přepnutí v menu (jen v tomto prohlížeči)
-  const xmasOn = () => !!VANOCE && (xmasUser ?? inXmasDates());
-  // výzdoba jen v zimní mapě (Pavel 2026-11-20: jarmark do podzimní mapy nepatří; autor ji kreslí i na podzim),
-  // v době výzdoby proto mapa sama otevře zimu (níž u setSeason)
+  const xmasOn = () => !!VANOCE && (xmasUser ?? true);
+  // výzdoba jen v zimní mapě (Pavel 2026-11-20: jarmark do podzimní mapy nepatří)
   const xmasShow = () => xmasOn() && state.season === 'winter';
   function applyExtras() {
     if (!ready && !LAYERS.some((l) => l.day)) return;
@@ -673,11 +667,13 @@
   }
   document.querySelectorAll('[data-wip]').forEach((b) => b.addEventListener('click', () => { state.wip = b.dataset.wip === '1'; applyVisibility(); viewer.viewport.fitBounds(homeBounds()); }));
   document.querySelectorAll('[data-wip]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.wip === '1') === state.wip)));
-  // v době vánoční výzdoby (assets/vanoce.json od–do) mapa sama otevře zimu s jarmarkem, ale bez padajícího sněhu
-  // (Pavel 2026-11-20); odkaz s ročním obdobím si drží svoje, skutečné počasí (když je zapnuté) sníh přidá samo
-  const xmasZima = !!VANOCE && inXmasDates() && !hashTokens.some((t) => SEASON_TOKEN[t]);
-  if (xmasZima) state.season = 'winter';
-  setSeason(state.season); setWeather(xmasZima ? 'clear' : state.weather); applyRealWeather();
+  // výchozí roční období podle kalendáře (Pavel 2026-11-21): prosinec–únor zima, březen–květen jaro, červen–srpen léto,
+  // září–listopad podzim. Odkaz s ročním obdobím si drží svoje. Zima od kalendáře bez padajícího sněhu (Pavel 2026-11-20),
+  // skutečné počasí (když je zapnuté) sníh přidá samo.
+  const obdobiKalendar = ['winter', 'spring', 'summer', 'autumn'][Math.floor(((new Date().getMonth() + 1) % 12) / 3)];
+  const odKalendare = !hashTokens.some((t) => SEASON_TOKEN[t]);
+  if (odKalendare) state.season = obdobiKalendar;
+  setSeason(state.season); setWeather(odKalendare ? 'clear' : state.weather); applyRealWeather();
   $('night').value = Math.round(state.night * 100);
   $('night').addEventListener('input', (e) => { state.night = e.target.value / 100; $('realTime').checked = false; saveRT(false); applyTime(); });
   // denní doba podle skutečné výšky slunce nad městem (zapíná se volitelně, pamatuje si to prohlížeč)
@@ -696,7 +692,7 @@
     state.night = Math.round(nightFromSun(sunAlt(new Date())) * 100) / 100; $('night').value = Math.round(state.night * 100); applyTime();
   }
   $('realTime').addEventListener('change', (e) => { saveRT(e.target.checked); tickReal(); });
-  // výchozí stav: podzim, den, skutečný čas vypnutý (zapne si ho každý sám, volba se pak pamatuje)
+  // výchozí stav: den, skutečný čas vypnutý (zapne si ho každý sám, volba se pak pamatuje)
   try { if (localStorage.getItem('izo-realtime') === '1' && !hashTokens.includes('noc') && !hashTokens.includes('soumrak')) { $('realTime').checked = true; } } catch {}
   setInterval(tickReal, 60000);
   $('mTime').addEventListener('click', () => { state.night = state.night < 0.25 ? 0.42 : state.night < 0.7 ? 1 : 0; $('realTime').checked = false; saveRT(false); $('night').value = Math.round(state.night * 100); applyTime(); });

@@ -86,6 +86,8 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
         'MHD': 'true' if mhd.get('gtfs') or os.path.exists('site/mhd.json') else 'false',   # mhd.json vyrábí mhd.py jen s GTFS
         'POHLED': json.dumps(pohled if isinstance(pohled, list) and len(pohled) >= 2 else None),
         'DOMU_CELEK': 'true' if M.get('domu_celek') else 'false',
+        # sezónní výchozí stav (náš doplněk, Pavel 2026-11-23): {"od": "MM-DD", "do": "MM-DD", "obdobi", "pocasi", "pohled": [lat, lon, km]}
+        'SEZONNI_START': json.dumps(M['sezonni_start'] if isinstance(M.get('sezonni_start'), dict) else None, ensure_ascii=False),
         'KAMERY': json.dumps(M['kamery'] if isinstance(M.get('kamery'), list) else [], ensure_ascii=False),
         'ROZSAH_MESTA': json.dumps(M['rozsah_mesta'] if isinstance(M.get('rozsah_mesta'), list) and len(M['rozsah_mesta']) >= 3 else None),
         'STROM': json.dumps(strom if isinstance(strom, list) and len(strom) == 2 else None),

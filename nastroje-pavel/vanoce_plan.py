@@ -2,9 +2,11 @@
 
   .venv/bin/python nastroje-pavel/vanoce_plan.py
 
-Plán 2026 (Vánoční jarmark 29. 11. – 20. 12. 2026, Masarykovo náměstí; obrázek v podklady/vanocni-jarmark-2026-plan.jpg,
-podklady = zástupce na Google Disk) je otočený: na obrázku vpravo = sever, dolů = východ.
-Převod pixel -> místo: kotva = střed fontány na náměstí (na plánu u ≈ 680, v ≈ 1130; na ortofotu ČÚZK x 442,85, y −852,8 m),
+Plán 2026 (Vánoční jarmark 29. 11. – 20. 12. 2026, Masarykovo náměstí; obrázek v podklady/vanocni-jarmark-2026-plan-v2.jpg,
+starší verze bez -v2, podklady = zástupce na Google Disk) je otočený: na obrázku vpravo = sever, dolů = východ.
+v2 (Pavel 2026-11-23): stejný výřez 1920 × 1515, změny jen u radnice a na jižní řadě: nový 14 nad 13, nový 12 v řadě
+10–12, zmizel šikmý stánek u fontány (dřív druhý z 12–13); dřívější 14–16 přečíslované na 15–17 beze změny polohy.
+Převod pixel -> místo: kotva = střed fontány na náměstí (na plánu u ≈ 680, v ≈ 1130; zeměpisně 48,8486369 / 17,1285768),
 měřítko ~14,2 px/m (ověřeno průčelím kostela a ulicí se stánky, odchylka do ~2 m). Plán slouží jen k polohám, tvary a barvy
 bere mapa ze svých modelů. Na příští rok: přepsat ROK/OD/DO, kotvu (pokud se změní výřez plánu) a pixely v RADY a STROMY.
 Kolotoč, pódium a fotopoint izomapa nekreslí (nemá pro ně model).
@@ -16,7 +18,10 @@ import geo
 # jarmark 2026 je 29. 11. – 20. 12.; v mapě zapnuto už od 19. 11. (Pavel 2026-11-19: „nechal bych výzdobu už defaultně
 # zapnutou“ – i jako pozvánka), konec s jarmarkem, pak by stánky na náměstí nesouhlasily
 OD, DO = '11-19', '12-20'
-U0, V0, X0, Y0, K = 680, 1130, 442.85, -852.8, 14.2
+# kotva = střed fontány: pixel plánu (U0, V0) a její zeměpisná poloha. Dřív v metrech mapy (x 442,85, y −852,8) – ty se
+# s posunem středu mřížky změní (2026-11-20 o −105 / −105 m) a jarmark pak ujel o 105 m k SV (Pavel 2026-11-23)
+U0, V0, LAT0, LON0, K = 680, 1130, 48.8486369, 17.1285768, 14.2
+X0, Y0 = (float(v) for v in geo.to_local(LON0, LAT0))
 
 
 def misto(u, v):
@@ -49,13 +54,13 @@ RADY = [
     ('plátěné 1–6',                (1553, 520), (1810, 460), 6, 3.0, 0.6, 'V'),
     ('plátěné 7–11',               (1570, 638), (1775, 595), 5, 3.0, 0.6, 'Z'),
     ('food trucky 17–18',          (1170, 700), (1340, 672), 2, 8.5, 3.0, 'Z'),
-    ('dřevěné 12–13',              (497, 1100), (535, 1148), 2, 2.6, 0.8, 'S'),
-    ('dřevěné 10–11',              (560, 1213), (603, 1218), 2, 2.6, 0.6, 'Z'),
+    ('dřevěné 13–14',              (505, 1045), (497, 1100), 2, 2.6, 1.3, 'S'),
+    ('dřevěné 10–12',              (517, 1207), (604, 1218), 3, 2.6, 0.5, 'Z'),
     ('dřevěné 8–9',                (756, 1245), (800, 1252), 2, 2.6, 0.6, 'Z'),
     ('dřevěný 7',                  (898, 1065), (898, 1065), 1, 2.6, 0.0, 'Z'),
     ('stánek DK 5 a dřevěný 6',    (883, 820),  (924, 862),  2, 2.6, 0.6, 'J'),
-    ('dřevěné 14–15',              (545, 820),  (597, 775),  2, 2.6, 0.8, 'S'),
-    ('dřevěný 16',                 (453, 835),  (453, 835),  1, 3.2, 0.0, 'S'),
+    ('dřevěné 15–16',              (545, 820),  (597, 775),  2, 2.6, 0.8, 'S'),
+    ('dřevěný 17',                 (453, 835),  (453, 835),  1, 3.2, 0.0, 'S'),
     ('Ježíškova pošta',            (842, 1108), (842, 1108), 1, 2.4, 0.0, 'Z'),
 ]
 STROMY = [(840, 1180)]                    # vánoční stromek u fontány

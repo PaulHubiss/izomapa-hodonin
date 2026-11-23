@@ -503,4 +503,52 @@
   // ---------- start: na počítači vždy otevřený Vzhled (Pavel 2026-11-16), na telefonu zavřeno (panel by zakryl mapu) ----------
   sync(); pocet(); rozlozeni();
   if (mobil.matches) zavri(false); else otevri('vzhled', false);
+
+  // ---------- bublina pro nového návštěvníka (Pavel 2026-11-23: „bublina je ok, na počítači nechat Vzhled rozbalený“) ----------
+  // Jen na telefonu (na počítači je Vzhled otevřený od startu): ukáže na Vzhled a Vrstvy. Zmizí po klepnutí do lišty nebo mapy,
+  // křížkem nebo sama po 12 s; viděnou si pamatuje prohlížeč. U sdíleného odkazu na místo (#…@) se neukáže.
+  // Náhled ?bublina: ukáže se vždy (i opakovaně) a na počítači začne panel zavřený, ať jde bublina posoudit.
+  // nase.js běží před skriptem mapy, takže location.hash je ještě ten z odkazu (mapa ho po startu přepíše polohou).
+  const BUB = 'nase-bublina', nahledBub = new URLSearchParams(location.search).has('bublina');
+  if (nahledBub && !mobil.matches) zavri(false);
+  if (nahledBub || (mobil.matches && !nacti(BUB) && !location.hash.includes('@'))) {
+    const b = el('div', 'nb-bublina');
+    b.setAttribute('role', 'status');
+    b.innerHTML = `<span class="nb-bublina-sipka" aria-hidden="true"></span>
+      <p><b>Zkuste si mapu po svém</b>Ve <strong>Vzhledu</strong> přepnete roční období, denní dobu a počasí, ve <strong>Vrstvách</strong> vyberete, co mapa ukazuje.</p>
+      <button type="button" class="nb-bublina-x" aria-label="Zavřít tip">${IK.zavrit}</button>`;
+    document.body.append(b);
+    // šipka míří na Vrstvy (na počítači je vedle Vzhledu štítek s nadpisem), pulzují Vzhled i Vrstvy
+    const cil = tab('vrstvy'), pulz = [tab('vzhled'), tab('vrstvy')];
+    const umisti = () => {
+      const r = cil.getBoundingClientRect(), w = b.offsetWidth, h = b.offsetHeight, sip = b.querySelector('.nb-bublina-sipka');
+      b.classList.toggle('dole', mobil.matches);
+      if (mobil.matches) {                                   // nad spodní lištou, šipka dolů na Vzhled
+        const left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - 70));
+        Object.assign(b.style, { left: `${left}px`, top: `${r.top - h - 14}px` });
+        sip.style.left = `${r.left + r.width / 2 - left - 7}px`; sip.style.top = '';
+      } else {                                               // vpravo od lišty, šipka doleva na Vzhled
+        const hl = head.parentElement === panel ? panel.getBoundingClientRect().bottom + 8 : 12;   // pod štítek s nadpisem
+        Object.assign(b.style, { left: `${r.right + 14}px`, top: `${Math.max(hl, r.top + r.height / 2 - 22)}px` });
+        sip.style.top = `${Math.max(8, r.top + r.height / 2 - parseFloat(b.style.top) - 7)}px`; sip.style.left = '';
+      }
+    };
+    let pryc = false;
+    const schovej = () => {
+      if (pryc) return; pryc = true;
+      b.classList.remove('vidi'); pulz.forEach((x) => x.classList.remove('nb-pulz'));
+      setTimeout(() => b.remove(), 400);
+      if (!nahledBub) uloz(BUB, '1');
+      removeEventListener('resize', umisti);
+    };
+    setTimeout(() => {
+      if (pryc) return;
+      umisti(); b.classList.add('vidi'); pulz.forEach((x) => x.classList.add('nb-pulz'));
+      setTimeout(schovej, 12000);
+    }, 1500);
+    addEventListener('resize', umisti);
+    b.querySelector('.nb-bublina-x').addEventListener('click', schovej);
+    lista.addEventListener('click', schovej);
+    $('map')?.addEventListener('pointerdown', schovej);
+  }
 })();

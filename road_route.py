@@ -1,7 +1,8 @@
 """Trasa autobusu mezi zastávkami po silnicích z dat mapy (pro GTFS bez shapes.txt, např. IDS JMK).
 
 Graf = vrcholy segmentů Overture (subtype road, jen sjízdné třídy), zhuštěné po 20 m; uzly se slévají podle souřadnic
-zaokrouhlených na 0,5 m. Zastávka se přichytí k nejbližšímu uzlu do 80 m. Zastávka mimo mapu: po silnici k uzlu nejblíž k ní (okraj mapy),
+zaokrouhlených na 0,5 m. Zastávka se přichytí k nejbližšímu uzlu do 80 m. Zastávka mimo mapu: po silnici k uzlu hlavní sítě (dá se k němu
+dojet i z něj odjet) nejblíž k ní (okraj mapy),
 dál rovně (to už prohlížeč nekreslí). Bez cesty vede úsek rovně.
 """
 import heapq
@@ -48,6 +49,23 @@ class Graph:
                     if ow <= 0: self.adj[b].append((a, w))
         self.arr = np.array(self.xy) if self.xy else np.zeros((0, 2))
         self.cache, self.fails = {}, 0
+        # hlavní síť = uzly, kam se dá z nejpropojenějšího uzlu dojet A odkud se dá zpátky (silně souvislá komponenta):
+        # zastávka mimo mapu se přichytí jen k ní. Jinak trasa končila na jednosměrce vedoucí jen ven nebo na odtrženém kousku
+        # silnice u okraje, cesta se nenašla a úsek vedl rovnou čarou přes domy (Hodonín 2026-11-23, linka 910 do Holíče)
+        n = len(self.xy); self.hlavni = np.zeros(n, bool)
+        if n:
+            zpet = [[] for _ in range(n)]
+            for u, nb in enumerate(self.adj):
+                for v, _ in nb: zpet[v].append(u)
+            def dosah(start, sousede):
+                vid = np.zeros(n, bool); vid[start] = True; z = [start]
+                while z:
+                    u = z.pop()
+                    for v in sousede(u):
+                        if not vid[v]: vid[v] = True; z.append(v)
+                return vid
+            hub = max(range(n), key=lambda u: len(self.adj[u]) + len(zpet[u]))
+            self.hlavni = dosah(hub, lambda u: (v for v, _ in self.adj[u])) & dosah(hub, lambda u: zpet[u])
 
     def node(self, p):
         k = (round(p[0] * 2), round(p[1] * 2))
@@ -58,7 +76,9 @@ class Graph:
     def snap(self, p, far=False):
         """nejbližší uzel do SNAP m; far=True: i dál (zastávka mimo mapu -> silnice na okraji mapy směrem k ní)"""
         if not len(self.arr): return None
-        d = np.hypot(self.arr[:, 0] - p[0], self.arr[:, 1] - p[1]); i = int(d.argmin())
+        d = np.hypot(self.arr[:, 0] - p[0], self.arr[:, 1] - p[1])
+        if far: d = np.where(self.hlavni, d, np.inf)
+        i = int(d.argmin())
         return i if far or d[i] <= SNAP else None
 
     def leg(self, a, b):

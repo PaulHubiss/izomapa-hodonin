@@ -28,10 +28,12 @@ http.createServer((q, r) => {
     let body = ''; q.on('data', (c) => { body += c; if (body.length > 1e5) q.destroy(); });
     q.on('end', () => {
       try {
-        const { slug, stav, komentar } = JSON.parse(body);
+        const { slug, stav, komentar, verze } = JSON.parse(body);
         if (!SLUG.test(String(slug)) || ![null, 'ok', 'predelat', 'pozdeji'].includes(stav ?? null)) throw new Error('neplatný slug nebo stav');
         const all = cti(RJ, {});
         all[slug] = { stav: stav ?? null, komentar: String(komentar || '').slice(0, 4000), kdy: new Date().toISOString() };
+        // otisk modelu, ke kterému rozhodnutí patří (počet trojúhelníků): jiný model = v dashboardu „nová verze“ nahoře
+        if (Number.isFinite(verze)) all[slug].verze = Math.round(verze);
         fs.writeFileSync(RJ, JSON.stringify(all, null, 1));
         r.writeHead(200, { 'content-type': 'application/json' }); r.end('{"ok":true}');
       } catch { r.writeHead(400); r.end(); }

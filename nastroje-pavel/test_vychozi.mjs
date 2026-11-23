@@ -1,4 +1,5 @@
-// Výchozí stav mapy pro nového návštěvníka (Pavel 2026-11-19, 2026-11-21): roční období podle kalendáře, den, skutečný čas NE, jasno, skutečné počasí NE,
+// Výchozí stav mapy pro nového návštěvníka (Pavel 2026-11-19, 2026-11-21, 2026-11-23): roční období podle kalendáře (v sezónním
+// startu z mesto.json zima se sněžením a pohled na jarmark), den, skutečný čas NE, jasno, skutečné počasí NE,
 // úsporný režim NE, předvolba Vše, Moje poloha zapnutá jen tomu, kdo ji už povolil.
 // node nastroje-pavel/test_vychozi.mjs   (běžící náhled na :8000)
 import { chromium } from './prohlizec.mjs';
@@ -38,16 +39,20 @@ over('zapnuté skutečné počasí si mapa pamatuje', (await stav(p1)).skutPocas
 await c1.close();
 
 // 1b. období podle kalendáře (Pavel 2026-11-21: žádná data u vzhledu, zima = výzdoba a Santa):
-// únor = zima s jarmarkem a bez padajícího sněhu, ručně zvolený podzim bez jarmarku; ručně zvolená zima v létě jarmark má
+// únor = zima s jarmarkem, ručně zvolený podzim bez jarmarku; ručně zvolená zima v létě jarmark má.
+// Sezónní start z mesto.json "sezonni_start" (Pavel 2026-11-23): 23. 11. – 29. 2. zima, sněžení a pohled na jarmark (náměstí)
 const xmasNa = (p) => p.evaluate(() => window.__izo.viewer.world._items.some((i) => /xmas/.test(i.source?.tilesUrl || i.source?.url || '')));
-for (const [datum, ceka] of [['2026-02-10', 'winter'], ['2026-04-10', 'spring'], ['2026-07-10', 'summer'], ['2026-11-21', 'autumn'], ['2026-12-01', 'winter']]) {
+const SEZONA = { '2026-02-10': 1, '2026-11-25': 1, '2026-12-01': 1 };
+const naNamesti = (p) => p.evaluate(() => { const at = location.hash.split('@')[1]?.split(',').map(Number) || []; return at.length >= 3 && Math.abs(at[0] - 48.8487) < 0.002 && Math.abs(at[1] - 17.1285) < 0.003 && at[2] < 0.6; });
+for (const [datum, ceka] of [['2026-02-10', 'winter'], ['2026-04-10', 'spring'], ['2026-07-10', 'summer'], ['2026-11-21', 'autumn'], ['2026-11-25', 'winter'], ['2026-12-01', 'winter']]) {
   const c = await b.newContext({ viewport: { width: 1400, height: 900 } });
   const p = await c.newPage(); p.on('pageerror', (e) => chyby.push(e.message));
   await p.clock.install({ time: new Date(`${datum}T10:00:00`) });
   await p.goto('http://localhost:8000/?vychozi', { waitUntil: 'load' }); await p.waitForTimeout(3000);
   const st = await stav(p);
-  let info = { ...st };
-  let v = st.obdobi === ceka && st.pocasi === 'clear';
+  const sez = !!SEZONA[datum], nam = await naNamesti(p);
+  let info = { ...st, naNamesti: nam };
+  let v = st.obdobi === ceka && st.pocasi === (sez ? 'snow' : 'clear') && nam === sez;
   if (datum === '2026-02-10') {
     const xz = await xmasNa(p); await p.click('[data-s="autumn"]'); await p.waitForTimeout(1500); const xp = await xmasNa(p);
     v = v && xz && !xp; info = { ...info, jarmarkZima: xz, jarmarkPodzim: xp };
@@ -56,7 +61,7 @@ for (const [datum, ceka] of [['2026-02-10', 'winter'], ['2026-04-10', 'spring'],
     await p.click('[data-s="winter"]'); await p.waitForTimeout(1500); const xz = await xmasNa(p);
     v = v && xz; info = { ...info, jarmarkZimaVLete: xz };
   }
-  over(`${datum}: ${ceka}, jasno`, v, JSON.stringify(info));
+  over(`${datum}: ${ceka}, ${sez ? 'sněžení, pohled na jarmark' : 'jasno, celé město'}`, v, JSON.stringify(info));
   await c.close();
 }
 

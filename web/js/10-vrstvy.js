@@ -236,7 +236,16 @@
     }, 400); });
     loadVisible();
   }
-  const HOME_VIEW = {{POHLED}}, HOME_ALL = {{DOMU_CELEK}}, OBEC = {{OBEC}};
+  // sezónní výchozí stav z mesto.json "sezonni_start" (Pavel 2026-11-23: zima se sněžením a skok na jarmark do konce února):
+  // platí jen v rozmezí od–do (MM-DD, může přes Nový rok) a jen bez odkazu s ročním obdobím / polohou; domů = jeho pohled
+  const SEZ = {{SEZONNI_START}};
+  const sezAktivni = (() => {
+    if (!SEZ || !SEZ.od || !SEZ.do) return false;
+    const md = (s) => +s.slice(0, 2) * 100 + +s.slice(3, 5), d = new Date(), t = (d.getMonth() + 1) * 100 + d.getDate();
+    const a = md(SEZ.od), b = md(SEZ.do);
+    return a <= b ? t >= a && t <= b : t >= a || t <= b;
+  })();
+  const HOME_VIEW = (sezAktivni && Array.isArray(SEZ.pohled) && SEZ.pohled) || {{POHLED}}, HOME_ALL = sezAktivni ? false : {{DOMU_CELEK}}, OBEC = {{OBEC}};
   const ROZSAH_MESTA = {{ROZSAH_MESTA}};   // obrys zástavby [[lat, lon], …] (mesto.json, nastroje-pavel/rozsah_mesta.py): na něj jde mapu oddálit
   function homeBounds() {
     const vis = LAYERS.filter((l) => shown(l.key));
@@ -672,8 +681,8 @@
   // skutečné počasí (když je zapnuté) sníh přidá samo.
   const obdobiKalendar = ['winter', 'spring', 'summer', 'autumn'][Math.floor(((new Date().getMonth() + 1) % 12) / 3)];
   const odKalendare = !hashTokens.some((t) => SEASON_TOKEN[t]);
-  if (odKalendare) state.season = obdobiKalendar;
-  setSeason(state.season); setWeather(odKalendare ? 'clear' : state.weather); applyRealWeather();
+  if (odKalendare) state.season = sezAktivni && SEZ.obdobi ? SEZ.obdobi : obdobiKalendar;
+  setSeason(state.season); setWeather(odKalendare ? (sezAktivni && SEZ.pocasi ? SEZ.pocasi : 'clear') : state.weather); applyRealWeather();
   $('night').value = Math.round(state.night * 100);
   $('night').addEventListener('input', (e) => { state.night = e.target.value / 100; $('realTime').checked = false; saveRT(false); applyTime(); });
   // denní doba podle skutečné výšky slunce nad městem (zapíná se volitelně, pamatuje si to prohlížeč)

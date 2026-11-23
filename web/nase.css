@@ -516,3 +516,30 @@ details.nb-sbal .muted { margin-top: 6px; }
   .nb-rail button span { display: none; }                   /* nízké okno: lišta jen s ikonami */
   .nb-rail button { padding: 7px 0; }
 }
+
+/* bublina pro nového návštěvníka: ukazuje na Vzhled (Pavel 2026-11-23, web/nase.js) */
+.nb-bublina {
+  position: fixed; z-index: 60; width: 248px; padding: 12px 34px 12px 14px;
+  background: rgba(16, 26, 38, .94); border: 1px solid var(--nb-zlata); border-radius: var(--nb-r);
+  box-shadow: var(--nb-stin); color: #eef3f8; font-size: 14px; line-height: 1.4;
+  opacity: 0; transform: translateX(-6px); transition: opacity .35s, transform .35s; pointer-events: none;
+}
+.nb-bublina.dole { transform: translateY(6px); }
+.nb-bublina.vidi { opacity: 1; transform: none; pointer-events: auto; }
+.nb-bublina p { margin: 0; }
+.nb-bublina b { display: block; color: var(--nb-zlata); margin-bottom: 2px; }
+.nb-bublina strong { color: #fff; }
+.nb-bublina-sipka {                                         /* šipka doleva (počítač) nebo dolů (telefon) */
+  position: absolute; left: -8px; width: 14px; height: 14px; transform: rotate(45deg);
+  background: rgba(16, 26, 38, .94); border-left: 1px solid var(--nb-zlata); border-bottom: 1px solid var(--nb-zlata);
+}
+.nb-bublina.dole .nb-bublina-sipka { top: auto !important; bottom: -8px; border-left: 0; border-top: 0; border-right: 1px solid var(--nb-zlata); }
+.nb-bublina-x {
+  position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; padding: 3px;
+  background: none; border: 0; color: #c8d3de; cursor: pointer; border-radius: var(--nb-r2);
+}
+.nb-bublina-x:hover { background: var(--nb-plocha-2); color: #fff; }
+.nb-bublina-x svg { width: 100%; height: 100%; }
+.nb-rail button.nb-pulz { animation: nb-pulz 1.4s ease-in-out 2; }
+@keyframes nb-pulz { 50% { box-shadow: 0 0 0 4px rgba(242, 198, 109, .55); } }
+@media (prefers-reduced-motion: reduce) { .nb-bublina, .nb-rail button.nb-pulz { transition: none; animation: none; } }

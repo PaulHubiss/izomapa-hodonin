@@ -21,6 +21,7 @@
   .head b { font-size: 16px; }
   .tag { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--bg); color: var(--mute); }
   .tag.ok { color: var(--acc); } .tag.predelat { color: var(--warn); } .tag.pozdeji { color: var(--info); }
+  .tag.nova { color: var(--bg); background: var(--warn); font-weight: 600; }
   .meta { color: var(--mute); font-size: 13px; }
   .imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
   .side { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
@@ -52,6 +53,7 @@
   <h1>Památky – vlastní modely, před a po <span id="mesto"></span> <span class="meta" id="sum"></span></h1>
   <div class="bar" id="roz" style="margin-bottom:6px"></div>
   <div class="bar" id="sk"></div>
+  <div class="bar" id="raz" style="margin-top:6px"></div>
 </header>
 <main id="list"></main>
 <div id="lb" role="dialog" aria-modal="true"><img alt=""><div class="lbar"><button class="btn" id="lbt">Před ⟷ Po (mezerník)</button><span id="lbc"></span><button class="btn" id="lbx">Zavřít (Esc)</button></div></div>
@@ -61,6 +63,15 @@ let SK = {}, MAPA = 'http://127.0.0.1:8000/';
 const ROZ = { ok: 'Schváleno', predelat: 'Předělat', pozdeji: 'Později' };
 const FR = { neposouzeno: 'Neposouzeno', ok: 'Schváleno', predelat: 'Předělat', pozdeji: 'Později' };
 let P = [], R = {}, fr = 'vse', fs = 'vse';
+// řazení (Pavel 2026-11-23: „ať nemusím rolovat až na konec stránky“): k posouzení nahoře, nebo nejnovější první
+const RAZ = { posoudit: 'Řadit: k posouzení nahoře', nove: 'Nejnovější první', puvodni: 'Původní pořadí' };
+let raz = 'posoudit';
+try { raz = localStorage.getItem('pamatky-razeni') || raz; } catch {}
+if (!(raz in RAZ)) raz = 'posoudit';
+const verzeOf = (e) => (e.stats || {}).trojuhelniku;
+// jiný model, než ke kterému patří rozhodnutí (u starších rozhodnutí otisk není → nepoznáme)
+const novaVerze = (e) => { const r = R[e.slug] || {}; return !!r.stav && r.verze != null && verzeOf(e) != null && r.verze !== verzeOf(e); };
+const poradi = (e) => novaVerze(e) || stavOf(e) === 'predelat' ? 0 : { neposouzeno: 1, pozdeji: 2, ok: 3 }[stavOf(e)] ?? 1;
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const mapy = (e) => `https://mapy.com/cs/letecka?x=${e.lon}&y=${e.lat}&z=19&m3d=1&height=160&yaw=45&pitch=-42`;   // jen k prohlédnutí, nikdy neobkreslovat
 const osm = (e) => `https://www.openstreetmap.org/?mlat=${e.lat}&mlon=${e.lon}#map=19/${e.lat}/${e.lon}`;
@@ -70,7 +81,7 @@ const stavOf = (e) => (R[e.slug] || {}).stav || 'neposouzeno';
 async function load() {
   const j = (u) => fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
   const [d, r, n] = await Promise.all([j('dashboard.json'), j('rozhodnuti.json'), j('nastaveni.json')]);
-  P = Object.values(d); R = r;
+  P = Object.values(d).map((e, i) => ({ ...e, _i: i })); R = r;   // _i = pořadí v dashboard.json (přibývá na konec = nejnovější)
   SK = Object.fromEntries([...new Set(P.map((e) => e.skupina || ''))].filter(Boolean).sort().map((k) => [k, k]));
   Object.assign(SK, n.skupiny || {});
   if (n.url) MAPA = n.url;
@@ -80,9 +91,9 @@ async function load() {
 function chips(el, opts, cur, set, count) {
   el.innerHTML = '';
   for (const [k, v] of Object.entries({ vse: 'Vše', ...opts })) {
-    const n = count(k); if (k !== 'vse' && !n) continue;
+    const n = count(k); if (k !== 'vse' && n === 0) continue;   // count vrací null = bez počtu (přepínač řazení)
     const b = document.createElement('button'); b.className = 'chip'; b.setAttribute('aria-pressed', cur === k);
-    b.innerHTML = `${esc(v)}<span class="n">${n}</span>`; b.onclick = () => { set(k); render(); }; el.append(b);
+    b.innerHTML = `${esc(v)}${n == null ? '' : `<span class="n">${n}</span>`}`; b.onclick = () => { set(k); render(); }; el.append(b);
   }
 }
 function render() {
@@ -91,8 +102,11 @@ function render() {
   chips(document.getElementById('sk'), SK, fs, (k) => { fs = k; }, (k) => P.filter((e) => okS(e, k) && okR(e)).length);
   const hotovo = P.filter((e) => e.stats).length, ok = P.filter((e) => stavOf(e) === 'ok').length, presk = P.filter((e) => !e.ma_model && e.preskocit).length;
   document.getElementById('sum').textContent = `· ${P.length} položek · s modelem ${hotovo} · schváleno ${ok}${presk ? ` · vynecháno ${presk}` : ''}`;
+  chips(document.getElementById('raz'), RAZ, raz, (k) => { raz = k === 'vse' ? 'posoudit' : k; try { localStorage.setItem('pamatky-razeni', raz); } catch {} }, () => null);
+  document.querySelector('#raz .chip')?.remove();   // „Vše“ tu nedává smysl
   const L = document.getElementById('list'); L.innerHTML = '';
-  for (const e of P) {
+  const S = raz === 'puvodni' ? P : [...P].sort((a, b) => (raz === 'posoudit' ? poradi(a) - poradi(b) : 0) || b._i - a._i);
+  for (const e of S) {
     if (!okR(e) || !okS(e)) continue;
     if (!e.ma_model && e.preskocit) continue;   // vynechané ("preskocit" v pamatky/<slug>.json, např. z mapy nejde vidět) – jen v souhrnu
     const r = R[e.slug] || {}, t = e.snimky || 0, st = e.stats || {};
@@ -101,6 +115,7 @@ function render() {
     c.innerHTML = `
       <div class="head"><b>${esc(e.nazev)}</b><span class="tag">${esc(SK[e.skupina] || e.skupina)}</span>
         ${r.stav ? `<span class="tag ${r.stav}">${ROZ[r.stav]}</span>` : ''}
+        ${novaVerze(e) ? '<span class="tag nova">nová verze modelu – posuď znovu</span>' : ''}
         <span class="meta">${st.trojuhelniku ? `${st.trojuhelniku.toLocaleString('cs')} trojúhelníků` : 'model zatím není'}</span></div>
       <div class="meta">${e.uskp ? `<a href="${kat(e)}" target="_blank" rel="noopener">Památkový katalog ${esc(e.uskp)}</a> · ` : ''}${e.wikidata ? `<a href="https://www.wikidata.org/wiki/${esc(e.wikidata)}" target="_blank" rel="noopener">Wikidata</a> · ` : ''}<a href="${osm(e)}" target="_blank" rel="noopener">OpenStreetMap</a> · <a href="${mapy(e)}" target="_blank" rel="noopener" title="Jen k prohlédnutí. Z Mapy.cz, Google ani Apple Maps se nesmí obkreslovat.">Mapy.cz 3D (jen prohlédnout)</a> · <a href="${izo(e)}" target="_blank" rel="noopener">na mapě</a></div>
       ${e.stats ? `<div class="imgs">
@@ -119,7 +134,7 @@ function render() {
       </div>`;
     const ta = c.querySelector('textarea'), sv = c.querySelector('.saved');
     const save = async (stav) => {
-      const cur = R[e.slug] || {}; const body = { slug: e.slug, stav: stav !== undefined ? stav : (cur.stav ?? null), komentar: ta.value };
+      const cur = R[e.slug] || {}; const body = { slug: e.slug, stav: stav !== undefined ? stav : (cur.stav ?? null), komentar: ta.value, verze: verzeOf(e) };
       const ok = await fetch('/rozhodnuti', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((x) => x.ok).catch(() => false);
       if (ok) { R[e.slug] = { ...body, kdy: new Date().toISOString() }; sv.textContent = 'uloženo'; } else sv.textContent = 'neuloženo!';
       c.querySelectorAll('.btn').forEach((x) => x.setAttribute('aria-pressed', x.dataset.s === R[e.slug]?.stav));

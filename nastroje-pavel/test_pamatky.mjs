@@ -50,6 +50,15 @@ const fotky = await p.evaluate(() => window.__izo.PAMATKY.filter((q) => q.foto).
 }).filter(Boolean));
 console.log(fotky.length ? `❌ karty bez správného popisku fotky: ${fotky.join(' | ')}` : '✅ všech 19 karet: fotka, autor, licence a odkaz na Commons');
 if (fotky.length) process.exitCode = 1;
+// párování jen téhož druhu (2026-11-24): kostel sv. Metoděje nemá fotku hřbitova, hřbitov má vlastní ikonku památky; ostatní dvojice zůstaly
+const par = await p.evaluate(() => { const z = window.__izo, V = (n) => z.VEREJNA.find((v) => v.nazev === n), P = (n) => z.PAMATKY.find((q) => q.nazev === n);
+  z.showVerejne(V('Kostel sv. Metoděje'));
+  return { metodejBezFotky: document.querySelector('#cardFoto').hidden, hrbitovSeHrbitovem: P('Městský hřbitov Hodonín').uVer?.druh === 'Hřbitov',
+           zamek: V('Masarykovo Muzeum v Hodoníně').pam?.nazev === 'Zámek Hodonín', skola: V('ZŠ Mírové Náměstí').pam?.nazev === 'Základní škola',
+           galerie: V('Galerie výtvarného umění v Hodoníně').pam?.nazev === 'Galerie Dům umění' }; });
+const parOk = Object.values(par).every(Boolean);
+console.log(parOk ? '✅ památky spárované jen s místem téhož druhu' : `❌ párování památek: ${JSON.stringify(par)}`);
+if (!parOk) process.exitCode = 1;
 // přepínač vrstvy
 await p.evaluate(() => { const c = document.querySelector('#l-pam'); c.checked = false; c.dispatchEvent(new Event('change')); });
 const poVypnuti = await p.evaluate(() => [...document.querySelectorAll('.pin.kat-pamatky')].filter((e) => e.offsetParent).length);

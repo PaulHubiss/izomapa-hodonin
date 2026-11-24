@@ -44,7 +44,7 @@
    {"nazev": "rybník Lavor", "bod": [48.84391, 17.13517], "typy": ["pramice", "rybar", "rybar"]}]},
  "skryte_casti": ["Brněnské náměstí", "Hodonín"],
  "hasici": {"kraj": 116, "okres": 3706, "dni": 7},
- "vyluky": {"oblast": "Hodonínsko"},
+ "vyluky": {"oblast": "Hodonínsko", "vlaky": ["R13", "S9", "S52", "S91"]},
  "hlaseni": true,
  "dnes": {"nadpis": "Dnes v Hodoníně"},
  "kamery": [

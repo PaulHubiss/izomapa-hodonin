@@ -8,7 +8,8 @@ const KOREN = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..'
 const b = await chromium.launch({ args: ['--use-angle=metal'] });
 const p = await (await b.newContext({ viewport: { width: 1400, height: 900 } })).newPage();
 const chyby = []; p.on('pageerror', (e) => chyby.push(e.message));
-await p.goto('http://localhost:8000/?ladeni#leto', { waitUntil: 'load' });
+// pohled v adrese: od 2026-11-23 mapa v zimě startuje zblízka u jarmarku (sezonni_start) a kolečko by přes výchozí pohled nedošlo
+await p.goto('http://localhost:8000/?ladeni#leto@48.8573,17.1240,5.0', { waitUntil: 'load' });
 await p.waitForSelector('#ladeni', { timeout: 30000 });
 await p.waitForTimeout(2000);
 await p.mouse.move(1150, 250);                                  // vpravo nahoře nad mapou (vlevo je panel): u okraje se uplatní omezení pohledu

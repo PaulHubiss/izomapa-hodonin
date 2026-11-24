@@ -1,0 +1,58 @@
+{
+ "skupina": "8. výběr (ChatGPT)",
+ "zdroj": "Pavel 2026-11-24: 8. výběr, zbylé výškové domy a další budovy (napady/CHATGPT-DAVKA-8.md); skupina = jedna stavba s více budovami",
+ "davky": {
+  "a": {
+   "Paneláky Lesní": ["b4906914", "cab36084", "23bc4226", "9147f70e"],
+   "Věžák Bří Čapků": ["20ea38ab"],
+   "Domy Bří Čapků 3273 a 3920": ["c8f1ac3a", "0ddd34c8", "0cf332da"],
+   "Paneláky Brandlova sever": ["b65f4976", "7183f2e7", "f1396cf2", "d45f1caa"],
+   "Paneláky Brandlova jih": ["2f22c6f4", "c5ff4345"],
+   "Paneláky Sídlištní": ["dfef86c1", "c745fe2e"]
+  },
+  "b": {
+   "Paneláky Polní": ["673fb481", "55df6f75", "ef874f93"],
+   "Paneláky Očovská": ["b6c19271", "9037c6b3", "989cec24", "f8113f15"],
+   "Paneláky Vřesová": ["5aaed5bc", "3f093882", "8d2f3562", "c85a8337", "d70bc85f", "5725c7f9"],
+   "Paneláky Luční": ["71e0e461", "7c1670f7", "f191d443"]
+  },
+  "c": {
+   "Paneláky Jižní sever": ["7c430dd3", "428f7f74", "b9150dd2", "acd5fc65", "b1f47ad7", "8bcde68b"],
+   "Paneláky Jižní jih": ["bd323952", "2e8f91d3", "d17389d7", "837ce395", "265a4e97"],
+   "Bodové domy Javorová": ["f551d471", "1c10b38e", "24973c09"],
+   "Domy Slavíkova a Šafaříkova": ["fec8cf02", "7949b00a", "cf357055", "01c2907c", "f2abd05f"],
+   "Dům Očovská 4510": ["68e590cc"]
+  },
+  "d": {
+   "Věžáky Sadová": ["bee2639b", "7d26ee75", "18ada17e"],
+   "Věžáky Anenská": ["ad5710ec", "8b860c3f"],
+   "Věžák Radniční": ["4c1ea22d"],
+   "Věžák Horní Valy": ["c071999f"],
+   "Věžáky Družstevní a Lipová": ["adb9cf4c", "7ee4e774", "1e6cf5e9"],
+   "Věžák Cihlářská čtvrť": ["d27f2473"]
+  },
+  "e": {
+   "Koupelní 3274": ["cac54627"],
+   "Koupelní 3759": ["38c2d5b8"],
+   "Pančava 3785": ["6372c0ca"],
+   "Plucárna 3560": ["6261ebe4", "9912f5d0"],
+   "Domov důchodců Na Pískách": ["e191fe73"],
+   "Bytový dům Kollárova 3995": ["8d44bb59"],
+   "Bytový dům Lipová alej 4086": ["9fcf8728"]
+  },
+  "f": {
+   "Nákupní středisko Marina": ["b63a24b9", "27b3e37b"],
+   "Rozmarýn": ["d5a944bb"],
+   "Lidl": ["f7906034"],
+   "Obchodní centrum Krátká": ["4786de07"],
+   "Lázně Měšťanská 3559": ["b13cc9bc"]
+  },
+  "g": {
+   "Beseda": ["f42ae738"],
+   "Dům Velkomoravská 378": ["93f1aec0"],
+   "Penzion Budvarka": ["9285e70a"],
+   "Evropa vlastní sál 1472": ["db8211c5"],
+   "iRO vnitřní hala": ["fd47e6bd"]
+  }
+ }
+}

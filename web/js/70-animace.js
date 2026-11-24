@@ -966,7 +966,8 @@
     VYL.list = d.vyluky; vylukyRender();
   }
   function vylukyRender() {
-    const naMape = new Set((MHD.routes || []).map((r) => linka(r[0])));
+    // vlaky z celostátního řádu mají v mapě číslo („Os 2700“), výluky linku IDS (S91): linky přes město jsou v mesto.json "vyluky.vlaky" (2026-11-24)
+    const naMape = new Set([...(MHD.routes || []).map((r) => linka(r[0])), ...(VYLUKY_CFG.vlaky || []).map(linka)]);
     VYL.rel = VYL.list.map((v) => ({ ...v, naMape: [...new Set(v.linky.filter((l) => naMape.has(linka(l))).map(linka))] }))
       .filter((v) => v.naMape.length || (VYLUKY_CFG.mesto && v.nazev.includes(VYLUKY_CFG.mesto)));
     vylBoxRender();

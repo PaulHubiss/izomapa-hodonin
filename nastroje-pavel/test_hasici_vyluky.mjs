@@ -14,6 +14,7 @@ const HASICI = { zdroj: 'https://udalosti.firebrno.cz/', udalosti: [
 const VYLUKY = { zdroj: 'https://www.idsjmk.cz/lockouts/all/current', vyluky: [
   { id: 4729, nazev: 'Výluka v Hodoníně - linky 664 a 912', od: iso(-500), do: iso(500), probiha: true, linky: ['664', '912'], url: 'https://www.idsjmk.cz/lockouts/detail/4729' },
   { id: 4743, nazev: 'Výluka na lince S91 v úseku Veselí nad Moravou - Myjava', od: iso(70), do: iso(120), probiha: false, linky: ['S91'], url: 'https://www.idsjmk.cz/lockouts/detail/4743' },
+  { id: 4722, nazev: 'Výluka na linkách S6 a R18 Veselí nad Moravou', od: iso(70), do: iso(120), probiha: false, linky: ['S6', 'R18'], url: 'https://www.idsjmk.cz/lockouts/detail/4722' },   // vlaky mimo Hodonín: ukázat se nesmí
   { id: 4700, nazev: 'Přesun zastávky Kyjov, ČSAD směr centrum', od: iso(-900), do: iso(900), probiha: true, linky: [], url: 'https://www.idsjmk.cz/lockouts/detail/4700' },
 ] };
 const d0 = new Date(); d0.setHours(23, 0, 0, 0);            // akce dnes ve 23:00 (vždy ještě nezačala, leda by zkouška běžela po 23. hodině)

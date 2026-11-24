@@ -7,7 +7,8 @@ v našem rendereru a pošle do dashboardu. Schvaluje dál jen Pavel.
 
 | krok | kdo | co |
 |---|---|---|
-| 1 | Claude | nové stavby: `pamatky/sestav.py --novy <slug> …`, `podklady_orto/laser/fotky/md.py <slug>` |
+| 0 | Claude | větší výběr a skupiny domů: `vybery/<číslo>.json` a `vyber.py` (kontrola, pak `--zapis` = body, kandidáti, sestav, oids) |
+| 1 | Claude | nové stavby: `pamatky/sestav.py --novy <slug> …` (po `vyber.py` odpadá), `podklady_orto/laser/fotky/md.py <slug>`, `popis.md` |
 | 2 | Claude | `node nastroje-pavel/chatgpt-modely/zabal.mjs <slug> [<slug> …] [--oprava=a,b]` → `predani/chatgpt/<balik>.zip`, text k vložení, Finder |
 | 3 | Pavel | zip do ChatGPT + text zadání, nechat pracovat, stáhnout `<balik>-od-chatgpt.zip` do Stažených souborů, napsat „hotovo“ |
 | 4 | Claude | `node nastroje-pavel/chatgpt-modely/prevezmi.mjs <balik>` (rozbalí, zkouška každé stavby), **přečte kód** |
@@ -57,5 +58,7 @@ v poznámkách. **Zakázané mapové služby** a jejich panoramata a 3D (Google,
 - **2026-11-20, dávky B, C, D (17 staveb)** – všechny tři vráceny za ~1 h souběžně, zkouška bez chyb. ChatGPT u smuteční
   síně dohledal projektovou dokumentaci města (řez se špicí 18,5 m) a sám poznal, že fotky ze Commons jsou z Kyjova.
   Zkouška u soch hlásila nesmyslné přesahy (drobná památka nemá půdorys) → opraveno v šabloně.
+- **2026-11-24:** číst poznámky i u modelů bez varování zkoušky – ChatGPT v nich hlásí chybné párování (Kino Svět). Zadání
+  teď chce `⚠️ PÁROVÁNÍ:` na prvním řádku a `prevezmi.mjs` podezřelé věty vypíše (🧭); opravit `oids` dřív než `--pouzij`.
 - Po pilotu (Pavel): dávky víc staveb, opravné kolo přes ChatGPT, poznámky rovnou jako `model.md` s kontrolním
   seznamem, hledání fotek s mantinely.

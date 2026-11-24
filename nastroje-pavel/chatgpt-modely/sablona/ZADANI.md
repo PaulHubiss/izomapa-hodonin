@@ -72,6 +72,17 @@ rendereru, s okny a stíny). Oprav přesně to, co komentář žádá, a zbytek 
 - **Barvy podle fotek, ale tlumené** (paleta mapy, ne syté). Tašky `#9c4a30`, břidlice `#4c535c`, plech `#7d8389`.
 - Hlavní úsilí do jižní a západní fasády a střechy; odvrácené strany věrohodně a jednodušeji.
 
+- **Stavba z víc budov** (`M.budovy` jich má víc): je to jedna stavba jednoho modelu. Projdi **všechny** budovy
+  v `M.budovy` (cyklus, ne jen `K.pudorys(0)`), u každé si délku, počet sekcí a výšku vezmi z jejího půdorysu a laseru.
+  Mapa se kreslí po čtvercích a v některém nemusí být v `M.budovy` všechny domy: nespoléhej na jejich počet ani pořadí
+  a chybějící dům prostě vynech (model nesmí spadnout).
+  Domy téhož typu mají stejné barvy, rytmus oken a lodžií; co se opravdu liší (barva po zateplení, tvar), rozliš podle fotek.
+- **Vzory ze stejného sídliště:** je-li ve `vzory/` schválený model téhož typu domu ve stejném sídlišti, drž jeho podání
+  (výška podlaží, okna, lodžie, atika, strojovny výtahů), ať sídliště působí jednotně. Barvy dál podle fotek.
+- **Ověř, že půdorys patří k názvu stavby** (adresa, ortofoto, fotky). Když je přiřazená **jiná budova**, nebo stavbě
+  **zjevně chybí část**, vymodeluj, co v datech je, a na **první řádek poznámek hned pod nadpis** napiš
+  `⚠️ PÁROVÁNÍ: ` a jednou větou co je špatně a která budova (adresa, oid z `podklad.md`) je správně.
+
 ## Kontrolní seznam (před odevzdáním každé stavby)
 
 1. `node zkouska.mjs <slug>` nehlásí ❌; každé ⚠️ je vysvětlené v poznámkách (např. „přesah = stříška vstupu“).

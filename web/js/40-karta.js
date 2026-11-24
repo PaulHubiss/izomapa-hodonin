@@ -203,9 +203,12 @@
   const nazevKlic = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
   for (const v of VEREJNA) { const p = OV.places.find((q) => nazevKlic(q.name) === nazevKlic(v.nazev) && geoM(q.lat, q.lon, v) < 150); if (p) { v.uMista = p; p.ver = v; } }
   // památka do 30 m od veřejného místa (kostel, muzeum): jedna ikonka v jeho kategorii, karta s fotkou a číslem památky
-  // (jen budovy: WC, parkoviště nebo park vedle sochy památkou nejsou)
+  // (jen budovy: WC, parkoviště nebo park vedle sochy památkou nejsou; hřbitov, socha, sloup… jen s místem téhož druhu –
+  // kostel sv. Metoděje 19 m od bodu Městského hřbitova měl jeho fotku a číslo, 2026-11-24)
+  const DRUH_PAM = /hřbitov|soch|sousoší|sloup|pomník|památník|náhrob|kašn/i;
+  const druhPam = (s) => (DRUH_PAM.exec(s) || [''])[0].toLowerCase();
   for (const v of VEREJNA) { if (v.uMista || ['sluzby', 'doprava', 'priroda'].includes(v.skupina)) continue; let best = null, bd = 30;
-    for (const m of PAMATKY) { if (m.uMista || m.uVer) continue; const d = geoM(v.lat, v.lon, m); if (d < bd) { best = m; bd = d; } }
+    for (const m of PAMATKY) { if (m.uMista || m.uVer || druhPam(m.nazev) !== druhPam(`${v.nazev} ${v.druh || ''}`)) continue; const d = geoM(v.lat, v.lon, m); if (d < bd) { best = m; bd = d; } }
     if (best) { v.pam = best; best.uVer = v; } }
   const placeCard = (p) => {
     const pm = p.pam, v = p.ver && verRadky(p.ver);

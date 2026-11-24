@@ -36,6 +36,11 @@ if (!pouzijArg) {
     fs.copyFileSync(js, path.join(BAL, `${s}.js`));                                  // zkouška chce model vedle _kit.js
     const z = spawnSync(process.execPath, ['zkouska.mjs', s], { cwd: BAL, encoding: 'utf8' });
     console.log(`=== ${s} ===\n${z.stdout}${z.stderr || ''}`);
+    // varování ChatGPT, že model stojí na jiné budově (Kino Svět 2026-11-23 takhle prošlo nepovšimnuté): opravit oids dřív než --pouzij
+    const pozn = fs.existsSync(path.join(OD, `${s}.md`)) ? fs.readFileSync(path.join(OD, `${s}.md`), 'utf8') : '';
+    const par = pozn.split('\n').filter((l) => /PÁROVÁNÍ|párování|chybn[ýéě] |omylem|nesprávn|jiná budova/i.test(l) && !/^\*\*Kontrolní/.test(l));
+    for (const l of par) console.log(`🧭 ${s}: ${l.slice(0, 400)}`);
+    if (par.length) console.log('');
   }
   // bezpečnostní kontrola kódu (kontrola_kodu.mjs): jen M, K a matematika; ❌ = ten model přečíst celý
   const js = stavby.map((s) => path.join(OD, `${s}.js`)).filter((f) => fs.existsSync(f));

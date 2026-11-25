@@ -179,19 +179,22 @@
     return { rows, ted };
   }
   function tedBarva(ted) { const e = $('cardOhTed'); if (ted && e) e.className = `oh-ted ${ted[0] ? 'otevreno' : 'zavreno'}`; }
+  // místo s termínem (jarmark): po posledním dni (termin_do) karta nemá starý termín ani prázdný program, text je text_po
+  // (Pavel 2026-11-25). Dokud je na stránce ještě nějaká akce (Vánoční burácení 24. 12.), program zůstává.
+  const poTerminu = (p) => !!p.termin_do && Date.now() >= new Date(`${p.termin_do}T23:59:59`).getTime();
   function showVerejne(p, b) {
     if (p.uMista) { placeCard(p.uMista); return; }
     b = p.vanoce ? null : b || budovaMista(p);               // jarmark stojí na náměstí, ne v budově
     state.sel = b || null;                                   // budova v obrysu se zvýrazní stejně jako po kliku na ni
     const { rows: oh, ted } = verRadky(p), pm = p.pam, kt = (b && b.kat) || {};
-    const rows = [['Druh', p.druh], ...(pm ? [['Kulturní památka', `ÚSKP ${pm.uskp}`]] : []), ['Adresa', p.adresa], ['Termín', p.termin], ...oh, ['Telefon', p.telefon],
+    const rows = [['Druh', p.druh], ...(pm ? [['Kulturní památka', `ÚSKP ${pm.uskp}`]] : []), ['Adresa', p.adresa], ['Termín', poTerminu(p) ? null : p.termin], ...oh, ['Telefon', p.telefon],
       ...(b ? budovaRadky(b) : [])];
     const overeno = p.overeno ? new Date(p.overeno).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric' }) : null;
     const extra = [p.web && [p.web, 'Web'], p.zdroj && p.zdroj !== p.web && [p.zdroj, 'Zdroj otevírací doby'], ...(pm ? pamLinks(pm) : []),
       p.osm && [p.osm, 'Údaje v OpenStreetMap'],
       kt.kod && [`https://vdp.cuzk.gov.cz/vdp/ruian/stavebniobjekty/${kt.kod}`, 'Údaje v katastru (RÚIAN)']].filter(Boolean);
     showCard({ title: p.nazev, ohPozn: overeno ? `podle webu ${new URL(p.zdroj || p.web).hostname.replace(/^www\./, '')}, ověřeno ${overeno}` : '',
-      text: p.text, rows, lon: p.lon, lat: p.lat, k: p.k, extra, kind: 6, foto: pm && pm.foto ? { ...pm.foto, alt: pm.nazev } : null });
+      text: (poTerminu(p) && p.text_po) || p.text, rows, lon: p.lon, lat: p.lat, k: p.k, extra, kind: 6, foto: pm && pm.foto ? { ...pm.foto, alt: pm.nazev } : null });
     tedBarva(ted);
     if (b) vBudove(mistaVBudove(b).filter((m) => m.p !== p), b, 'V budově také');
     if (p.program) showProgram(p);                           // kino (Pavel 2026-11-20), stejně jako příběh DK
@@ -233,6 +236,7 @@
   async function showProgram(p) {
     const karta = state.card, d = await programAkce(p.program);
     if (!d || !karta || state.card !== karta || $('card').hidden) return;   // mezitím jiná nebo zavřená karta
+    if (!d.akce.length && poTerminu(p)) return;             // po skončení bez prázdného programu
     // dlouhý program (jarmark: ~50 vystoupení na jedné stránce): pod nejbližšími pěti sbalený zbytek, bez odkazu u každého řádku
     const dlouhy = d.akce.some((a) => a.druh === 'jarmark'), zbytek = dlouhy ? d.akce.slice(5) : [];
     const akce = d.akce.slice(0, 5);

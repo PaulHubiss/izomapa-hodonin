@@ -63,6 +63,20 @@ over('Vrstvy: přepínač výzdoby není (Pavel 2026-11-25)', await p.evaluate((
 const dnes = await p.evaluate(() => [...document.querySelectorAll('#dnes li')].map((l) => l.textContent));
 over('Dnes: vystoupení jarmarku jednotlivě, akce DK zůstává, „Vánoční jarmark“ jako akce DK ne', dnes.some((t) => /Kapela Highland.*Vánoční jarmark/.test(t)) && dnes.some((t) => /Koncert v DK/.test(t)) && !dnes.some((t) => /^Vánoční jarmark/.test(t)), dnes);
 over('kluziště pryč z dat i z popisku', !(V.kluziste || []).length && !/kluzi/i.test(await p.evaluate(() => document.querySelector(String.fromCharCode(35) + "l-xmas").closest("label").textContent + document.body.innerText + document.querySelector('#l-xmas').closest('label').title)));
+// po skončení (Pavel 2026-11-25): 20. 12. večer ještě termín, 22. 12. bez termínu, ale s poslední akcí 24. 12., v lednu bez termínu i programu
+for (const [kdy, termin, program] of [['2026-12-20T21:00:00', true, true], ['2026-12-22T10:00:00', false, true], ['2027-01-10T12:00:00', false, false]]) {
+  const q = await b.newPage({ viewport: { width: 1280, height: 860 } });
+  q.on('pageerror', (e) => chyby.push(e.message));
+  await q.clock.setFixedTime(new Date(kdy));
+  await q.route('**/api/program*', (r2) => r2.fulfill({ contentType: 'application/json', body: JSON.stringify({ akce: /jarmark/.test(r2.request().url()) ? [...akce, den('24', '10:00', 'Vánoční burácení')] : [], zdroj: URL_J }) }));
+  await q.goto('http://localhost:8000/#zima@48.84870,17.12840,0.12', { waitUntil: 'load' }); await pripraveno(q); await q.waitForTimeout(1200);
+  await q.evaluate(() => window.__izo.showVerejne(window.__izo.VEREJNA.find((x) => x.vanoce))); await q.waitForTimeout(800);
+  const s = await q.evaluate(() => ({ nadpis: document.querySelector('#cardTitle').textContent, dl: document.querySelector('#cardDl').textContent, text: document.querySelector('#cardText').textContent,
+    program: !document.querySelector('#cardProgram').hidden, akce: [...document.querySelectorAll('#cardProgram li')].map((l) => l.textContent), odkaz: document.querySelector('#cardLinks').textContent }));
+  over(`karta ${kdy.slice(0, 10)}: ${termin ? 's termínem' : 'bez termínu'}, ${program ? 's programem' : 'bez programu'}`, s.nadpis === 'Vánoční jarmark' && /Termín/.test(s.dl) === termin
+    && s.program === program && /skončil/.test(s.text) === !termin && (!program || s.akce.some((t) => /burácení/.test(t))) && /Web/.test(s.odkaz), s);
+  await q.close();
+}
 // telefon: karta s rozbaleným programem nepřeteče do stran
 const m = await b.newPage({ viewport: { width: 390, height: 844 } });
 await m.clock.setFixedTime(new Date('2026-12-03T15:00:00'));

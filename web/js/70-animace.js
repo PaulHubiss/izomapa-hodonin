@@ -1084,14 +1084,18 @@
   const pcSvg = (c, den) => { const k = pcIk(c, den); return `<span class="pc-ik pc-${k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">`
     + PC_IK[k].replace(/\/>/g, ' vector-effect="non-scaling-stroke"/>') + '</svg></span>'; };
   const DNY_KR = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+  // Nepovedený dotaz (výpadek, odmítnutí, zaseknutí) se zkusí znovu za 10 s, pak za 20, 40 … nejvýš za 5 min; dřív až za 30 min
+  // a sekce Dnes zůstala bez počasí (Pavel 2026-11-25).
+  let pocasiPokus = 0, pocasiZnovu = 0;
   async function dnesPocasi() {
+    clearTimeout(pocasiZnovu);
     const d = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${OV.cam.lat0}&longitude=${OV.cam.lon0}`
       + '&current=temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m'
       + '&hourly=temperature_2m,weather_code,precipitation_probability,is_day'
-      + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=7')
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=7', { signal: AbortSignal.timeout(15000) })
       .then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    if (!d || !d.current || !d.daily || !d.hourly) return;
-    DNES.pocasi = d;
+    if (!d || !d.current || !d.daily || !d.hourly) { pocasiZnovu = setTimeout(dnesPocasi, Math.min(300, 10 * 2 ** pocasiPokus++) * 1000); return; }
+    pocasiPokus = 0; DNES.pocasi = d;
     dnesRender();
   }
   function pocasiRender() {

@@ -29,9 +29,16 @@ if (!pouzijArg) {
   const r = spawnSync('unzip', ['-qo', '-j', zip, '-d', OD]);                        // -j: bez složek
   if (r.status !== 0) { console.log('❌ rozbalení selhalo', String(r.stderr)); process.exit(1); }
   console.log(`📦 ${zip} (${new Date(fs.statSync(zip).mtimeMs).toLocaleString('cs-CZ')}) → ${path.relative(ROOT, OD)}: ${fs.readdirSync(OD).join(', ')}\n`);
+  // bezpečnostní kontrola kódu (kontrola_kodu.mjs) PŘED zkouškou, která model spouští (do 2026-11-25 byla až po ní);
+  // jen M, K a matematika; ❌ = ten model se nespustí a musí se přečíst celý
+  const js0 = stavby.map((s) => path.join(OD, `${s}.js`)).filter((f) => fs.existsSync(f));
+  const kk = spawnSync(process.execPath, [path.join(ROOT, 'nastroje-pavel/chatgpt-modely/kontrola_kodu.mjs'), ...js0], { encoding: 'utf8' });
+  console.log(`=== bezpečnost kódu ===\n${kk.stdout}`);
+  const zakazane = new Set([...kk.stdout.matchAll(/^❌ (\S+)\.js/gm)].map((m) => m[1]));
   for (const s of stavby) {
     const js = path.join(OD, `${s}.js`);
     if (!fs.existsSync(js)) { console.log(`❌ ${s}: v zipu chybí ${s}.js\n`); continue; }
+    if (zakazane.has(s)) { console.log(`❌ ${s}: neprošel kontrolou kódu, nespouštím\n`); continue; }
     if (!fs.existsSync(path.join(OD, `${s}.md`))) console.log(`⚠️ ${s}: v zipu chybí poznámky ${s}.md`);
     fs.copyFileSync(js, path.join(BAL, `${s}.js`));                                  // zkouška chce model vedle _kit.js
     const z = spawnSync(process.execPath, ['zkouska.mjs', s], { cwd: BAL, encoding: 'utf8' });
@@ -42,10 +49,6 @@ if (!pouzijArg) {
     for (const l of par) console.log(`🧭 ${s}: ${l.slice(0, 400)}`);
     if (par.length) console.log('');
   }
-  // bezpečnostní kontrola kódu (kontrola_kodu.mjs): jen M, K a matematika; ❌ = ten model přečíst celý
-  const js = stavby.map((s) => path.join(OD, `${s}.js`)).filter((f) => fs.existsSync(f));
-  const kk = spawnSync(process.execPath, [path.join(ROOT, 'nastroje-pavel/chatgpt-modely/kontrola_kodu.mjs'), ...js], { encoding: 'utf8' });
-  console.log(`=== bezpečnost kódu ===\n${kk.stdout}`);
   console.log(`Další krok: ${kk.status ? 'přečíst modely s ❌ celé, ' : ''}přečíst modely s varováním zkoušky, pak prevezmi.mjs ${balik} --pouzij`);
   process.exit(0);
 }

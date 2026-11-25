@@ -67,9 +67,19 @@ DMP.update(UP.get('dmp', {}))                                 # ruční doplněn
 # (pamatky/pred_po.mjs zapíše pamatky/vrsky.json; oid v seznamu stačí začátkem). Do dlaždic jdou jen modely schválené
 # v dashboardu (pamatky/schvalene.json), proto i vršky jen jejich.
 PAM_SCHV = set(json.load(open('pamatky/schvalene.json', encoding='utf-8'))) if os.path.exists('pamatky/schvalene.json') else set()
-PAM_VRSKY = [(o, v['vrsek']) for s_, v in (json.load(open('pamatky/vrsky.json', encoding='utf-8')).items() if os.path.exists('pamatky/vrsky.json') else [])
-             if s_ in PAM_SCHV for o in v.get('oids', []) if o]
-def pam_vrsek(key): return next((v for o, v in PAM_VRSKY if str(key).startswith(o)), None)
+# Model skupiny domů (víc oids) má jeden společný vršek: platí jen pro nejvyšší dům podle měření, ostatní mají svou změřenou
+# výšku (p90 nad terénem + 0,6 m na hřeben), jinak by nízký dům měl obrys vysokého souseda a zakrýval, co je za ním (2026-11-25).
+PAM_VRSKY = []
+for s_, v in (json.load(open('pamatky/vrsky.json', encoding='utf-8')).items() if os.path.exists('pamatky/vrsky.json') else []):
+    oids_ = [o for o in v.get('oids', []) if o]
+    if s_ not in PAM_SCHV: continue
+    mer_ = {o: max((h[1] for k, h in DMP.items() if k.startswith(o) and h and h[1]), default=None) for o in oids_} if len(oids_) > 1 else {}
+    nej_ = max((o for o in oids_ if mer_.get(o)), key=lambda o: mer_[o], default=None)
+    PAM_VRSKY += [(o, v['vrsek'], mer_.get(o) if nej_ is not None and o != nej_ else None) for o in oids_]
+def pam_vrsek(key, gnd, vlastni):                              # vlastni = vršek domu podle dat (terén + okap + střecha)
+    for o, v, mer in PAM_VRSKY:
+        if str(key).startswith(o): return v if mer is None else min(v, max(vlastni, gnd + mer) + 0.6)
+    return None
 
 
 def h01(s):
@@ -1423,7 +1433,7 @@ for _, r in bld.iterrows():
         if dsp:
             top_ = b['e'] + (b['rh'] if b['r'] != 'flat' else 0.0)
             if b.get('dz'): top_ = max(top_, b['e'] + max(q[6] for q in b['dz']))
-        pam_ = pam_vrsek(key)                                          # vlastní model památky: vršek modelu (i s věží)
+        pam_ = pam_vrsek(key, gnd, top_)                                        # vlastní model památky: vršek modelu (i s věží)
         if pam_ is not None: top_ = pam_
         binfo.append({'id': bid, 'oid': key, 'name': nm, 'cls': CLS_CZ.get(c, 'budova' if not c else c), 'floors': floors,
                       'h': round(total, 1), 'roof': rs, 'addr': adrs, 'lon': round(float(lon), 6), 'lat': round(float(lat), 6),

@@ -248,6 +248,7 @@
       const poly = (pts) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(ox + x * sx, oy + y * sx) : ctx.moveTo(ox + x * sx, oy + y * sx))); ctx.closePath(); ctx.fill(); };
       for (const S of stalls) {
         if (!vis(S.c[0], S.c[1], 60)) continue;
+        vyrez(S, sx, ox, oy, () => {
         ctx.globalAlpha = a * 0.28; ctx.fillStyle = '#ffc870'; poly(S.pool);
         ctx.globalAlpha = a * 0.9; ctx.fillStyle = '#ffd98a'; poly(S.win);
         S.bulbs.forEach(([bx, by], i) => {
@@ -255,7 +256,23 @@
           ctx.fillStyle = i % 2 ? '#fff0b0' : '#ff5a40';
           ctx.fillRect(Math.round(ox + bx * sx - k / 2), Math.round(oy + by * sx - k / 2), k, k);
         });
+        });
       }
+      ctx.globalAlpha = 1;
+    }
+    // pódium večer: osvětlená deska a plocha před ní, barevná světla pod střechou (pomalé střídání)
+    if (xm && night > 0.25 && sx > 0.15) for (const Q of podia) if (vis(Q.c[0], Q.c[1], 100)) {
+      const a = Math.min(1, (night - 0.25) / 0.35), k = Math.max(1, Math.round(sx * 2));
+      const poly = (pts) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(ox + x * sx, oy + y * sx) : ctx.moveTo(ox + x * sx, oy + y * sx))); ctx.closePath(); ctx.fill(); };
+      vyrez(Q, sx, ox, oy, () => {
+      ctx.fillStyle = '#ffc870'; ctx.globalAlpha = a * 0.3; poly(Q.deska);
+      });
+      // žárovky na střeše bez výřezu: obrysy domů jsou konvexní a zakrývaly by i místa vedle hřebene, kde je střecha pódia vidět
+      Q.svetla.forEach(([lx, ly], i) => {
+        ctx.globalAlpha = a * ((Math.floor(t * 0.8) + i) % 3 ? 1 : 0.5);
+        ctx.fillStyle = ['#ff5a48', '#ffd65a', '#62a6ff'][i % 3];
+        ctx.fillRect(Math.round(ox + lx * sx - k / 2), Math.round(oy + ly * sx - k / 2), k, k);
+      });
       ctx.globalAlpha = 1;
     }
     // vánoční strom: blikající světýlka (strom je ve vrstvě výzdoby)

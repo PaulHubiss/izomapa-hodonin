@@ -1,0 +1,315 @@
+{
+ "skupina": "9. výběr (ChatGPT)",
+ "zdroj": "Pavel 2026-11-25: další větší sada (napady/CHATGPT-DAVKA-9.md); skupina = jedna stavba s více budovami",
+ "davky": {
+  "a": {
+   "Náměstí u pódia 396–4514": [
+    "f5c2d22f",
+    "349334a8",
+    "a55677ee",
+    "fd98fa99"
+   ],
+   "Náměstí západ 391–393": [
+    "f1758916",
+    "ab273cf6",
+    "070e8f8d",
+    "064886cb"
+   ],
+   "Náměstí sever 259 a 1654": [
+    "e0a1d613",
+    "2190dbb3"
+   ],
+   "Náměstí východ 120–122": [
+    "19a09480",
+    "b471eeeb",
+    "015d0711"
+   ],
+   "Náměstí 115 a 117": [
+    "c525babb",
+    "f3138ea5"
+   ],
+   "Dům Jánošíkova 92": [
+    "e77ec86c"
+   ]
+  },
+  "b": {
+   "Národní 387–390": [
+    "9cb81044",
+    "d6c037ac",
+    "0ef65873",
+    "3af64a1f"
+   ],
+   "Národní 383–386": [
+    "a1ad2996",
+    "0d050978",
+    "e59e6707",
+    "272d0eb1"
+   ],
+   "Národní 262 a 1456": [
+    "0e6386da",
+    "c9e17165"
+   ],
+   "Národní 266": [
+    "e8bdee40"
+   ],
+   "Národní 267": [
+    "73b28fbe"
+   ]
+  },
+  "c": {
+   "Národní 372 a 373": [
+    "bd7caf06",
+    "1edb4d23"
+   ],
+   "Národní 297 a 298": [
+    "3784e12d",
+    "395b07f2",
+    "9a04f601"
+   ],
+   "Národní 300, 301 a 452": [
+    "a279097d",
+    "cc5a20c9",
+    "dbd62b1c"
+   ],
+   "Národní 362–368": [
+    "f6267ef9",
+    "84bb2422",
+    "825c04c1",
+    "e546a372",
+    "d3888734"
+   ],
+   "Národní 357–360": [
+    "9cd06189",
+    "3a196a26",
+    "e4c8ffad",
+    "ce1d1c59",
+    "aa60910e"
+   ],
+   "Národní 3200": [
+    "c94531f7"
+   ]
+  },
+  "d": {
+   "Národní 351 a 3572–3574": [
+    "5770638d",
+    "c81a1493",
+    "2f70089f"
+   ],
+   "Národní 3798": [
+    "28502f7b"
+   ],
+   "Národní 338–343": [
+    "29fefaab",
+    "da61a2f9",
+    "2f81a0be",
+    "2f9ad536",
+    "8c0ba4f0",
+    "4a50f020"
+   ],
+   "Národní 335 a 3539": [
+    "038b5ee6",
+    "0de9310e"
+   ],
+   "Národní 1754, 493 a 1872": [
+    "7ca861ee",
+    "2cf47082",
+    "5bb58fa0"
+   ],
+   "Bytový dům Brněnská 726": [
+    "e5057c54"
+   ]
+  },
+  "e": {
+   "Dukelských hrdinů 3653": [
+    "9d8914ea"
+   ],
+   "Velkomoravská 2202": [
+    "1ef1b6d8"
+   ],
+   "Velkomoravská 2269": [
+    "256469dd"
+   ],
+   "Velkomoravská 1051": [
+    "10a20c47"
+   ],
+   "Úprkova 807": [
+    "e439a08c"
+   ],
+   "Sv. Čecha 3844": [
+    "e35e6b47"
+   ],
+   "Tyršova 3214 a 3362": [
+    "e6563787",
+    "41a65c07"
+   ]
+  },
+  "f": {
+   "Štefánikova 4083": [
+    "7e9e1e91"
+   ],
+   "Štefánikova 1655": [
+    "b663af05"
+   ],
+   "Dobrovolského 126 a 800": [
+    "e5379f67",
+    "cc3f8669"
+   ],
+   "Měšťanská 1686 a 1687": [
+    "03287636",
+    "b28970d4"
+   ],
+   "Dolní Valy 3739 a 3940": [
+    "6509b512",
+    "df344982"
+   ],
+   "Horní Valy 3859": [
+    "22331733"
+   ],
+   "Štefánikova 913": [
+    "2b481145"
+   ]
+  },
+  "g": {
+   "Družstevní čtvrť 3133–3144": [
+    "96144414",
+    "eb3c7509"
+   ],
+   "Cihlářská 3094 a 3124": [
+    "0b20baa7",
+    "61cd7f6d",
+    "d973c6c0"
+   ],
+   "Brandlova 3364 a 3405": [
+    "57b2bb12",
+    "5539b082",
+    "b9e7224d"
+   ],
+   "Jižní 3635 a 3645": [
+    "19169d88",
+    "c9e693af"
+   ],
+   "Jižní 3624": [
+    "66ee95d4"
+   ],
+   "Lesní 3750": [
+    "ca8b4830"
+   ]
+  },
+  "h": {
+   "U Červených domků 2870–2882": [
+    "aa6ceb82",
+    "b3eb0f3b",
+    "91f2f5bf",
+    "4a366646",
+    "2fa9d7a7"
+   ],
+   "Křičkova": [
+    "3fb92617",
+    "f03348be",
+    "79d3d3dc",
+    "62e4799d",
+    "961b3e9b",
+    "b1f990cf"
+   ],
+   "Erbenova sever": [
+    "ac86bbe2",
+    "a44468d6",
+    "6e448347"
+   ],
+   "Erbenova jih": [
+    "0f5861b6",
+    "fa87d3c8"
+   ],
+   "Lipová alej 3056–3062": [
+    "b325b46c",
+    "5be5b4d1"
+   ],
+   "P. Jilemnického 2854": [
+    "449986c5"
+   ]
+  },
+  "i": {
+   "Domy nám. B. Martinů": [
+    "63e0d71e",
+    "26c1877f",
+    "83f7e996",
+    "5ce41f4b"
+   ],
+   "Nám. B. Martinů 2951": [
+    "2c19c78c"
+   ],
+   "J. Suka sever": [
+    "a5e2963a",
+    "a6a4db7d",
+    "2ea66672",
+    "7d874e2d"
+   ],
+   "J. Suka jih": [
+    "37beba11",
+    "41f0bfd9",
+    "b3722ea9",
+    "059ab92a"
+   ],
+   "I. Olbrachta": [
+    "bf9e1939",
+    "521f5741"
+   ],
+   "Třída Bří Čapků 3498–3509": [
+    "fb84e40b",
+    "de24ad71",
+    "f3e4647c",
+    "497b8c80",
+    "332677de",
+    "0afae561"
+   ]
+  },
+  "j": {
+   "Brněnská 773 a 4104": [
+    "b61d13e7",
+    "09b4a143"
+   ],
+   "Brněnská 4105": [
+    "0435fa2b"
+   ],
+   "Čajkovského a Smetanova": [
+    "9edcc3ef",
+    "36b3335d",
+    "a4602f89"
+   ],
+   "M. Benky 4194": [
+    "12a19471"
+   ],
+   "Žižkova 4564": [
+    "ab0413ba"
+   ],
+   "Polní 4004": [
+    "be798220"
+   ],
+   "Penzion Lipovka": [
+    "35311afb"
+   ]
+  }
+ },
+ "poznamky_davky": {
+  "a": "Domy na Masarykově náměstí, kde mapa v zimě startuje (Vánoční jarmark). Západní řada (391–397, 1643) má průčelí na východ k náměstí, z mapy je vidět hlavně zadní strana do dvorů a střechy; východní řada ukazuje průčelí. Model musí dávat smysl ze všech stran. Pódium ani stánky nekresli, ty jsou ve zvláštní vrstvě. Fotky celého náměstí z Commons jsou společné a leží u stavby `namesti-u-podia-3964514` (severovýchod, východ, sever, celkové pohledy); u každého domu ověř, že ho na fotce opravdu máš.",
+  "b": "Řada domů na Národní třídě v centru. Sousední domy na sebe navazují, štítové zdi u sousedů bez oken, v přízemí čekej obchody a výlohy (ověř). Společné fotky ulice leží u `narodni-387390`. Čísla v názvech fotek jsou orientační, ne popisná: dům na fotce vždy ověř.",
+  "c": "Řada domů na Národní třídě v centru. Sousední domy na sebe navazují, štítové zdi u sousedů bez oken, v přízemí čekej obchody a výlohy (ověř). Společné fotky ulice leží u `narodni-362368`. Čísla v názvech fotek jsou orientační, ne popisná: dům na fotce vždy ověř.",
+  "d": "Severní část Národní třídy a okolí. Řadové domy navazují na sousedy, štítové zdi u sousedů bez oken. Společné fotky ulice leží u `narodni-338343`. Čísla v názvech fotek jsou orientační, ne popisná: dům na fotce vždy ověř.",
+  "e": "Samostatné veřejné a administrativní budovy v centru. Nejdřív zjisti, co v budově sídlí (adresa, oficiální web), a napiš to do poznámek.",
+  "f": "Budovy kolem centra. Nejdřív zjisti, co v budově sídlí (adresa, oficiální web), a napiš to do poznámek.",
+  "g": "Bytové domy na sídlištích (konstrukce podle tabulky). Schválené vzory ze stejných sídlišť jsou ve `vzory/`, drž stejné zpracování lodžií, atik a soklů, ať sídliště vypadá jednotně.",
+  "h": "Starší obytné domy (RÚIAN většinou 1960 a 1970), střechu každé skupiny ověř na ortofotu a laseru. Domy jedné ulice jsou si podobné, ať mají jednotné zpracování.",
+  "i": "Starší obytné domy (RÚIAN většinou 1960 až 1980). Domy jedné ulice jsou si podobné, ať mají jednotné zpracování; střechu každé skupiny ověř na ortofotu a laseru.",
+  "j": "Novější bytové domy a samostatné budovy. Nejdřív zjisti, co v budově sídlí nebo jak se projekt jmenuje (web developera, zprávy), a napiš to do poznámek."
+ },
+ "poznamky": {
+  "Dukelských hrdinů 3653": "⚠️ Budova má dvě výšky a mapa ji dnes kreslí špatně (jednolitě 19 m). Laser: severovýchodní část asi 14 m (na ortofotu střecha se solárními panely), jihozápadní část asi 28 m, střešní nástavba až 31,5 m. Ortofoto potvrzuje dlouhý stín. Rozhraní částí odečti z `orto.jpg` a vrcholů v `laser.json` (v = východ, s = sever od středu rámu).",
+  "Polní 4004": "Laser z mračna DMP 1G tu nemá body; výška v tabulce (medián / p90) je z novějšího DMP OK 2024. Střechu ověř na ortofotu.",
+  "Žižkova 4564": "Novostavba z roku 2023, starší laser DMP 1G tu nemá body. Výška 16,4 m je odhad z dat mapy, ortofoto ukazuje bílou plochou střechu s ustoupeným patrem.",
+  "Brněnská 773 a 4104": "Dva dlouhé domy za sebou, každý s vlastní střechou.",
+  "Tyršova 3214 a 3362": "Dvě různé budovy vedle sebe: 3214 občanská vybavenost, 3362 bytový dům.",
+  "Národní 351 a 3572–3574": "⚠️ Národní 351 (`5770638d`) má víc výšek pod jedním půdorysem: laser medián 4,6 m, p90 18,2 m (vyšší uliční část a nízká část ve dvoře). Rozdělení odečti z ortofota a laseru.",
+  "Národní 383–386": "U Národní 383 (`272d0eb1`) laser téměř nemá body, výšku odvoď od sousedů a fotek a napiš to jako odhad.",
+  "Brandlova 3364 a 3405": "U Brandlova 3364 (`57b2bb12`) starší laser nesedí (asi 8 m, málo bodů), ber výšku z tabulky a podlaží."
+ }
+}

@@ -55,7 +55,7 @@ const KINO = { zdroj: 'https://www.kinosvet.eu/', akce: [
   { nazev: 'Film 2', od: mistni(new Date(d0.getTime() + 30 * 60e3)), do: null, url: 'https://www.kinosvet.eu/program/2', druh: 'film' },
   { nazev: 'Film zítra', od: mistni(new Date(d0.getTime() + 20 * 3600e3)), do: null, url: 'https://www.kinosvet.eu/program/3', druh: 'film' },
 ] };
-await ctx.route('**/api/program*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(/zdroj=kinosvet/.test(r.request().url()) ? KINO : PROGRAM) }));
+await ctx.route('**/api/program*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(/zdroj=kinosvet/.test(r.request().url()) ? KINO : /zdroj=jarmark/.test(r.request().url()) ? { akce: [], zdroj: PROGRAM.zdroj } : PROGRAM) }));
 await ctx.route('https://api.open-meteo.com/**', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(POCASI) }));
 // Firefox (BiDi) hlásí schválně přerušený dotaz na HZS (řádek výš, záložní cesta přes prostředníka) jako chybu stránky
 // „požadavek CORS nebyl úspěšný“; Chromium a WebKit ho mlčky přejdou. Ta hláška se nepočítá (2026-11-17).

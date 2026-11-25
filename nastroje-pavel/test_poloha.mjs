@@ -34,7 +34,7 @@ over('předvolby jsou v jednom řádku, jen ikonky', await p.evaluate(() => {
 let s = await stav();
 over('na začátku zvýrazněno „Vše“', s.zap.join() === 'Vše', s.zap.join());
 await klik('Jezdím MHD'); s = await stav();
-// l-xmas = vánoční výzdoba, jen v sezóně (assets/vanoce.json od–do); předvolby ji nepřepínají (2026-11-20 shodila zkoušku)
+// l-xmas = autorův přepínač výzdoby, u nás skrytý (Pavel 2026-11-25), předvolby ho nepřepínají
 const zapnute = Object.entries(s.v).filter(([id, on]) => on && id !== 'l-xmas').map(([id]) => id).sort();
 over('Jezdím MHD: jen Doprava (místa), provoz a zvýraznění', zapnute.join() === ['l-hover', 'l-traffic', 'l-v-doprava'].sort().join(), zapnute.join());
 over('Jezdím MHD je zvýrazněná a její název u nadpisu', s.zap.join() === 'Jezdím MHD' && s.jmeno === '· Jezdím MHD', `${s.zap.join()} | ${s.jmeno}`);
@@ -44,7 +44,7 @@ await p.evaluate(() => { const i = document.getElementById('l-v-sport'); i.click
 s = await stav();
 over('ruční přepnutí zhasne předvolbu', s.zap.length === 0, s.zap.join());
 await klik('Vše'); s = await stav();
-// vánoční výzdobu předvolby nechávají být (zapíná se podle data), proto se nepočítá
+// skrytý přepínač výzdoby se nepočítá
 over('Vše zapne všechno', Object.entries(s.v).every(([k, v]) => v || k === 'l-xmas') && s.zap.join() === 'Vše');
 
 // ---------- poloha ----------

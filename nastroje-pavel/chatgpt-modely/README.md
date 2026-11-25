@@ -8,6 +8,7 @@ v našem rendereru a pošle do dashboardu. Schvaluje dál jen Pavel.
 | krok | kdo | co |
 |---|---|---|
 | 0 | Claude | větší výběr a skupiny domů: `vybery/<číslo>.json` a `vyber.py` (kontrola, pak `--zapis` = body, kandidáti, sestav, oids) |
+| – | Claude | co ještě nemá model: `kandidati_vyber.py [--plocha 350 --vyska 10 --misto --ulice "…"]`; `popis.md` hromadně: `popis_hromadne.py vybery/<číslo>.json` |
 | 1 | Claude | nové stavby: `pamatky/sestav.py --novy <slug> …` (po `vyber.py` odpadá), `podklady_orto/laser/fotky/md.py <slug>`, `popis.md` |
 | 2 | Claude | `node nastroje-pavel/chatgpt-modely/zabal.mjs <slug> [<slug> …] [--oprava=a,b]` → `predani/chatgpt/<balik>.zip`, text k vložení, Finder |
 | 3 | Pavel | zip do ChatGPT + text zadání, nechat pracovat, stáhnout `<balik>-od-chatgpt.zip` do Stažených souborů, napsat „hotovo“ |

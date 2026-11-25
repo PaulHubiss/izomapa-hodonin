@@ -1067,7 +1067,14 @@
     const out = [], souhrn = [];
     for (const p of OV.places.filter((q) => q.program)) { const d = await programAkce(p.program); if (d) for (const a of d.akce) out.push({ ...a, misto: p }); }
     // veřejná místa s programem (Kino Svět, Pavel 2026-11-20): denně několik představení, proto jedna souhrnná položka
-    for (const v of VEREJNA.filter((q) => q.program)) { const d = await programAkce(v.program); if (d) souhrn.push({ misto: v, akce: d.akce }); }
+    // vystoupení na jarmarku (Pavel 2026-11-25) jsou po jednom jako akce DK; samotná položka „Vánoční jarmark“ z programu DK se pak neopakuje
+    for (const v of VEREJNA.filter((q) => q.program)) {
+      const d = await programAkce(v.program); if (!d) continue;
+      if (!v.vanoce) { souhrn.push({ misto: v, akce: d.akce }); continue; }
+      const klic = (u) => new URL(u).pathname.split('/').pop();
+      for (let i = out.length - 1; i >= 0; i--) if (d.akce.length && klic(out[i].url) === klic(d.zdroj)) out.splice(i, 1);
+      for (const a of d.akce) out.push({ ...a, misto: { name: v.nazev }, otevri: () => { goTo(v.xy[0], v.xy[1], 1.4); showVerejne(v); } });
+    }
     DNES.program = out; DNES.souhrn = souhrn; dnesRender();
   }
   const filmu = (n) => `${n} ${n === 1 ? 'film' : n < 5 ? 'filmy' : 'filmů'}`;
@@ -1083,7 +1090,7 @@
     for (const v of VYL.rel) if (vylVDnes(v)) out.push({ ik: 'vyluka', text: v.nazev, cas: vylKdy(v), poradi: v.probiha ? 2 : 5, t: new Date(v.od).getTime(),
       akce: () => window.open(v.url, '_blank', 'noopener') });
     for (const a of DNES.program) if (a.t0 < pozitri && (a.t0 >= Date.now() - 3 * 3600e3)) out.push({ ik: 'program', text: a.nazev, misto: a.misto.name, poradi: 4, t: a.t0,
-      cas: `${a.t0 < zitra ? 'dnes' : 'zítra'} ${hodiny(a.t0)}`, akce: () => { goTo(a.misto.xy[0], a.misto.xy[1], 1.4); placeCard(a.misto); } });
+      cas: `${a.t0 < zitra ? 'dnes' : 'zítra'} ${hodiny(a.t0)}`, akce: a.otevri || (() => { goTo(a.misto.xy[0], a.misto.xy[1], 1.4); placeCard(a.misto); }) });
     for (const { misto: v, akce } of DNES.souhrn || []) {      // „4 filmy dnes · Kino Svět · od 16:50“; když dnes už nic, zítřek
       const ted = Date.now(), dnes = akce.filter((a) => a.t0 >= ted - 15 * 60e3 && a.t0 < zitra), zit = akce.filter((a) => a.t0 >= zitra && a.t0 < pozitri);
       const [kdy, ak] = dnes.length ? ['dnes', dnes] : ['zítra', zit];
@@ -1120,7 +1127,7 @@
     setInterval(dnesRender, 60e3);                          // „dnes 19:00“ → „probíhá“, půlnoc
   }
 
-  if (location.hostname === 'localhost') window.__izo = { ULICE, W, HZ, VYL, showHasici, vylukyRender, showStop, trams, skiers, MHD, LIVE, showBuilding, showPamatka, PAMATKY, placeCard, PLACES: OV.places, showPodnik, PODNIKY, VEREJNA, showVerejne, budovaMista, verOteviraci, ohParse, ohTed, townRect, viewer, CHODCI, chodciAktivita, mhdActive, mhdPos, cars, roads, along: (r, s) => along(r, s), XC, busWait, ringFree: (g) => ringFree(g), get planes() { return PLANES; }, pribehu: OV.places.length, sestaveni: SEST, STRANY,
+  if (location.hostname === 'localhost') window.__izo = { VANOCE_DATA: { stromy: {{XMAS_LL}}, podia: {{PODIA}}, stanky: {{STANKY}}, kluziste: {{KLUZISTE}} }, geoImg, ULICE, W, HZ, VYL, showHasici, vylukyRender, showStop, trams, skiers, MHD, LIVE, showBuilding, showPamatka, PAMATKY, placeCard, PLACES: OV.places, showPodnik, PODNIKY, VEREJNA, showVerejne, budovaMista, verOteviraci, ohParse, ohTed, townRect, viewer, CHODCI, chodciAktivita, mhdActive, mhdPos, cars, roads, along: (r, s) => along(r, s), XC, busWait, ringFree: (g) => ringFree(g), get planes() { return PLANES; }, pribehu: OV.places.length, sestaveni: SEST, STRANY,
     // video (nastroje-pavel/video.mjs): bod obrazu ze zeměpisných souřadnic, roční období, počasí, stav
     w2img: (x, y) => toImg(x, y, gz(x, y)), set zvZvets(v) { ZV_ZVETS = v; }, set lodZvets(v) { LOD_ZVETS = v; },
     omezeniZbyva: () => { const vp = viewer.viewport, b = vp.getBounds(true), c = vp.getCenter(true), q = clampCenter(c); return Math.hypot(q.x - c.x, q.y - c.y) * vp.getContainerSize().x / b.width; },

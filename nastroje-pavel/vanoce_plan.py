@@ -9,7 +9,7 @@ v2 (Pavel 2026-11-23): stejný výřez 1920 × 1515, změny jen u radnice a na j
 Převod pixel -> místo: kotva = střed fontány na náměstí (na plánu u ≈ 680, v ≈ 1130; zeměpisně 48,8486369 / 17,1285768),
 měřítko ~14,2 px/m (ověřeno průčelím kostela a ulicí se stánky, odchylka do ~2 m). Plán slouží jen k polohám, tvary a barvy
 bere mapa ze svých modelů. Na příští rok: přepsat ROK/OD/DO, kotvu (pokud se změní výřez plánu) a pixely v RADY a STROMY.
-Kolotoč, pódium a fotopoint izomapa nekreslí (nemá pro ně model).
+Pódium od 2026-11-25 (model v render.html). Kolotoč a fotopoint izomapa nekreslí (nemá pro ně model).
 """
 import json, math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -64,9 +64,9 @@ RADY = [
     ('Ježíškova pošta',            (842, 1108), (842, 1108), 1, 2.4, 0.0, 'Z'),
 ]
 STROMY = [(840, 1180)]                    # vánoční stromek u fontány
-# kluziště „jen ze srandy“ (Pavel 2026-11-19, ve skutečnosti na náměstí není; poznámka u přepínače výzdoby ve web/nase.js):
-# střed v pixelech plánu, délka a šířka m, delší strana k severu (mezi stánky 14–16 na západě a fontánou na východě)
-KLUZISTE = [((705, 940), 20, 12, 90)]
+# kluziště (19. 11. „jen ze srandy“) Pavel 2026-11-25 zrušil, ve skutečnosti na náměstí není
+# pódium: střed v pixelech plánu, délka a hloubka m (rámeček PÓDIUM 131 × 67 px), kam míří čelo (k fontáně = východ)
+PODIA = [((747, 653), 9.2, 4.7, 'V')]
 
 
 def main():
@@ -78,7 +78,7 @@ def main():
         '_pozn': 'Z plánu Vánočního jarmarku 2026 (DK Hodonín) přes nastroje-pavel/vanoce_plan.py – neupravovat ručně, přegenerovat.',
         'od': OD, 'do': DO,
         'stromy': [misto(*p) for p in STROMY],
-        'kluziste': [dict(zip(('lat', 'lon'), misto(*st)), d=d, s=s, a=a) for st, d, s, a in KLUZISTE],
+        'podia': [dict(zip(('lat', 'lon'), misto(*st)), d=d, s=s, a=natoceni(st, st, celo)) for st, d, s, celo in PODIA],
         'stanky': stanky,
     }
     os.makedirs('assets', exist_ok=True)

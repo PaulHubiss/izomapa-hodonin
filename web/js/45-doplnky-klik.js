@@ -27,8 +27,8 @@
     const [ix, iy] = vpToImg(e.position);
     const st = stopAt(ix, iy);
     if (st) { showStop(st); return; }
-    const b = hit(ix, iy);
-    if (b) showBuilding(b); else showPoint(ix, iy);
+    const b = hit(ix, iy), jm = jarmarkAt?.(ix, iy, b);
+    if (jm) showVerejne(jm); else if (b) showBuilding(b); else showPoint(ix, iy);
   });
   $('osd').addEventListener('pointermove', (e) => {
     if (pluginCursor || pluginCapture) { state.hover = null; $('osd').style.cursor = pluginCursor; return; }
@@ -41,7 +41,8 @@
     if (!$('l-hover').checked || e.pointerType === 'touch') { state.hover = null; $('osd').style.cursor = ''; return; }
     const [ix, iy] = vpToImg(new OpenSeadragon.Point(mx, my));
     state.hover = hit(ix, iy);
-    $('osd').style.cursor = state.hover || stopAt(ix, iy) ? 'pointer' : '';
+    const jm = jarmarkAt?.(ix, iy, state.hover); if (jm) state.hover = null;
+    $('osd').style.cursor = jm || state.hover || stopAt(ix, iy) ? 'pointer' : '';
   });
 
 

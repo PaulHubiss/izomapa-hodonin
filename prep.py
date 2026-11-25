@@ -1907,13 +1907,21 @@ for _k in geo.MESTO.get('vanocni_stanky') or []:
     for _i in range(_n):
         _s = (_i - (_n - 1) / 2) * (_w + _m); _sx, _sy = _x + math.cos(_a) * _s, _y + math.sin(_a) * _s
         if AREA.contains(Point(_sx, _sy)): stalls.append([round(float(_sx), 2), round(float(_sy), 2), round(float(ground(_sx, _sy)), 2), round(_a, 4), _w, _i])
+# pódium (mesto.json "podia": [{lat, lon: střed, a: směr delší strany ve ° od východu, d: délka m, s: hloubka m}]), čelo je na pravé straně
+# od směru (lokální −t) jako pult stánku; jen ve vrstvě výzdoby
+podia = []
+for _k in geo.MESTO.get('podia') or []:
+    _x, _y = to_local(_k['lon'], _k['lat']); _a = math.radians(_k.get('a', 0)); _L, _W = _k.get('d', 9.0), _k.get('s', 5.0)
+    if not AREA.contains(Point(_x, _y)): continue
+    _zs = [float(ground(_x + math.cos(_a) * i * _L / 2 - math.sin(_a) * j * _W / 2, _y + math.sin(_a) * i * _L / 2 + math.cos(_a) * j * _W / 2)) for i in (-1, 0, 1) for j in (-1, 0, 1)]
+    podia.append([round(float(_x), 2), round(float(_y), 2), round(min(_zs), 2), round(max(_zs), 2), round(_a, 4), _L, _W])
 TOP = max([b['e'] + b['rh'] for b in buildings] + [t[2] + t[3] for t in trees] + [float(H.max())])
 json.dump({'chunk': CHUNK, 'center': [CX, CY], 'half': HALF, 'step': STEP, 'n': N, 'hmin': HMIN, 'heights': [round(float(v), 2) for v in H.ravel()],
            'ms': MS, 'hext': [round(float(v), 2) for v in HX.ravel()], 'nb': NB, 'margin': geo.MARGIN, 'skirt': geo.skirt_edges(CHUNK),
            'floor': geo.FLOOR, 'top': round(TOP, 1),
            'buildings': buildings, 'trees': trees, 'props': props, 'cars': cars, 'buses': buses, 'portals': portals, 'lines': lines_out,
            'herds': herds_out,
-           'xmas': xmas, 'rinks': rinks, 'stalls': stalls,
+           'xmas': xmas, 'rinks': rinks, 'stalls': stalls, 'podia': podia,
            'play': [[round(float(x), 2), round(float(y), 2), round(float(ground(x, y)), 2), round(a, 3), t] for x, y, a, t in play],
            'bridges': [{'p': run, 'w': D[4], 'k': D[5], 'c': D[6], 'wtr': D[8] if len(D) > 8 else 0} for D in DECKS if D[0].intersects(EXT)
                        for run in deck_runs([[*q, round(float(g_), 2)] for q, g_ in zip(deck_line(D), D[3])])]},

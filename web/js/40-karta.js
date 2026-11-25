@@ -181,17 +181,17 @@
   function tedBarva(ted) { const e = $('cardOhTed'); if (ted && e) e.className = `oh-ted ${ted[0] ? 'otevreno' : 'zavreno'}`; }
   function showVerejne(p, b) {
     if (p.uMista) { placeCard(p.uMista); return; }
-    b = b || budovaMista(p);
+    b = p.vanoce ? null : b || budovaMista(p);               // jarmark stojí na náměstí, ne v budově
     state.sel = b || null;                                   // budova v obrysu se zvýrazní stejně jako po kliku na ni
     const { rows: oh, ted } = verRadky(p), pm = p.pam, kt = (b && b.kat) || {};
-    const rows = [['Druh', p.druh], ...(pm ? [['Kulturní památka', `ÚSKP ${pm.uskp}`]] : []), ['Adresa', p.adresa], ...oh, ['Telefon', p.telefon],
+    const rows = [['Druh', p.druh], ...(pm ? [['Kulturní památka', `ÚSKP ${pm.uskp}`]] : []), ['Adresa', p.adresa], ['Termín', p.termin], ...oh, ['Telefon', p.telefon],
       ...(b ? budovaRadky(b) : [])];
     const overeno = p.overeno ? new Date(p.overeno).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric' }) : null;
     const extra = [p.web && [p.web, 'Web'], p.zdroj && p.zdroj !== p.web && [p.zdroj, 'Zdroj otevírací doby'], ...(pm ? pamLinks(pm) : []),
       p.osm && [p.osm, 'Údaje v OpenStreetMap'],
       kt.kod && [`https://vdp.cuzk.gov.cz/vdp/ruian/stavebniobjekty/${kt.kod}`, 'Údaje v katastru (RÚIAN)']].filter(Boolean);
     showCard({ title: p.nazev, ohPozn: overeno ? `podle webu ${new URL(p.zdroj || p.web).hostname.replace(/^www\./, '')}, ověřeno ${overeno}` : '',
-      rows, lon: p.lon, lat: p.lat, k: p.k, extra, kind: 6, foto: pm && pm.foto ? { ...pm.foto, alt: pm.nazev } : null });
+      text: p.text, rows, lon: p.lon, lat: p.lat, k: p.k, extra, kind: 6, foto: pm && pm.foto ? { ...pm.foto, alt: pm.nazev } : null });
     tedBarva(ted);
     if (b) vBudove(mistaVBudove(b).filter((m) => m.p !== p), b, 'V budově také');
     if (p.program) showProgram(p);                           // kino (Pavel 2026-11-20), stejně jako příběh DK
@@ -233,19 +233,30 @@
   async function showProgram(p) {
     const karta = state.card, d = await programAkce(p.program);
     if (!d || !karta || state.card !== karta || $('card').hidden) return;   // mezitím jiná nebo zavřená karta
+    // dlouhý program (jarmark: ~50 vystoupení na jedné stránce): pod nejbližšími pěti sbalený zbytek, bez odkazu u každého řádku
+    const dlouhy = d.akce.some((a) => a.druh === 'jarmark'), zbytek = dlouhy ? d.akce.slice(5) : [];
     const akce = d.akce.slice(0, 5);
     const box = $('cardProgram'), h = document.createElement('p'); h.className = 'nb-oddil-nadpis'; h.textContent = 'Program'; box.classList.add('nb-oddil');
     const ul = document.createElement('ul');
-    for (const a of akce) {
-      const o = new Date(a.t0), li = document.createElement('li'), tm = document.createElement('time'), x = document.createElement('a');
+    const radek = (a) => {
+      const o = new Date(a.t0), li = document.createElement('li'), tm = document.createElement('time'), x = document.createElement(dlouhy ? 'span' : 'a');
       tm.dateTime = a.od;
       tm.textContent = `${DNY[o.getDay()]} ${o.getDate()}. ${o.getMonth() + 1}.${o.getHours() || o.getMinutes() ? ` ${o.getHours()}:${String(o.getMinutes()).padStart(2, '0')}` : ''}`;
-      x.href = a.url; x.target = '_blank'; x.rel = 'noopener'; x.textContent = a.nazev;
-      li.append(tm, x); ul.append(li);
-    }
+      if (!dlouhy) { x.href = a.url; x.target = '_blank'; x.rel = 'noopener'; }
+      x.textContent = a.nazev;
+      li.append(tm, x); return li;
+    };
+    ul.append(...akce.map(radek));
     if (!akce.length) { const li = document.createElement('li'); li.textContent = 'Teď nic naplánovaného.'; ul.append(li); }
     const vse = document.createElement('a'); vse.className = 'vse'; vse.href = d.zdroj; vse.target = '_blank'; vse.rel = 'noopener'; vse.textContent = 'Celý program ↗';
-    box.replaceChildren(h, ul, vse); box.hidden = false;
+    box.replaceChildren(h, ul);
+    if (zbytek.length) {
+      const det = document.createElement('details'), s = document.createElement('summary'), u2 = document.createElement('ul'), n = zbytek.length;
+      s.textContent = n < 5 ? `Další ${n}` : `Dalších ${n}`; s.insertAdjacentHTML('beforeend', kik('chev'));
+      u2.append(...zbytek.map(radek)); det.append(s, u2); box.append(det);
+    }
+    if (dlouhy) vse.textContent = 'Program na webu DK Hodonín ↗';
+    box.append(vse); box.hidden = false;
   }
   const neighborCard = (n) => showCard({ title: n.name, text: n.text || 'Sousední izometrická mapa.', lon: n.lon, lat: n.lat, k: n.k, link: neighborHref(n), linkText: `Přejít na mapu ${n.name} ↗`, target: n.target, rows: [['Sousední mapa', n.name]], kind: 3 });
   // víc vchodů jedné ulice do jednoho údaje: „Družstevní čtvrť 3133–3142“, jinak „Ulice 1, 3, 5“ (Pavel 2026-11-20: karty uklidit)
@@ -271,7 +282,7 @@
   // karta budovy se seznamem „V budově“, karta místa se seznamem „V budově také“.
   function mistaVBudove(b) {
     const v = (p) => geoM(b.lat, b.lon, p) < 35 && inPoly(p.xy[0], p.xy[1], b.hull);
-    return [...VEREJNA.filter((p) => !p.uMista && v(p)).map((p) => ({ p, ver: true })), ...PODNIKY.filter(v).map((p) => ({ p, ver: false }))]
+    return [...VEREJNA.filter((p) => !p.uMista && !p.vanoce && v(p)).map((p) => ({ p, ver: true })), ...PODNIKY.filter(v).map((p) => ({ p, ver: false }))]
       .sort((x, y) => x.p.nazev.localeCompare(y.p.nazev, 'cs'));
   }
   const otevriMisto = (m, b) => (m.ver ? showVerejne(m.p, b) : showPodnik(m.p, b));

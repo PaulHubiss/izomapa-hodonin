@@ -57,14 +57,15 @@
   // Zimní mapa = výzdoba a Santa, bez ohledu na datum (Pavel 2026-11-21: „nechci žádné datumy u vzhledu, zima je zima“).
   // Od–do ve vanoce.json prohlížeč nepoužívá (autor podle nich výzdobu zapíná a kreslí ji i na podzim).
   const VANOCE = {{VANOCE}};
-  let xmasUser = null;                                         // ruční přepnutí v menu (jen v tomto prohlížeči)
-  const xmasOn = () => !!VANOCE && (xmasUser ?? true);
+  // bez přepínače (Pavel 2026-11-25: „trhy budou součást zimní mapy, bez možnosti vypnutí“); autorův l-xmas zůstává skrytý
+  const xmasOn = () => !!VANOCE;
   // výzdoba jen v zimní mapě (Pavel 2026-11-20: jarmark do podzimní mapy nepatří)
   const xmasShow = () => xmasOn() && state.season === 'winter';
   function applyExtras() {
     if (!ready && !LAYERS.some((l) => l.day)) return;
     $('l-xmas').checked = xmasOn();
-    $('l-xmas').closest('label').hidden = !VANOCE;
+    $('l-xmas').closest('label').hidden = true;
+    for (const p of VEREJNA) if (p.vanoce && p.el) p.el.hidden = !shown(p.k) || !xmasShow();   // ikonka jarmarku jen s výzdobou
     const want = (l) => {
       const w = {};
       if (xmasShow()) { const v = state.season === 'winter' ? 'xmas_winter' : 'xmas_autumn'; if (l.src(v)) w.xmas = v; }
@@ -83,7 +84,6 @@
       }
     }
   }
-  $('l-xmas').addEventListener('change', (e) => { xmasUser = e.target.checked; applyExtras(); });
   const S_REV = { spring: 'jaro', summer: 'leto', autumn: 'podzim', winter: 'zima' };
   const neighborHref = (n) => {
     let u = n.url || '';
@@ -617,7 +617,7 @@
     for (const p of OV.places) if (p.el) p.el.hidden = !shown(p.k);
     for (const p of PAMATKY) if (p.el) p.el.hidden = !shown(p.k);
     for (const p of PODNIKY) if (p.el) p.el.hidden = !shown(p.k);
-    for (const p of VEREJNA) if (p.el) p.el.hidden = !shown(p.k);
+    for (const p of VEREJNA) if (p.el) p.el.hidden = !shown(p.k) || (p.vanoce && !xmasShow());
     for (const n of OV.neighbors || []) if (n.el) n.el.hidden = !shown(n.k);
     for (const n of OV.needs || []) if (n.el) n.el.hidden = !state.wip;
     document.querySelectorAll('[data-wip]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.wip === '1') === state.wip)));

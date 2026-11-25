@@ -1,5 +1,5 @@
 #!/bin/sh
-# Vánoční výzdoba (assets/vanoce.json: stromy, kluziště, stánky) jako samostatná průhledná vrstva.
+# Vánoční výzdoba (assets/vanoce.json: stromy, kluziště, stánky, pódia) jako samostatná průhledná vrstva.
 # Přerenderuje jen čtverce, kde výzdoba je (scéna + vrstvy xmas_winter a xmas_autumn), a přestaví web.
 # ./vanoce.sh            po každé změně výzdoby (pár minut); ./postav.sh ho pouští sám
 # Prohlížeč vrstvu zapíná podle data (od/do ve vanoce.json), v menu jde vypnout.
@@ -18,7 +18,7 @@ plan = set()
 st = MESTO.get('vanocni_strom') or []
 if st and not isinstance(st[0], list): st = [st]
 for la, lo in st: plan |= chunks_of(la, lo)
-for k in (MESTO.get('kluziste') or []) + (MESTO.get('vanocni_stanky') or []): plan |= chunks_of(k['lat'], k['lon'], 20)
+for k in (MESTO.get('kluziste') or []) + (MESTO.get('vanocni_stanky') or []) + (MESTO.get('podia') or []): plan |= chunks_of(k['lat'], k['lon'], 20)
 print(' '.join(f'{c[0]},{c[1]}' for c in sorted(plan)) if MESTO.get('vanoce') else '')
 PY
 )

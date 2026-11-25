@@ -1,4 +1,4 @@
-// Doplněk „Santa se soby“ (Pavel 2026-11-20): v době vánoční výzdoby (přepínač „Vánoční výzdoba“ zapnutý) a v zimní mapě
+// Doplněk „Santa se soby“ (Pavel 2026-11-20): v zimní mapě
 // přeletí Santa na saních se třemi soby (vpředu Rudolf se svítícím nosem) přes právě zobrazený výřez mapy, po pauze znovu.
 // Za saněmi třpytivá stopa, na zemi stín (jako u letadel), občas pustí dárek, který dopadne do komína (komíny z overlay_hook.py).
 // Kliknutí na saně zapne sledování kamerou (lišta nahoře, × nebo tažení mapy ho vypne), při sledování Santa létá dál a zatáčí.
@@ -63,8 +63,7 @@
       const PAUZA = (CFG.pauza_s ?? 25) * 1000, V = CFG.rychlost ?? 42, VYS = CFG.vyska ?? 110;
       const KOMIN = D.komin || [];
       const toImg = api.toImg, gz = api.gz;
-      const xmasEl = document.getElementById('l-xmas');
-      const aktivni = (view) => view.season === 'winter' && xmasEl && xmasEl.checked && !xmasEl.closest('label')?.hidden;
+      const aktivni = (view) => view.season === 'winter';      // zima je zima (Pavel 2026-11-21); přepínač výzdoby zrušen 2026-11-25
 
       let S = null, dalsi = performance.now() + 4000, sleduj = false, posl = null, skok = 0;
       const stopa = [], darky = [], jiskry = [];

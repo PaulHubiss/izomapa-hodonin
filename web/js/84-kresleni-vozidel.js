@@ -77,18 +77,67 @@
   // vánoční stánky (mesto.json "vanocni_stanky"): stánky jsou ve vrstvě výzdoby (render.html mode=xmas), tady jen noční osvětlení.
   // Rozměry musí odpovídat render.html: stánek w × 2,4 m, okap 2,2 m, pult na straně −t, okénko 0,95–1,95 m.
   const stalls = [];
+  // klikací obrysy jarmarku (stánky, strom, pódium): klik otevře kartu místa s "vanoce": true (Pavel 2026-11-25). Budova blíž k pohledu
+  // má přednost (hloubka d z overlay.py, menší = blíž), jinak by klik na střechu před stánkem otevřel jarmark.
+  const JARMARK = VEREJNA.find((p) => p.vanoce), jarObrysy = [];
+  const obalka = (pts) => {                                    // konvexní obálka (monotónní řetěz)
+    const s = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]), pul = (q) => { const r = []; for (const p of q) { while (r.length > 1 && (r[r.length - 1][0] - r[r.length - 2][0]) * (p[1] - r[r.length - 2][1]) - (r[r.length - 1][1] - r[r.length - 2][1]) * (p[0] - r[r.length - 2][0]) <= 0) r.pop(); r.push(p); } r.pop(); return r; };
+    return [...pul(s), ...pul(s.reverse())];
+  };
+  const jarObrys = (P, l, w, z0, z1, x, y, g) => { const pts = []; for (const s of [-l, l]) for (const t of [-w, w]) for (const h of [z0, z1]) pts.push(P(s, t, h)); jarObrysy.push({ p: obalka(pts), d: depth(x, y, g) }); };
+  // večerní světla se nekreslí přes budovy, které stojí blíž k pohledu (dřív svítila i na jejich střechách): obrysy těchto budov,
+  // zapamatované do načtení dalšího čtverce. vyrez(S, fn) nakreslí fn jen mimo ně.
+  let jarVerze = 0; onChunk.push(() => { jarVerze++; });
+  const pred = (S) => {
+    if (S.verze === jarVerze) return S.pred;
+    const xs = S.okoli.map((q) => q[0]), ys = S.okoli.map((q) => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), m = new Set();
+    for (let i = Math.floor(x0 / CELL); i <= Math.floor(x1 / CELL); i++) for (let j = Math.floor(y0 / CELL); j <= Math.floor(y1 / CELL); j++)
+      for (const b of grid.get(i + ',' + j) || []) if (b.d < S.d && b.bb[0] < x1 && b.bb[2] > x0 && b.bb[1] < y1 && b.bb[3] > y0) m.add(b);
+    S.verze = jarVerze; return S.pred = [...m].map((b) => b.hull);
+  };
+  const vyrez = (S, sx, ox, oy, fn) => {
+    const H = pred(S);
+    if (!H.length) { fn(); return; }
+    ctx.save();
+    for (const h of H) {
+      ctx.beginPath(); ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      h.forEach(([x, y], i) => (i ? ctx.lineTo(ox + x * sx, oy + y * sx) : ctx.moveTo(ox + x * sx, oy + y * sx))); ctx.closePath(); ctx.clip('evenodd');
+    }
+    fn(); ctx.restore();
+  };
+  var jarmarkAt = (ix, iy, b) => {
+    if (!JARMARK || !xmasShow() || !shown(JARMARK.k)) return null;
+    return jarObrysy.some((o) => inPoly(ix, iy, o.p) && !(b && b.d < o.d)) ? JARMARK : null;
+  };
+  for (const [lat, lon] of {{XMAS_LL}} || []) {
+    const x = (lon - cam.lon0) * cam.kx, y = (lat - cam.lat0) * cam.ky, g = gz(x, y);
+    jarObrysy.push({ p: obalka([toImg(x - 3.7, y, g + 1.2), toImg(x + 3.7, y, g + 1.2), toImg(x, y - 3.7, g + 1.2), toImg(x, y + 3.7, g + 1.2), toImg(x, y, g + 14.7)]), d: depth(x, y, g) });
+  }
   for (const k of {{STANKY}} || []) {
     const n = k.n || 5, wS = k.w || 3.0, m = k.m ?? 1.2, a = (k.a || 0) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);
     const x0 = (k.lon - cam.lon0) * cam.kx, y0 = (k.lat - cam.lat0) * cam.ky;
     for (let i = 0; i < n; i++) {
       const sc = (i - (n - 1) / 2) * (wS + m), cx = x0 + ux * sc, cy = y0 + uy * sc, g = gz(cx, cy);
       const P = (s, t, h) => toImg(cx + ux * s - uy * t, cy + uy * s + ux * t, g + h), l = wS / 2;
-      stalls.push({ c: P(0, 0, 1),
+      jarObrys(P, l, 1.3, 0, 3.1, cx, cy, g);
+      stalls.push({ c: P(0, 0, 1), d: depth(cx, cy, g), okoli: [P(-l - 2.2, -5.5, 0), P(l + 2.2, -5.5, 0), P(-l, -1.4, 2.2), P(l, -1.4, 2.2)],
         win: [P(-l + 0.25, -1.23, 0.95), P(l - 0.25, -1.23, 0.95), P(l - 0.25, -1.23, 1.95), P(-l + 0.25, -1.23, 1.95)],
         pool: [P(-l - 0.8, -1.3, 0), P(l + 0.8, -1.3, 0), P(l + 2.2, -5.5, 0), P(-l - 2.2, -5.5, 0)],
         bulbs: Array.from({ length: 6 }, (_, j) => P(-l + 0.25 + j * (wS - 0.5) / 5, -1.45, 1.9)) });
     }
   }
+  // pódium (assets/vanoce.json "podia"): stavba je ve vrstvě výzdoby, tady jen večerní světla. Rozměry musí odpovídat render.html:
+  // deska 1 m nad nejvyšším bodem terénu, rám střechy o 4,2 m výš; žárovky jsou na přivrácených hranách rámu (západ a jih),
+  // světla pod střechou při pohledu shora vidět nejsou.
+  const podia = ({{PODIA}} || []).map((k) => {
+    const a = (k.a || 0) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), l = (k.d || 9) / 2, w = (k.s || 5) / 2;
+    const x0 = (k.lon - cam.lon0) * cam.kx, y0 = (k.lat - cam.lat0) * cam.ky, at = (s, t) => [x0 + ux * s - uy * t, y0 + uy * s + ux * t];
+    const g = Math.max(...[-1, 0, 1].flatMap((i) => [-1, 0, 1].map((j) => gz(...at(i * l, j * w))))), D = g + 1, E = D + 4.2;
+    const P = (s, t, h) => toImg(...at(s, t), h);
+    jarObrys((s, t, h) => P(s, t, g + h), l + 0.4, w + 0.4, 0, 6, x0, y0, g);
+    return { c: P(0, 0, D), d: depth(x0, y0, g), okoli: [P(-l - 1.5, -w - 6, g), P(l + 1.5, -w - 6, g), P(-l, w, D), P(l, w, D), P(0, 0, E + 1)], deska: [P(-l, -w, D), P(l, -w, D), P(l, w, D), P(-l, w, D)],
+      svetla: [...Array.from({ length: 7 }, (_, j) => P(-l + 0.3 + j * (2 * l - 0.6) / 6, w + 0.3, E + 0.15)), ...Array.from({ length: 4 }, (_, j) => P(-l - 0.3, w - 0.6 - j * (2 * w - 1.2) / 3, E + 0.15))] };
+  });
   // svíčky na hrobech (overlay/<čtverec>.json "svicky": [x, y obrázku, náhoda]), kreslí se večer
   const svicky = [], SVB = 512, svGrid = new Map();             // mřížka po 512 px obrázku: každý snímek jen buňky ve výřezu
   onChunk.push((k, d) => {

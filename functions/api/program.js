@@ -10,6 +10,8 @@ export const ZDROJE = {
   // Kino Svět (patří pod DK Hodonín, Pavel 2026-11-20): úvodní stránka má celý „Aktuální program“ po dnech (h4.movie-day
   // „20. 11. 2026 | pátek“, pod ním a.movie__link s časem „16:50 | Velký sál“ a názvem), strojový výstup nemá
   kinosvet: { url: 'https://www.kinosvet.eu/', zaklad: 'https://www.kinosvet.eu', cti: parseKinoSvet },
+  // Vánoční jarmark (stránka akce DK Hodonín, Pavel 2026-11-25): program je souvislý text po dnech. Adresa platí pro rok 2026, na příští rok vyměnit.
+  jarmark: { url: 'https://www.dkhodonin.eu/divadlo/1652-vanocni-jarmark', zaklad: 'https://www.dkhodonin.eu/divadlo/1652-vanocni-jarmark', cti: parseJarmark },
 };
 
 const ent = (s) => s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -45,6 +47,34 @@ export function parseKinoSvet(html, zaklad) {
     if (m[1]) { den = `${m[3]}-${p(m[2])}-${p(m[1])}`; continue; }
     if (!den) continue;
     akce.push({ nazev: ent(m[7]), od: `${den}T${p(m[5])}:${m[6]}`, do: null, url: new URL(m[4], zaklad).href, druh: 'film' });
+  }
+  return akce;
+}
+
+// Stránka jarmarku: <p><strong>ČT 3.12.</strong></p>, pod ním <p>16:30 Taneční studio…</p>. Rok je jen v záhlaví („od 29. 11. 2026“).
+// Řádek bez času pod akcí (rozsvícení stromu „po příchodu průvodu“) se připíše k ní; podtitul dne nad první akcí a rozmezí dní
+// („PO 21.12. - ÚT 22.12.“) se vynechávají: čas ani den se nedomýšlí, celý text je o klik dál na stránce DK. Konce vystoupení na webu nejsou (do = null).
+const VYNECHAT = /^Setkání účastníků na pěší zóně/;         // sraz před průvodem, ne program na náměstí (Pavel 2026-11-25)
+export function parseJarmark(html, zaklad) {
+  const rok = /od\s+\d{1,2}\.\s*\d{1,2}\.\s*(\d{4})/.exec(html), akce = [], p2 = (x) => String(x).padStart(2, '0');
+  if (!rok) return akce;
+  let den = null, posl = null;
+  for (const [, vnitrek] of html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)) {
+    const t = ent(vnitrek.replace(/<[^>]+>/g, ' '));
+    if (/^(PO|ÚT|ST|ČT|PÁ|SO|NE)\s+\d/.test(t)) {
+      const d = /^\S+\s+(\d{1,2})\.\s*(\d{1,2})\.?$/.exec(t);
+      den = d ? `${rok[1]}-${p2(d[2])}-${p2(d[1])}` : null; posl = null;
+      continue;
+    }
+    if (!t) { den = null; continue; }                        // prázdný odstavec = konec dne
+    const a = den && /^(\d{1,2}):(\d{2})\s+(.+)$/.exec(t);
+    if (!a) { if (den && posl && !/^Pořadatel/.test(t)) posl.nazev += ` · ${t}`; continue; }
+    if (VYNECHAT.test(a[3])) { posl = null; continue; }
+    // „Easy line KONCERT“ → „Easy line (koncert)“: verzálky na konci jsou druh akce; „vánoční KONCERT“ je součást názvu
+    const nazev = a[3].replace(/\s*[–-]?\s*(DĚTSKÉ DIVADLO)$/, (m, k) => ` (${k.toLowerCase()})`)
+      .replace(/(\S+)\s+KONCERT$/, (m, w) => (w === 'vánoční' ? `${w} koncert` : `${w} (koncert)`))
+      .replace(/ - /g, ' – ').replace(/“([^“”]*)”/g, '„$1“').trim();
+    akce.push(posl = { nazev, od: `${den}T${p2(a[1])}:${a[2]}`, do: null, url: zaklad, druh: 'jarmark' });
   }
   return akce;
 }

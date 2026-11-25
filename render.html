@@ -134,14 +134,14 @@ const tv = (x, y, z) => [x, z, -y];   // (východ, sever, výška) -> three
 const frameAt = (x, y, z, ang) => (s, t, h) => tv(x + Math.cos(ang) * s - Math.sin(ang) * t, y + Math.sin(ang) * s + Math.cos(ang) * t, z + h);
 const C255 = (rgb) => rgb.map((v) => v / 255);
 
-// vrstva xmas: plochy pod stánky a kluzištěm (natočené obdélníky [x, y, úhel, půl délky, půl šířky]). V nich se ve vrstvě
+// vrstva xmas: plochy pod stánky, kluzištěm a pódiem (natočené obdélníky [x, y, úhel, půl délky, půl šířky]). V nich se ve vrstvě
 // znovu nakreslí terén a nekreslí se mobiliář ani zaparkovaná auta, takže je výzdoba v mapě zakryje (jinak by prosvítaly
 // zpod stánků z obyčejných dlaždic).
 // [x, y, úhel, půl délky pro mobiliář, půl šířky, půl délky pro auta a terén]: zaparkovaná auta mizí i v mezerách mezi
 // stánky a do 8,5 m za krajními stánky řady (auto mezi stánky působí rušivě), lavičky a lampy jen přímo pod stánkem
 const XZ = XMAS ? [
   ...(scene.stalls || []).map(([x, y, g, a, wS]) => [x, y, a, wS / 2 + 0.8, 2.3, wS / 2 + 8.5]),
-  ...(scene.rinks || []).map(([x, y, z0, z1, a, L, W]) => [x, y, a, L / 2 + 1.0, W / 2 + 1.0, L / 2 + 1.0]),
+  ...[...(scene.rinks || []), ...(scene.podia || [])].map(([x, y, z0, z1, a, L, W]) => [x, y, a, L / 2 + 1.0, W / 2 + 1.0, L / 2 + 1.0]),
 ] : [];
 const podXZ = (x, y, o = 0, auta = false) => XZ.some(([cx, cy, a, l, w, la]) => {
   const dx = x - cx, dy = y - cy, s = Math.cos(a) * dx + Math.sin(a) * dy, t = -Math.sin(a) * dx + Math.cos(a) * dy;
@@ -1348,6 +1348,30 @@ function pamModely(W, R, X) {
       pushBox(V, f, -l - T, -l, -w, w, z0 - 0.4, ice + 1.0, white, W0, blue);
       pushBox(V, f, l, l + T, -w, w, z0 - 0.4, ice + 1.0, white, W0, blue);
     }
+    // pódium: deska 1 m nad zemí s černým lemem, schody na straně −s, čtyři příhradové sloupy, střecha (v zimě se sněhem), rampa světel,
+    // reproduktory po stranách čela (−t). Záda jsou otevřená: při pohledu zezadu by plná stěna schovala celý vnitřek.
+    for (const [x, y, z0, z1, a, Lp, Wp] of scene.podia || []) {
+      const f = frameAt(x, y, 0, a), l = Lp / 2, w = Wp / 2, D = z1 + 1.0, E = D + 4.2;
+      const black = [0.10, 0.10, 0.12], deck = [0.42, 0.32, 0.23], steel = [0.62, 0.64, 0.68], dark = [0.20, 0.21, 0.24];
+      pushBox(V, f, -l, l, -w, w, z0 - 0.4, D, black, W0, deck);
+      for (let k = 0; k < 4; k++) pushBox(V, f, -l - 0.35 * (4 - k), -l, 0.2, 1.6, z0 - 0.4, z1 + 0.22 * (k + 1), dark, W0, steel);      // schody od zákulisí
+      for (const s of [-l + 0.2, l - 0.2]) for (const t of [-w + 0.2, w - 0.2]) pushBox(V, f, s - 0.17, s + 0.17, t - 0.17, t + 0.17, D, E, steel, W0);
+      for (let z = D + 0.55; z < E - 0.3; z += 0.7) for (const s of [-l + 0.2, l - 0.2]) for (const t of [-w + 0.2, w - 0.2]) pushBox(V, f, s - 0.18, s + 0.18, t - 0.18, t + 0.18, z, z + 0.14, dark, W0);   // příhrada
+      pushBox(V, f, -l, l, w - 0.28, w - 0.2, D, D + 1.0, dark, W0, steel);                                                             // zadní zábradlí
+      pushBox(V, f, -l - 0.3, l + 0.3, -w - 0.3, w + 0.3, E, E + 0.35, dark, W0);                                                        // rám střechy
+      const R = SEASON_ID === 3 ? [0.93, 0.95, 0.97] : [0.30, 0.32, 0.36], Rt = E + 1.1, o = 0.4;
+      pushQuad(V, f(-l - o, -w - o, E + 0.35), f(l + o, -w - o, E + 0.35), f(l + o, 0, Rt), f(-l - o, 0, Rt), R, W0);
+      pushQuad(V, f(l + o, w + o, E + 0.35), f(-l - o, w + o, E + 0.35), f(-l - o, 0, Rt), f(l + o, 0, Rt), R, W0);
+      pushTri(V, f(l + o, -w - o, E + 0.35), f(l + o, w + o, E + 0.35), f(l + o, 0, Rt), dark, W0);
+      pushTri(V, f(-l - o, w + o, E + 0.35), f(-l - o, -w - o, E + 0.35), f(-l - o, 0, Rt), dark, W0);
+      for (const t of [-w + 0.5, w - 0.5]) for (let k = 0; k < 6; k++) {                                                                // světla pod střechou
+        const s = -l + 0.8 + k * (Lp - 1.6) / 5;
+        pushBox(V, f, s - 0.16, s + 0.16, t - 0.16, t + 0.16, E - 0.4, E, [[0.95, 0.30, 0.25], [0.98, 0.80, 0.30], [0.35, 0.60, 0.95]][k % 3], W0);
+      }
+      for (const s of [-l + 0.75, l - 0.75]) pushBox(V, f, s - 0.4, s + 0.4, -w + 0.45, -w + 1.15, D, D + 1.9, black, W0, dark);          // reproduktory
+      for (const s of [-1.6, 0, 1.6]) { pushBox(V, f, s - 0.05, s + 0.05, -w + 0.9, -w + 1.0, D, D + 1.5, steel, W0); pushBox(V, f, s - 0.09, s + 0.09, -w + 0.85, -w + 1.05, D + 1.5, D + 1.68, black, W0); }   // mikrofony
+      pushBox(V, f, -0.8, 0.8, w - 1.7, w - 0.8, D, D + 0.75, [0.60, 0.16, 0.16], W0, [0.86, 0.84, 0.80]);                               // bicí
+    }
     // vánoční stánky: dřevěná bouda, zasněžená sedlová střecha, otevřený pult na straně −t, světýlka pod okapem
     for (const [x, y, g, a, wS, i] of scene.stalls || []) {
       const f = frameAt(x, y, g, a), l = wS / 2, w = 1.2, E = 2.2, Rg = 3.0, o = 0.3;
@@ -1712,6 +1736,7 @@ if (XMAS) {
   };
   for (const [x, y, g] of scene.xmas || []) mark(x, y, g + 16, 5);
   for (const [x, y, z0, z1, a, L, W] of scene.rinks || []) mark(x, y, z1 + 2, Math.max(L, W) / 2 + 1);
+  for (const [x, y, z0, z1, a, L, W] of scene.podia || []) mark(x, y, z1 + 7, Math.max(L, W) / 2 + 2);
   for (const [x, y, g] of scene.stalls || []) mark(x, y, g + 4, 3);
 }
 window.INFO = { width: IW, height: IH, tile: TILE, cols: Math.ceil(IW / TILE), rows: Math.ceil(IH / TILE), x0: GX0, y1: GY1, mpp: MPP, chunk: scene.chunk || [0, 0], season: SEASON, mode: XMAS ? 'xmas' : LIGHTS ? 'lights' : 'day', need: NEED ? [...NEED] : null };

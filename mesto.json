@@ -32,6 +32,7 @@
            "zdroj": "KORDIS JMK (data.brno.cz)", "zdroj_url": "https://data.brno.cz/", "licence": "CC BY"}
  },
  "potoky": true,
+ "pole": {"skvrny": false, "prahy": [[104.5, "wheat"], [92.5, "rape"], [74.5, "soil"], [-1, "maize"]]},
  "rozliseni": "detailni",
  "sezonni_start": {"od": "11-23", "do": "02-29", "obdobi": "winter", "pocasi": "snow", "pohled": [48.8487, 17.1285, 0.35]},
  "doplnky": {"santa": {"enabled": true, "pauza_s": 25, "polomer": 2000, "rychlost": 28}},

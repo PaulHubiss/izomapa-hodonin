@@ -1,4 +1,8 @@
 (async () => {
+  // zelený rámeček fokusu jen při ovládání klávesnicí (iPhone ho jinak ukazuje na × každého otevřeného okna)
+  document.documentElement.classList.add('ukazatel');
+  addEventListener('pointerdown', () => document.documentElement.classList.add('ukazatel'), { capture: true, passive: true });
+  addEventListener('keydown', (e) => { if (e.key === 'Tab') document.documentElement.classList.remove('ukazatel'); }, { capture: true });
 
   // data mapy: vždy se zeptat serveru, jestli se nezměnila (Safari 2026-11-17 držel starý chodci.json i po obnovení
   // stránky, protože ?v= je verze dlaždic a ta se při změně dat nemění); nezměněný soubor = krátká odpověď 304
@@ -103,7 +107,10 @@
   // vrstvy v odkazu: vypnutá vrstva = slovo v odkazu (#leto-bezdopravy@…), zapnuté (výchozí) se nepíšou
   const LAYER_TOKEN = { bezpopisku: 'l-labels', bezdopravy: 'l-traffic', bezlidi: 'l-lide', bezkoure: 'l-smoke', bezzvyrazneni: 'l-hover',
     ...Object.fromEntries(Object.values(KAT).map((c) => [c.token, c.vrstva])) };
-  const applyLayers = (tok) => { for (const [t, id] of Object.entries(LAYER_TOKEN)) { const el = $(id); if (!el) continue; const on = !tok.includes(t); if (el.checked !== on) { el.checked = on; el.dispatchEvent(new Event('change')); } } };
+  // výchozí vypnuté vrstvy (Pavel 2026-11-25: názvy ulic) jsou v odkazu naopak: slovo = zapnutá
+  const LAYER_ZAP = { sulicemi: 'l-ulice' };
+  const applyLayers = (tok) => { for (const [t, id] of Object.entries(LAYER_ZAP)) { const el = $(id), on = tok.includes(t); if (el && el.checked !== on) { el.checked = on; el.dispatchEvent(new Event('change', { bubbles: true })); } }
+    for (const [t, id] of Object.entries(LAYER_TOKEN)) { const el = $(id); if (!el) continue; const on = !tok.includes(t); if (el.checked !== on) { el.checked = on; el.dispatchEvent(new Event('change')); } } };
   const WIP = Object.values(TILES.chunks || {}).some((c) => c.status !== 'hotovo');
 
 

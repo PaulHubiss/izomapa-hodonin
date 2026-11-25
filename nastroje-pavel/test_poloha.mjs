@@ -38,14 +38,14 @@ await klik('Jezdím MHD'); s = await stav();
 const zapnute = Object.entries(s.v).filter(([id, on]) => on && id !== 'l-xmas').map(([id]) => id).sort();
 over('Jezdím MHD: jen Doprava (místa), provoz a zvýraznění', zapnute.join() === ['l-hover', 'l-traffic', 'l-v-doprava'].sort().join(), zapnute.join());
 over('Jezdím MHD je zvýrazněná a její název u nadpisu', s.zap.join() === 'Jezdím MHD' && s.jmeno === '· Jezdím MHD', `${s.zap.join()} | ${s.jmeno}`);
-await klik('Čistá mapa'); s = await stav();
-over('Čistá mapa: žádné ikonky míst, život zapnutý', !Object.entries(s.v).some(([id, on]) => on && (id.startsWith('l-v-') || id === 'l-labels' || id === 'l-pam' || id === 'l-pod')) && s.v['l-lide'] && s.v['l-traffic'], JSON.stringify(s.v));
+await p.click('#l-ulice'); await klik('Čistá mapa'); s = await stav();   // zapnuté názvy ulic Čistá mapa vypne
+over('Čistá mapa: žádné ikonky míst ani názvy ulic, život zapnutý', !s.v['l-ulice'] && !Object.entries(s.v).some(([id, on]) => on && (id.startsWith('l-v-') || id === 'l-labels' || id === 'l-pam' || id === 'l-pod')) && s.v['l-lide'] && s.v['l-traffic'], JSON.stringify(s.v));
 await p.evaluate(() => { const i = document.getElementById('l-v-sport'); i.click(); });
 s = await stav();
 over('ruční přepnutí zhasne předvolbu', s.zap.length === 0, s.zap.join());
 await klik('Vše'); s = await stav();
-// skrytý přepínač výzdoby se nepočítá
-over('Vše zapne všechno', Object.entries(s.v).every(([k, v]) => v || k === 'l-xmas') && s.zap.join() === 'Vše');
+// skrytý přepínač výzdoby a názvy ulic (výchozí vypnuté, předvolby je nezapínají) se nepočítají
+over('Vše zapne všechno', Object.entries(s.v).every(([k, v]) => v || ['l-xmas', 'l-ulice'].includes(k)) && s.zap.join() === 'Vše');
 
 // ---------- poloha ----------
 over('tlačítko Moje poloha je vidět', await p.isVisible('#poloha'));

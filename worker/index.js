@@ -4,7 +4,7 @@
 //   /api/<jméno>     naše prostředníky z functions/api/<jméno>.js (stejné soubory jako na Pages a v nahled_server.py)
 //   POST /api/report hlášení nepřesnosti → autorův kód (D1) + e-mail Pavlovi (textHlaseni níž)
 //   POST /api/zprava formulář „Napište nám“ (worker/zprava.js)
-//   /admin, /api/admin/*, /api/flights → autorův kód (heslo ADMIN_PASSWORD; před ním Cloudflare Access)
+//   /admin, /api/admin/*, /api/flights, /api/pluhy → autorův kód (heslo ADMIN_PASSWORD; před ním Cloudflare Access)
 //   ostatní          statické soubory ze site/ (sem se Worker nedostane, podává je Cloudflare rovnou, viz run_worker_first)
 //
 // Přenositelné do dalších projektů na paulhubiss.cz: PROSTREDNICI + posta.js + zprava.js + předání zbytku aplikaci.

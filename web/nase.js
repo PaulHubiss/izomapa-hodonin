@@ -66,6 +66,7 @@
   // Vrstva hasičů zrušena (Pavel 2026-11-18), výjezdy jsou jen v sekci Dnes.
   const DALSI_IK = {
     'l-traffic': { barva: 'var(--muted)', ik: '<path d="m21 8-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4a2 2 0 0 0-1.903 1.257L5 10 3 8"/><path d="M7 14h.01"/><path d="M17 14h.01"/><rect width="18" height="8" x="3" y="10" rx="2"/><path d="M5 18v2"/><path d="M19 18v2"/>' },
+    'l-ulice': { barva: 'var(--muted)', ik: '<path d="M12 13v8"/><path d="M12 3v3"/><path d="M2.354 10.354a1.207 1.207 0 0 1 0-1.708l2.06-2.06A2 2 0 0 1 5.828 6h12.344a2 2 0 0 1 1.414.586l2.06 2.06a1.207 1.207 0 0 1 0 1.708l-2.06 2.06a2 2 0 0 1-1.414.586H5.828a2 2 0 0 1-1.414-.586z"/>' },   // Lucide signpost
     'l-lide': { barva: 'var(--muted)', ik: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>' },
     'l-smoke': { barva: 'var(--muted)', ik: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>' },
     'l-hover': { barva: 'var(--muted)', ik: '<path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z"/>' },
@@ -81,13 +82,14 @@
     s.append(l); return s;
   };
   sek.vrstvy.append(skupina('Místa', KATEG.length ? KATEG.map((c) => c.vrstva) : ['l-labels']),
-    skupina('Život ve městě', ['l-traffic', 'l-lide', 'l-smoke', 'l-hover']));
+    skupina('Život ve městě', ['l-traffic', 'l-lide', 'l-smoke', 'l-ulice', 'l-hover']));
   // přepínač, který app.html nezná (přibyl by v autorově novince), se neztratí: přidá se do poslední skupiny
   if (stareVrstvy) { for (const lab of stareVrstvy.querySelectorAll('label')) sek.vrstvy.lastElementChild.lastElementChild.append(lab); stareVrstvy.remove(); }
 
   // předvolby vrstev (F16, Pavel 2026-11-18 „sedí, stavěj“): jedno klepnutí přepne sadu vrstev. Zvýrazněná je předvolba,
   // která přesně odpovídá zapnutým vrstvám, takže po ručním přepnutí zhasne.
   // Vrstva bez dat (skrytý přepínač) se nepočítá. Odkaz Sdílet je nese sám, protože ukládá vypnuté vrstvy.
+  // Názvy ulic (výchozí vypnuté) předvolby nepřepínají, jen Čistá mapa je vypne.
   const ZIVOT = ['l-traffic', 'l-lide', 'l-smoke', 'l-hover'];
   // jen ikonky v jednom řádku (Pavel 2026-11-18: „ať to nezabírá tolik místa“), název v bublině a vedle nadpisu Předvolby.
   // Lucide: bus, binoculars, balloon, map, check-check
@@ -98,13 +100,14 @@
       ik: '<path d="M10 10h4"/><path d="M19 7V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3"/><path d="M20 21a2 2 0 0 0 2-2v-3.851c0-1.39-2-2.962-2-4.829V8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v11a2 2 0 0 0 2 2z"/><path d="M 22 16 L 2 16"/><path d="M4 21a2 2 0 0 1-2-2v-3.851c0-1.39 2-2.962 2-4.829V8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v11a2 2 0 0 1-2 2z"/><path d="M9 7V4a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v3"/>' },
     { nazev: 'Ven s dětmi', kat: ['pribehy', 'priroda', 'sport', 'jidlo', 'kultura'],
       ik: '<path d="M12 16v1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v1"/><path d="M12 6a2 2 0 0 1 2 2"/><path d="M18 8c0 4-3.5 8-6 8s-6-4-6-8a6 6 0 0 1 12 0"/>' },
-    { nazev: 'Čistá mapa', kat: [],
+    { nazev: 'Čistá mapa', kat: [], bezUlic: true,
       ik: '<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>' },
     { nazev: 'Vše', kat: KATEG.map((c) => c.k), ik: '<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>' },
   ];
   const cil = (p) => { const m = {};
     for (const c of KATEG) m[c.vrstva] = p.kat.includes(c.k);
     for (const id of ZIVOT) m[id] = !p.zivot || p.zivot.includes(id);
+    if (p.bezUlic) m['l-ulice'] = false;
     return m; };
   const dostupne = (id) => { const v = $(id); return v && !v.closest('label')?.hidden ? v : null; };
   const predvolby = el('div', 'nb-predvolby');
@@ -239,8 +242,9 @@
         <li><b>Doprava:</b> MHD a vlaky podle jízdních řádů, kde to jde, živě i se zpožděním; auta podle sčítání dopravy.</li>
         <li><b>Lidé:</b> chodci, cyklisté, zvířata v zoo a loďky; řídí je denní doba, počasí a roční období.</li>
         <li><b>Kouř z komínů</b> se stáčí podle skutečného větru.</li>
+        <li><b>Názvy ulic</b> jsou na začátku vypnuté. Po zapnutí se ukážou při přiblížení, v obytných ulicích až úplně zblízka.</li>
       </ul>
-      <p class="nb-napo-pozn">Auta, lidé a loďky jsou ilustrační, ne skuteční.</p>`,
+      <p class="nb-napo-pozn">Auta,lidé a loďky jsou ilustrační, ne skuteční.</p>`,
     };
     const listy = el('div', 'chips4 nb-zalozky');
     listy.setAttribute('role', 'tablist');

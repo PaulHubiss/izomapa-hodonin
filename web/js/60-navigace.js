@@ -134,6 +134,7 @@
   }
   function pick(r) { ULICE.vyber = null; r.go(); $('q').value = r.label; res = []; cur = -1; renderResults(); }
   $('panel').addEventListener('pointerdown', (e) => { if (!e.target.closest('.search')) zrusUlici(); });
+  $('qClear').addEventListener('click', () => { const q = $('q'); q.value = ''; q.dispatchEvent(new Event('input')); q.focus(); });   // křížek v poli
   $('q').addEventListener('input', (e) => {
     ULICE.vyber = null;                                    // píše se nové hledání (text v poli nechat)
     const q = norm(e.target.value.trim());
@@ -201,6 +202,7 @@
   function shareUrl() {
     const tok = [{ spring: 'jaro', summer: 'leto', autumn: 'podzim', winter: 'zima' }[state.season]];
     if (state.night > 0.7) tok.push('noc'); else if (state.night > 0.25) tok.push('soumrak');
+    for (const [t, id] of Object.entries(LAYER_ZAP)) if ($(id) && $(id).checked) tok.push(t);
     for (const [t, id] of Object.entries(LAYER_TOKEN)) if ($(id) && !$(id).checked && !$(id).closest('label').hidden) tok.push(t);   // skrytý přepínač (vrstva bez dat) do odkazu nepatří
     let at = location.hash.split('@')[1] || '';
     if (state.card && !$('card').hidden) at = `${state.card.lat.toFixed(5)},${state.card.lon.toFixed(5)},${at.split(',')[2] || '0.40'},${state.card.kind}`;

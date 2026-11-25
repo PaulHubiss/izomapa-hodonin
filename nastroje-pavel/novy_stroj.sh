@@ -15,7 +15,7 @@ krok "kontrola podkladů";           $PY nastroje-pavel/kontrola_podkladu.py --t
 krok "data Overture + terén";       $PY fetch_data.py --vse
 krok "výšky z laseru 2013";         [ -f assets/dmp_vysky.json ] || { $PY dmp_fetch.py && $PY dmp_vysky.py; }
 krok "les z ortofota";              [ -f build/les_maska.png ] || { $PY nastroje-pavel/kontrola_podkladu.py plati build/orto || rm -rf build/orto; $PY nastroje/les.py &&$PY nastroje-pavel/kontrola_podkladu.py razitko build/orto; }
-krok "pole a louky (ZABAGED)";      [ -f assets/zabaged.json ] || { $PY nastroje/zabaged.py && $PY nastroje/pole.py; }
+krok "pole a louky (ZABAGED)";      [ -f assets/zabaged.json ] || { $PY nastroje/zabaged.py && $PY nastroje/pole.py && $PY nastroje/pole_cesty.py; }
 krok "barvy střech z ortofota";     [ -f assets/strechy_orto.json ] || { $PY nastroje-pavel/kontrola_podkladu.py plati build/orto04 || rm -rf build/orto04; $PY nastroje/strechy.py &&$PY nastroje-pavel/kontrola_podkladu.py razitko build/orto04; }
 krok "hřiště a semafory";           [ -f assets/hriste.json ] || $PY nastroje/hriste.py; [ -f assets/semafory.json ] || $PY nastroje/semafory.py
 krok "zeleň na zpevněných plochách"; [ -f build/zelen_maska.png ] || $PY nastroje/povrchy.py

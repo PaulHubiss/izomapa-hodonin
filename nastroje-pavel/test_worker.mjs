@@ -1,5 +1,5 @@
 // Zkouška Workeru (worker/*.js) bez sítě: node nastroje-pavel/test_worker.mjs
-// 1. každý prostředník z functions/api/ je ve Workeru zapojený (flights obsluhuje autorův kód),
+// 1. každý prostředník z functions/api/ je ve Workeru zapojený (flights a pluhy obsluhuje autorův kód),
 // 2. e-mail je platný MIME a čeština v něm přežije cestu (posta.js),
 // 3. formulář Napište nám: kontrola vstupu a text e-mailu (zprava.js).
 import { readdirSync } from 'node:fs';
@@ -11,7 +11,7 @@ let chyby = 0;
 const ok = (c, t) => { console.log(`${c ? '✅' : '❌'} ${t}`); if (!c) chyby++; };
 
 const soubory = readdirSync(new URL('../functions/api/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3));
-for (const s of soubory.filter((s) => s !== 'flights')) ok(PROSTREDNICI[s]?.onRequest, `prostředník ${s} zapojený ve worker/index.js`);
+for (const s of soubory.filter((s) => !['flights', 'pluhy'].includes(s))) ok(PROSTREDNICI[s]?.onRequest, `prostředník ${s} zapojený ve worker/index.js`);
 for (const s of Object.keys(PROSTREDNICI)) ok(soubory.includes(s), `prostředník ${s} má soubor ve functions/api/`);
 
 const rozloz = (m) => {

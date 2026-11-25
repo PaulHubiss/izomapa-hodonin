@@ -50,6 +50,70 @@
     const sd = r.c === 'c' ? p.dir * 2.3 : p.side;            // po silnici u pravého okraje
     const x = a[0] + dx * t + dy / L * sd, y = a[1] + dy * t - dx / L * sd; return [x, y, gz(x, y), dx * p.dir, dy * p.dir];
   }
+  // lidé na nástupišti: před příjezdem vlaku (3 min) přicházejí a čekají, při stání nastoupí, vystoupivší se po odjezdu rozejdou.
+  // Vše podle času jízdy vlaku (el), takže bez stavu a stejné pro všechny návštěvníky. Strana nástupiště podle pěších cest v okolí.
+  const PLAT = { on: {{NASTUPISTE}}, dw: new Map(), side: new Map() };   // zapíná "nastupiste": true v mesto.json (hodí se na menší stanice s pár kolejemi)
+  function trainDwells(i) {                                  // [[příjezd, odjezd, x, y, tx, ty], …] zastavení vlaku v mapě (s od výjezdu)
+    if (PLAT.dw.has(i)) return PLAT.dw.get(i);
+    const trip = MHD.trips[i], q = trip[4], out = [];
+    const add = (ta, td, el) => {
+      const o = mhdPos(trip, el), L = Math.hypot(o.dx, o.dy) || 1;
+      if (!cam.grounds.some((g) => Math.abs(o.x - g.cx) <= cam.half && Math.abs(o.y - g.cy) <= cam.half)) return;
+      out.push([ta, td, o.x, o.y, o.dx / L, o.dy / L]);
+    };
+    if (q.length > 3 && q[1] === q[3]) add(-120, q[2], q[2] / 2); else add(-120, 0, 0);                 // výchozí stanice: nástup před odjezdem
+    for (let k = 2; k < q.length - 2; k += 2) if (q[k + 1] === q[k + 3] && q[k + 2] > q[k]) add(q[k], q[k + 2], (q[k] + q[k + 2]) / 2);
+    const e = q[q.length - 2]; if (q[q.length - 1] !== q[q.length - 3] || q.length < 4) add(e, e + 25, e);   // konečná: jen výstup
+    PLAT.dw.set(i, out); return out;
+  }
+  function platSide(x, y, tx, ty) {                          // 1 / -1: na které straně koleje jsou pěší cesty (nástupiště), 0 = obě
+    const key = Math.round(x / 30) + ',' + Math.round(y / 30);
+    if (PLAT.side.has(key)) return PLAT.side.get(key);
+    let a = 0, b = 0;
+    for (const ls of PWK.values()) for (const [r] of ls) for (const w of r.w) {
+      const dx = w[0] - x, dy = w[1] - y, al = dx * tx + dy * ty, la = -dx * ty + dy * tx;
+      if (Math.abs(al) < 40 && Math.abs(la) > 2.5 && Math.abs(la) < 18) { if (la > 0) a++; else b++; }
+    }
+    const v = a > b * 2 ? 1 : b > a * 2 ? -1 : 0; if (a + b) PLAT.side.set(key, v); return v;   // bez cest (čtverec se ještě načítá) neukládat
+  }
+  function platformPeople(share, tNow) {                     // pseudo-postavy [p, P, ip] pro kreslení spolu s chodci
+    const res = [];
+    if (!PLAT.on || !MHD.on || !MHD.act) return res;
+    for (const a of MHD.act) {
+      const i = a[0], trip = MHD.trips[i];
+      if (MHD.routes[trip[0]][1] !== 2) continue;
+      const el = a[2] ? -a[2] : a[1] + tNow;
+      trainDwells(i).forEach(([ta, td, x, y, tx, ty], k) => {
+        if (el < ta - 190 || el > td + 45) return;
+        const side = platSide(x, y, tx, ty);
+        const seed = i * 131 + k * 17 + 7, nW = Math.round((6 + rnd(seed) * 14) * Math.max(0.2, share)), nA = Math.round((2 + rnd(seed + 1) * 8) * Math.max(0.2, share));
+        const sd = (j) => side || (j % 2 ? 1 : -1), dwell = Math.max(10, td - ta);
+        const near = el > ta - 20 && el < td + 8, dc = near ? depth(x, y, gz(x, y)) : 0;   // vlak u nástupiště zakryje lidi za sebou
+        const pt = (al, la, j, dx, dy, moving) => {
+          const sg = sd(j), px = x + tx * al - ty * la * sg, py = y + ty * al + tx * la * sg, z = gz(px, py);
+          if (near && depth(px, py, z) > dc) return;
+          res.push([{ oi: (seed * 7 + j * 29) % 160, moving, ph: el * 7.5 + j, pair: false, kid: false, dog: null }, [px, py, z, dx, dy], toImg(px, py, z)]);
+        };
+        for (let j = 0; j < nW; j++) {                       // čekající: přijdou z boku, stojí čelem ke koleji, při stání nastoupí
+          const r1 = rnd(seed + 10 + j), r2 = rnd(seed + 40 + j), al = (r1 - 0.5) * 50, la0 = 3.2 + r2 * 1.6;
+          const tin = ta - 180 + rnd(seed + 70 + j) * 165, tout = ta + 3 + rnd(seed + 90 + j) * dwell * 0.7;
+          if (el < tin || el > tout) continue;
+          const sg = sd(j), nx = -ty * sg, ny = tx * sg;     // normála od koleje k nástupišti
+          if (el < tin + 10) { const la = la0 + (tin + 10 - el) * 1.3; pt(al, la, j, -nx, -ny, true); }
+          else if (el > tout - 2) pt(al, la0 - (el - tout + 2) * 0.8, j, -nx, -ny, true);
+          else pt(al, la0, j, -nx * 0.3 + tx * (r1 < 0.5 ? 1 : -1) * 0.1, -ny * 0.3 + ty * 0.1, false);
+        }
+        for (let j = 0; j < nA; j++) {                       // vystoupivší: od vlaku pryč z nástupiště
+          const jj = j + 50, r1 = rnd(seed + 120 + j), al0 = (r1 - 0.5) * 40, t0 = ta + 4 + rnd(seed + 150 + j) * Math.min(25, dwell * 0.5);
+          if (el < t0 || el > Math.max(t0 + 50, td + 40)) continue;   // za vlakem je vidět až po odjezdu, tak se rozcházejí i chvíli po něm
+          const sg = sd(jj), nx = -ty * sg, ny = tx * sg, back = r1 < 0.5 ? -1 : 1, v = Math.min(1.25, 50 / Math.max(50, td + 40 - t0));
+          const w = (el - t0) * v, la = 2.4 + Math.min(w, 4), al = al0 + Math.max(0, w - 4) * back;
+          pt(al, la, jj, w < 4 ? nx : tx * back, w < 4 ? ny : ty * back, true);
+        }
+      });
+    }
+    return res;
+  }
   function stepPerson(p, dt) {
     if (p.wait > 0) { p.wait -= dt; p.moving = false; return; }
     p.moving = true; p.ph += p.bike ? dt * 5 : dt * 7.5 * p.v;

@@ -14,7 +14,7 @@ if [ "$1" = data ]; then
   echo "== data Overture pro celý rozsah"; $PY fetch_data.py --vse
   echo "== výšky budov z laseru";      [ -f assets/dmp_vysky.json ] || { $PY dmp_fetch.py && $PY dmp_vysky.py; }
   [ -f build/les_maska.png ] || { $PY nastroje/les.py && $PY nastroje-pavel/kontrola_podkladu.py razitko build/orto; }
-  [ -f assets/zabaged.json ] || { $PY nastroje/zabaged.py && $PY nastroje/pole.py; }
+  [ -f assets/zabaged.json ] || { $PY nastroje/zabaged.py && $PY nastroje/pole.py && $PY nastroje/pole_cesty.py; }
 fi
 # Střechy, zeleň a hřebeny: drahé (ortofoto ~5 GB) a v gitu z čisté stavby → znovu jen s `data` (nový rozsah) nebo když chybí.
 # Mezipaměť ortofota (build/orto04/) se jmenuje podle polohy v mapě, ne na Zemi: po posunu středu by se poskládalo

@@ -83,6 +83,8 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
         'VITR': 'true' if M.get('vitr') else 'false',
         'POCASI': 'true' if M.get('pocasi') else 'false',
         'LETADLA': 'true' if M.get('letadla', False) else 'false',
+        'PLUHY': 'true' if M.get('pluhy', False) else 'false',
+        'NASTUPISTE': 'true' if M.get('nastupiste', False) else 'false',
         'MHD': 'true' if mhd.get('gtfs') or os.path.exists('site/mhd.json') else 'false',   # mhd.json vyrábí mhd.py jen s GTFS
         'POHLED': json.dumps(pohled if isinstance(pohled, list) and len(pohled) >= 2 else None),
         'DOMU_CELEK': 'true' if M.get('domu_celek') else 'false',
@@ -105,6 +107,7 @@ def postav_stranku(M, html_out='site/index.html', og_cesta='og.jpg', je_obec=Fal
         'PAMATKY_ZDROJ': (', kulturní památky z <a href="https://www.wikidata.org/" target="_blank" rel="noopener">Wikidat</a> (CC0), '
                           'jejich fotky © autoři na <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> '
                           '(autor a licence u každé fotky)' if os.path.exists('assets/pamatky.json') else ''),
+        'PLUHY_ZDROJ': ', sypače zimní údržby © <a href="https://udrzba.rsd.cz/" target="_blank" rel="noopener">ŘSD ČR</a>' if M.get('pluhy', False) else '',
         'LETADLA_ZDROJ': ', letadla © <a href="https://adsb.lol/" target="_blank" rel="noopener">adsb.lol</a> (ODbL)' if M.get('letadla', False) else '',
         # výjezdy hasičů (functions/api/hasici.js) a výluky (functions/api/vyluky.js): jen přes prostředníka na Cloudflaru
         'HASICI': json.dumps(M['hasici'] if isinstance(M.get('hasici'), dict) and M['hasici'].get('kraj') else None),

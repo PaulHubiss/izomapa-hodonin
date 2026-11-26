@@ -34,3 +34,4 @@ echo "== vlaky (celostátní JŘ)";   $PY nastroje-pavel/vlaky_jr.py
 echo "== cesty pro chodce";          $PY nastroje-pavel/chodci.py
 echo "== tvar ulic pro hledání";     $PY nastroje-pavel/ulice.py
 echo "== přestavba";               ./postav.sh render
+echo "== klikací plochy jarmarku"; $PY nastroje-pavel/jarmark_klik.py

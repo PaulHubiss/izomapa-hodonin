@@ -13,7 +13,7 @@ v našem rendereru a pošle do dashboardu. Schvaluje dál jen Pavel.
 | 2 | Claude | `node nastroje-pavel/chatgpt-modely/zabal.mjs <slug> [<slug> …] [--oprava=a,b]` → `predani/chatgpt/<balik>.zip`, text k vložení, Finder |
 | 3 | Pavel | zip do ChatGPT + text zadání, nechat pracovat, stáhnout `<balik>-od-chatgpt.zip` do Stažených souborů, napsat „hotovo“ |
 | 4 | Claude | `node nastroje-pavel/chatgpt-modely/prevezmi.mjs <balik>` (rozbalí, zkouška každé stavby), **přečte kód** |
-| 5 | Claude | `prevezmi.mjs <balik> --pouzij` → modely do `pamatky/`, poznámky jako `model.md`, náhled, snímky do dashboardu |
+| 5 | Claude | `prevezmi.mjs <balik> --pouzij` → modely do `pamatky/`, poznámky jako `model.md`, náhled, snímky do dashboardu; `prehled.py <balik> …` = všechny v jednom obrázku |
 | 6 | Pavel | dashboard: Schváleno / Předělat s komentářem / Později |
 | 7 | Claude | „Předělat“ → `zabal.mjs --oprava=<slug>` (komentář z dashboardu + snímky z rendereru) a znovu od kroku 3 |
 
@@ -42,7 +42,8 @@ v poznámkách. **Zakázané mapové služby** a jejich panoramata a 3D (Google,
 
 ## Pojistky
 
-- Kód od ChatGPT je cizí program (spouští se při renderu). **`kontrola_kodu.mjs`** (pouští ho `prevezmi.mjs` sám) hlídá,
+- Kód od ChatGPT je cizí program (spouští se při renderu). **`kontrola_kodu.mjs`** (pouští ho `prevezmi.mjs` sám, od 2026-11-25
+  **před** zkouškou, která model spouští; ❌ se vůbec nespustí) hlídá,
   že model používá jen M, K a matematiku: žádná síť, stránka, `eval`, cizí importy, nebezpečná jména v řetězcích.
   Celé Claude čte jen modely s ❌ a ty, u kterých zkouška hlásí něco divného (výška, přesahy). Kontrola je ověřená na
   schválně zlém souboru; první verze ho propustila (`//` v adrese uřízlo zbytek řádku jako komentář), opraveno 2026-11-20.
@@ -61,5 +62,7 @@ v poznámkách. **Zakázané mapové služby** a jejich panoramata a 3D (Google,
   Zkouška u soch hlásila nesmyslné přesahy (drobná památka nemá půdorys) → opraveno v šabloně.
 - **2026-11-24:** číst poznámky i u modelů bez varování zkoušky – ChatGPT v nich hlásí chybné párování (Kino Svět). Zadání
   teď chce `⚠️ PÁROVÁNÍ:` na prvním řádku a `prevezmi.mjs` podezřelé věty vypíše (🧭); opravit `oids` dřív než `--pouzij`.
+- **2026-11-25, 9. výběr (62 staveb v 10 dávkách):** všechny vráceny naráz, 60 bez varování, Pavel schválil všech 62 za ~10 min. Po renderu
+  modelů u náměstí pustit `vanoce.sh` a `test_jarmark.mjs` (vyšší obrysy domů zakryly klik na pódium, opraveno v `prep.py`).
 - Po pilotu (Pavel): dávky víc staveb, opravné kolo přes ChatGPT, poznámky rovnou jako `model.md` s kontrolním
   seznamem, hledání fotek s mantinely.

@@ -1,0 +1,121 @@
+{
+ "skupina": "10. výběr (ChatGPT)",
+ "zdroj": "Pavel 2026-11-26: další sada (napady/CHATGPT-DAVKA-10.md); skupina = jedna stavba s více budovami",
+ "davky": {
+  "a": {
+   "Kasárenská 4063": ["a45e14dd"],
+   "Anenská 405": ["404e3a2b"],
+   "Brněnská 3163": ["cdeefaf8"],
+   "Brněnská 3983": ["9b789705"],
+   "Lipová alej 3207": ["e4d695f4"],
+   "Lipová alej 3756": ["2dd58692"]
+  },
+  "b": {
+   "Sportovní 4186": ["59507ffd"],
+   "Brněnská 3602": ["e60d79dd"],
+   "Brněnská 3883": ["ad1d6a06"],
+   "Brněnská 4499": ["93238960"],
+   "Dvořákova 4047": ["332ff76b"]
+  },
+  "c": {
+   "Wilsonova 4441": ["0ce03730"],
+   "Wilsonova 4266": ["55869281"],
+   "Kanceláře u Wilsonovy": ["346c9135"],
+   "Velkomoravská 1734": ["0f0b6995"],
+   "Velkomoravská 461": ["e4ee50be"],
+   "Sv. Čecha 3073": ["40509803"]
+  },
+  "d": {
+   "Štefánikova 288": ["4692fe5d"],
+   "Štefánikova 3948": ["976ed160"],
+   "Rodinova 691": ["405e2348"],
+   "Hotel Rodinova 720": ["84a8d954"],
+   "Měšťanská 240": ["605f5e46"],
+   "Měšťanská 3786": ["49fa9c13"]
+  },
+  "e": {
+   "Janáčkova 2265 a 2266": ["8a2889cb", "576f67bd"],
+   "Janáčkova 2388, 2560 a 2561": ["5bb87ae9", "c87751b9", "c29d45ec"],
+   "Sv. Čecha 2371 a 2373": ["dd5a4fb7", "3a1f4d80"],
+   "Vrchlického 2541": ["0238459e"],
+   "Vrchlického 3192 a 3534": ["ea71588a"],
+   "Úprkova 2232": ["40aa8e7e"]
+  },
+  "f": {
+   "nám. 17. listopadu 2033": ["1163c72c"],
+   "Nádražní řádek 674": ["e576c9f5"],
+   "Brněnská 330": ["1297c4b2"],
+   "Štefánikova 284": ["6eb845d1"],
+   "Pr. Veselého 1577 a Sušilova 1576": ["67374855"],
+   "Sadová 1688": ["b4af183a"]
+  },
+  "g": {
+   "Erbenova 2725, 2861 a 2862": ["04851a0c"],
+   "Erbenova 2724, 2864 a 2865": ["cc86461e"],
+   "Křičkova 2723, 2867 a 2868": ["f2f98bb0"],
+   "Patočkova 2787 a 2788": ["967552b5"],
+   "Patočkova 2809, 2810, 3488 a 3489": ["97f6bdd9", "550232ca"],
+   "U Červených domků 2850": ["4212b844"]
+  },
+  "h": {
+   "Skácelova 2773": ["3aad6966"],
+   "Skácelova 2711": ["3fae546d"],
+   "P. Jilemnického 2923": ["f3c12f7b"],
+   "P. Jilemnického 2794": ["bcb1953e"],
+   "Křičkova 3881": ["af9dd6c7"],
+   "Velkomoravská 3218": ["cba9cedf"]
+  },
+  "i": {
+   "I. Olbrachta 3549–3556": ["5358c1c7", "985c7476"],
+   "I. Olbrachta 2934–2940": ["edfafbc9", "9f09460c"],
+   "J. Suka 2780 a 2917": ["f7fec01a", "8a9ef374"]
+  },
+  "j": {
+   "Marxova 2575–2577": ["f9525b97"],
+   "Bezručova 2765": ["c5b4a44a"],
+   "Jungmannova 2591": ["37137260"],
+   "Žižkova 3077 a 3078": ["6947af14"],
+   "Žižkova 3960": ["7ef18756"],
+   "G. Preissové 3470–3473": ["6548b506", "9b9b83a0"]
+  },
+  "k": {
+   "Brandlova 3171": ["c40199d7"],
+   "Brandlova 2420": ["a2c3979d"],
+   "Brandlova 2772": ["34e14b85"],
+   "Očovská 3847–3849": ["3f7c9a67"],
+   "nám. Osvobození 3352 a 3353": ["0ffde486"],
+   "Kolískova 3189 a 3349": ["63a5f6b0", "624568a8"]
+  },
+  "l": {
+   "Slavíkova 180": ["4c869d10"],
+   "Výstavní 4470": ["8cdd229a"],
+   "Měšťanská 3347 a 3348": ["4dbceaa0"],
+   "Horní Valy 2774": ["7588f166"]
+  }
+ },
+ "poznamky_davky": {
+  "a": "Velké veřejné budovy bez názvu v datech. Nejdřív zjisti, co v budově sídlí (škola, úřad, obchod, sportoviště), a napiš to na začátek poznámek; vzhled podle toho.",
+  "b": "Velké veřejné a obchodní budovy. Nejdřív zjisti, co v budově sídlí, a napiš to na začátek poznámek.",
+  "c": "Budovy v centru u Wilsonovy, Velkomoravské a Sv. Čecha. Nejdřív zjisti, co v budově sídlí (Wilsonova 4441 je v RÚIAN stavba pro dopravu, Wilsonova 4266 ubytování z roku 2016).",
+  "d": "Starší domy a veřejné budovy kolem Štefánikovy, Rodinovy a Měšťanské v centru. Zjisti, co v nich sídlí; u domů z první republiky (Měšťanská 240 z roku 1933, Štefánikova 288 z roku 1947) hledej i historické fotky.",
+  "e": "Bytové domy v centru. Janáčkova a Sv. Čecha jsou vyšší domy z doby kolem roku 1945–1960 (laser přes 20 m), každý dům ve skupině má vlastní střechu.",
+  "f": "Bytové domy v centru a u nádraží.",
+  "g": "Bytové domy z 60. let na západě města (Erbenova, Křičkova, Patočkova); sousední domy už modely mají, drž s nimi jednotný ráz.",
+  "h": "Domy a občanské stavby na západě (Skácelova, P. Jilemnického). Občanské stavby z let 1956–1960 jsou možná školy nebo školky: zjisti to a napiš do poznámek.",
+  "i": "Bytové domy na sídlišti u I. Olbrachta a J. Suka; sousední domy už modely mají, drž s nimi jednotný ráz.",
+  "j": "Bytové domy na východě centra (Marxova, Bezručova, Jungmannova, Žižkova, G. Preissové).",
+  "k": "Bytové domy na východě a jihu (Brandlova, Očovská, nám. Osvobození, Kolískova).",
+  "l": "Bytové domy na jihu centra."
+ },
+ "poznamky": {
+  "Brněnská 3163": "⚠️ Pod jedním půdorysem víc výšek: laser medián 5,7 m, p90 11 m (vyšší a nízká část). Rozhraní odečti z `orto.jpg` a vrcholů v `laser.json`.",
+  "Brandlova 3171": "Starší laser DMP 1G tu nemá body; výška v tabulce je z dat mapy (novější DMP OK 2024). Střechu ověř na ortofotu.",
+  "Kolískova 3189 a 3349": "U Kolískova 3349 (`624568a8`) starší laser nemá body; výšku ber z tabulky a od souseda 3189.",
+  "Sadová 1688": "Starší laser DMP 1G tu nemá body; výška v tabulce je z dat mapy. Střechu ověř na ortofotu.",
+  "Skácelova 2773": "Novostavba z roku 2012, starší laser tu nemá body; výška v tabulce je z dat mapy. Střechu ověř na ortofotu.",
+  "Výstavní 4470": "Novostavba z roku 2019, starší laser má jen pár bodů (medián nesmyslný); výška kolem 16 m z dat mapy. Střechu ověř na ortofotu.",
+  "Patočkova 2809, 2810, 3488 a 3489": "Dva domy vedle sebe z různé doby (2809/2810 z 60. let, 3488/3489 z roku 1972), každý s vlastní střechou.",
+  "Vrchlického 3192 a 3534": "Jeden půdorys, dvě čísla popisná; může jít o dvě části s různou výškou, ověř na laseru.",
+  "Kanceláře u Wilsonovy": "Budova bez adresy v datech, v centru u Wilsonovy. Zjisti, co to je, a pokud najdeš správný název, napiš ho na první řádek poznámek."
+ }
+}

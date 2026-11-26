@@ -117,8 +117,17 @@
     }
     fn(); ctx.restore();
   };
+  // Kde je jarmark opravdu vidět (site/jarmark_klik.json z nastroje-pavel/jarmark_klik.py, z neprůhledných pixelů vrstvy výzdoby):
+  // tam má přednost před budovou, protože obrysy budov (konvexní obal) přes stánky přesahují (Pavel 2026-11-26, budova brala klik
+  // u 46 % viditelné plochy). Bez souboru jako dřív: obrys stánku a budova blíž k pohledu vyhraje.
+  let jarKlik = null;
+  if (JARMARK) fetch(`jarmark_klik.json${VER ? VER + '&' : '?'}s=${SEST}`, NC).then((r) => (r.ok ? r.json() : null)).then((d) => {
+    if (!Array.isArray(d)) return;
+    jarKlik = d.map((p) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of p.o) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } return { ...p, bb: [x0, y0, x1, y1] }; });
+  }).catch(() => {});
   var jarmarkAt = (ix, iy, b) => {
     if (!JARMARK || !xmasShow() || !shown(JARMARK.k)) return null;
+    if (jarKlik) return jarKlik.some((p) => ix >= p.bb[0] && ix <= p.bb[2] && iy >= p.bb[1] && iy <= p.bb[3] && inPoly(ix, iy, p.o) && !p.d.some((h) => inPoly(ix, iy, h))) ? JARMARK : null;
     return jarObrysy.some((o) => inPoly(ix, iy, o.p) && !(b && b.d < o.d)) ? JARMARK : null;
   };
   for (const [lat, lon] of {{XMAS_LL}} || []) {

@@ -27,6 +27,7 @@ krok "sčítání dopravy (hustota aut)"; [ -f build/scitani.json ] || $PY nastr
 krok "vlaky (celostátní JŘ)";       $PY nastroje-pavel/vlaky_jr.py   # stáhne platné ročníky JR (~25 MB každý) a spojí je
 krok "výšky DMP OK 2024";           [ -f build/dmpok_vysky.json ] || $PY nastroje/dmpok.py
 krok "scény, render, web";          ./postav.sh render
+krok "klikací plochy jarmarku";     $PY nastroje-pavel/jarmark_klik.py   # z vrstvy výzdoby, po renderu
 krok "cesty pro chodce";            $PY nastroje-pavel/chodci.py
 krok "tvar ulic pro hledání";       $PY nastroje-pavel/ulice.py
 krok "hotovo"

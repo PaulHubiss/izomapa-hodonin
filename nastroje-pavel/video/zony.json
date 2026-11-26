@@ -1,0 +1,7 @@
+{
+  "_popis": "Bezpečné zóny: podíl výšky (nahore, dole) a šířky (vlevo, vpravo), který na síti zakryje rozhraní (popisek, tlačítka, lišta). Čte je režim ?video (rámeček) i video.mjs (titulek se jim vyhne). ⚠️ Orientační hodnoty pro Instagram Reels a TikTok, neověřené měřením na nahraném videu (2026-11-26).",
+  "9:16": { "nahore": 0.13, "dole": 0.24, "vpravo": 0.14, "vlevo": 0 },
+  "4:5": { "nahore": 0, "dole": 0, "vpravo": 0, "vlevo": 0 },
+  "1:1": { "nahore": 0, "dole": 0, "vpravo": 0, "vlevo": 0 },
+  "16:9": { "nahore": 0, "dole": 0, "vpravo": 0, "vlevo": 0 }
+}

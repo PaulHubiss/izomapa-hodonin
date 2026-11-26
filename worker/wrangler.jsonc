@@ -25,5 +25,9 @@
   ],
   // e-mail o novém hlášení; adresát musí být ověřený v Email Routing (Cloudflare → paulhubiss.cz → Email → Destination addresses)
   "send_email": [{ "name": "EMAIL" }],
+  // co z mesto.json smí Worker obsloužit (bezpečnostní průchod 2026-11-26): hasiči jen s těmito čísly, letadla a sypače jen
+  // když jsou v mapě zapnuté. Jinak by šlo přes nás posílat libovolné dotazy na cizí servery. Shodu s mesto.json hlídá
+  // nastroje-pavel/test_worker.mjs, po změně mesto.json upravit i tady.
+  "vars": { "HASICI": { "kraj": 116, "okres": 3706, "dni": 7 }, "LETADLA": false, "PLUHY": false },
   "observability": { "enabled": true }
 }

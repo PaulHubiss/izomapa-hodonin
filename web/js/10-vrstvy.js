@@ -722,8 +722,8 @@
   const nightFromSun = (a) => (a > 8 ? 0 : a > 0 ? 0.42 * (1 - a / 8) + 0.0 : a > -7 ? 0.42 + 0.58 * (-a / 7) : 1);
   const saveRT = (v) => { try { localStorage.setItem('izo-realtime', v ? '1' : '0'); } catch {} };
   function tickReal() {
-    if (!$('realTime').checked) return;
-    state.night = Math.round(nightFromSun(sunAlt(new Date())) * 100) / 100; $('night').value = Math.round(state.night * 100); applyTime();
+    if (!podleHodin()) return;
+    state.night = Math.round(nightFromSun(sunAlt(tedDate())) * 100) / 100; $('night').value = Math.round(state.night * 100); applyTime();   // virtuální hodiny (Den za minutu)
   }
   $('realTime').addEventListener('change', (e) => { saveRT(e.target.checked); tickReal(); });
   // výchozí stav: den, skutečný čas vypnutý (zapne si ho každý sám, volba se pak pamatuje)

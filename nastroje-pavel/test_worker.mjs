@@ -2,8 +2,9 @@
 // 1. každý prostředník z functions/api/ je ve Workeru zapojený (flights a pluhy obsluhuje autorův kód),
 // 2. e-mail je platný MIME a čeština v něm přežije cestu (posta.js),
 // 3. formulář Napište nám: kontrola vstupu a text e-mailu (zprava.js).
-import { readdirSync } from 'node:fs';
-import { PROSTREDNICI, textHlaseni } from '../worker/index.js';
+import { readdirSync, readFileSync } from 'node:fs';
+import { PROSTREDNICI, textHlaseni, povoleno } from '../worker/index.js';
+import { odkaz } from '../functions/api/program.js';
 import { mime, platnyEmail } from '../worker/posta.js';
 import { zkontroluj, textEmailu } from '../worker/zprava.js';
 
@@ -38,6 +39,24 @@ ok(/^Reply-To: <jana@example.cz>$/m.test(zp.hlav), 'zpráva: Reply-To na odesíl
 ok(zp.text.includes('Místo: Jez') && zp.text.includes('Od: Jana <jana@example.cz>') && zp.text.includes('#leto@48.85000,17.13000'), 'zpráva: místo, odesílatel, odkaz');
 const bez = textEmailu(zkontroluj({ druh: 'jine', text: 'Pěkná mapa!' }).z, 'https://x');
 ok(bez.includes('nevyplnil e-mail') && !bez.includes('Na mapě'), 'zpráva bez e-mailu a polohy');
+
+// bezpečnostní průchod 2026-11-26: Worker pouští dál jen to, co mapa používá; vars v wrangler.jsonc musí sedět s mesto.json
+const bezKom = (t) => { let o = '', s = false; for (let i = 0; i < t.length; i++) { const c = t[i];
+  if (s) { o += c; if (c === '\\') o += t[++i]; else if (c === '"') s = false; continue; }
+  if (c === '"') { s = true; o += c; continue; }
+  if (c === '/' && t[i + 1] === '/') { while (i < t.length && t[i] !== '\n') i++; o += '\n'; continue; }
+  o += c; } return o.replace(/,(\s*[}\]])/g, '$1'); };
+const WR = JSON.parse(bezKom(readFileSync(new URL('../worker/wrangler.jsonc', import.meta.url), 'utf8'))).vars || {};
+const MJ = JSON.parse(readFileSync(new URL('../mesto.json', import.meta.url), 'utf8'));
+ok(JSON.stringify(WR.HASICI) === JSON.stringify(MJ.hasici), `wrangler vars HASICI = mesto.json hasici (${JSON.stringify(WR.HASICI)})`);
+ok(WR.LETADLA === !!MJ.letadla && WR.PLUHY === !!MJ.pluhy, `wrangler vars LETADLA/PLUHY = mesto.json (${WR.LETADLA}/${WR.PLUHY})`);
+const Q = (s) => new URLSearchParams(s);
+ok(povoleno('/api/hasici', Q('kraj=116&okres=3706&dni=7'), WR) && !povoleno('/api/hasici', Q('kraj=116&okres=3706&dni=8'), WR)
+  && !povoleno('/api/hasici', Q('kraj=1&okres=2&dni=7'), WR), 'hasiči: jen čísla z mesto.json');
+ok(povoleno('/api/flights', Q(''), WR) === !!MJ.letadla && povoleno('/api/pluhy', Q(''), WR) === !!MJ.pluhy, 'letadla a sypače jen zapnuté');
+ok(povoleno('/api/program', Q('zdroj=x'), WR) && povoleno('/api/report', Q(''), WR), 'ostatní cesty beze změny');
+ok(odkaz('javascript:alert(1)', 'https://www.dkhodonin.eu') === 'https://www.dkhodonin.eu' && odkaz('/akce/1', 'https://www.dkhodonin.eu') === 'https://www.dkhodonin.eu/akce/1',
+  'program: odkaz jen http(s)');
 
 console.log(chyby ? `\n❌ ${chyby} chyb` : '\n✅ vše v pořádku');
 process.exit(chyby ? 1 : 0);

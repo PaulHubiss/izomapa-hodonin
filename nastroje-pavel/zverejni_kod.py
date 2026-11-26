@@ -1,7 +1,7 @@
 """Zveřejní kód naší verze mapy do veřejného forku (licence AGPL-3.0, Pavel 2026-11-19).
 
     .venv/bin/python nastroje-pavel/zverejni_kod.py          nahraje změny (pouští ho aktualizuj.sh nasad)
-    .venv/bin/python nastroje-pavel/zverejni_kod.py --seznam jen vypíše, co by šlo ven
+    .venv/bin/python nastroje-pavel/zverejni_kod.py --seznam [--doma]   jen vypíše, co by šlo ven (s --doma i co zůstane)
 
 Proč: autor v README (ř. 192) a licence AGPL chtějí, aby kdo upraví izomapu a pustí ji jako web, zveřejnil i úpravy.
 Fork https://github.com/PaulHubiss/izomapa-hodonin dostane jen KÓD. Ven NEjdou deníky, poznámky, úkoly, návrhy,
@@ -41,14 +41,28 @@ def git(*a, cwd=KOREN):
     return subprocess.run(['git', *a], cwd=cwd, capture_output=True, text=True, check=True).stdout
 
 
-def seznam():
-    return [f for f in git('ls-files', '-z').split('\0') if f and not SKRYT.search(f)]
+# Ven jde jen to, co je tady povolené (bezpečnostní průchod 2026-11-26: dřív vše kromě SKRYT, takže nový soukromý soubor
+# v kořeni by odešel sám). SKRYT dál platí navrch jako druhá pojistka. Nová složka s kódem nebo nový soubor v kořeni =
+# přidat sem; --seznam vypíše i to, co se nezveřejní, ať je vidět, že se na nic nezapomnělo.
+POVOLENO = re.compile(r'^(web|worker|functions|hlaseni|nastroje|nastroje-pavel|priklady|doplnky|knihovny|tests)/'
+                      r'|^pamatky/(_[^/]+\.js|[^/]+\.(py|mjs|sh|md))$'          # nástroje a návod; modely Hodonína ne
+                      r'|^[^/]+\.(py|mjs|sh)$|^render\.html$'                    # autorův kód v kořeni
+                      r'|^(\.gitignore|AGENTS\.md|CLAUDE\.md|LICENSE|README\.md|package\.json|package-lock\.json|mesto\.json)$')
+
+
+def seznam(vse=False):
+    f_ = [f for f in git('ls-files', '-z').split('\0') if f]
+    ven = [f for f in f_ if POVOLENO.search(f) and not SKRYT.search(f)]
+    return (ven, [f for f in f_ if f not in set(ven)]) if vse else ven
 
 
 def main():
     soubory = seznam()
     if '--seznam' in sys.argv:
-        print('\n'.join(soubory)); print(f'\n{len(soubory)} souborů', file=sys.stderr); return
+        _, ne = seznam(vse=True)
+        print('\n'.join(soubory)); print(f'\n{len(soubory)} souborů ven, {len(ne)} zůstává doma', file=sys.stderr)
+        if '--doma' in sys.argv: print('\n'.join(f'(doma) {f}' for f in ne))
+        return
     if not (KLON / '.git').exists():
         KLON.parent.mkdir(parents=True, exist_ok=True)
         git('clone', '-q', FORK, str(KLON))

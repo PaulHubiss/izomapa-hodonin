@@ -28,13 +28,16 @@ export async function onRequest({ request }) {
   const oblast = (new URL(request.url).searchParams.get('oblast') || '').slice(0, 60);
   const json = (o, status = 200, max = 600) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${max}` } });
   if (!oblast) return json({ vyluky: [] }, 400, 0);
-  const cache = caches.default, key = new Request(`${API}?izomapa=${encodeURIComponent(oblast)}`);
+  // Odpověď IDS JMK je pro všechny oblasti stejná: v mezipaměti jednou a oblast se vybírá až tady. Dřív měla každá oblast
+  // vlastní klíč, takže libovolné ?oblast= znamenalo nový dotaz na IDS JMK (bezpečnostní průchod 2026-11-26).
+  const cache = caches.default, key = new Request(`${API}?izomapa=vse`);
   let r = await cache.match(key);
   if (!r) {
     const up = await fetch(API, { headers: { 'user-agent': UA, accept: 'application/json' } });
     if (!up.ok) return json({ vyluky: [] }, 502, 0);
-    r = json({ vyluky: preved(await up.json(), oblast), zdroj: 'https://www.idsjmk.cz/lockouts/all/current' });
+    r = new Response(await up.text(), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=600' } });
     await cache.put(key, r.clone());
   }
-  return r;
+  let data; try { data = await r.json(); } catch { return json({ vyluky: [] }, 502, 0); }
+  return json({ vyluky: preved(data, oblast), zdroj: 'https://www.idsjmk.cz/lockouts/all/current' });
 }

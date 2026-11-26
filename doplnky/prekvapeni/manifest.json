@@ -1,0 +1,8 @@
+{
+  "id": "prekvapeni",
+  "name": "Skrytá překvapení",
+  "version": "1.0.0",
+  "description": "Nikde nepopsaná překvapení po kliknutí: kostel zazvoní (noty a holubi z věže), lev v zoo zařve, ve vodě občas vykoukne vodník, komín elektrárny vypustí kouřové srdce nebo prstenec. Normální kliknutí (karta) funguje dál.",
+  "hook": "overlay_hook.py",
+  "scripts": ["prekvapeni.js"]
+}

@@ -31,9 +31,19 @@ export function textHlaseni(d, kde = KDE) {
   ].join('\n');
 }
 
+// Pustit dotaz dál? Hasiči jen s čísly z mesto.json, letadla a sypače jen zapnuté (env z wrangler.jsonc "vars",
+// bezpečnostní průchod 2026-11-26). Bez vars (lokální zkouška) vše jako dřív.
+export function povoleno(p, q, env = {}) {
+  if (p === '/api/flights' && env.LETADLA === false) return false;
+  if (p === '/api/pluhy' && env.PLUHY === false) return false;
+  if (p === '/api/hasici' && env.HASICI) return ['kraj', 'okres', 'dni'].every((k) => q.get(k) === String(env.HASICI[k]));
+  return true;
+}
+
 export default {
   async fetch(req, env, ctx) {
-    const p = new URL(req.url).pathname;
+    const u = new URL(req.url), p = u.pathname;
+    if (!povoleno(p, u.searchParams, env)) return new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } });
     const m = p.match(/^\/api\/([a-z]+)$/);
     if (m && PROSTREDNICI[m[1]]) return PROSTREDNICI[m[1]].onRequest({ request: req, env, waitUntil: (x) => ctx.waitUntil(x) });
     if (p === '/api/zprava' && req.method === 'POST') return prijmiZpravu(req, env, ctx, KDE);

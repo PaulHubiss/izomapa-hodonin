@@ -149,6 +149,13 @@ TRAM_LINES = [tuple(t) for t in MESTO.get('mhd', {}).get('tramvaje', [])]
 NAZVY_BUDOV = (json.load(open('assets/upresneni.json', encoding='utf-8')) if os.path.exists('assets/upresneni.json') else {}).get('nazvy_budov', [])
 def rucni_nazev(oid):
     return next((n['nazev'] for n in NAZVY_BUDOV if str(oid).startswith(n['oid'])), None)
+# výšky z laseru (DMP 1G, jako prep.py): oid → [medián, p90] nad terénem; pro obrys budov s vlastním modelem
+DMP = json.load(open('assets/dmp_vysky.json')) if os.path.exists('assets/dmp_vysky.json') else {}
+if os.path.exists('assets/dmp_rucne.json'): DMP.update({k: v for k, v in json.load(open('assets/dmp_rucne.json')).items() if not k.startswith('_')})
+def dmp_p90(oid):
+    if not oid: return None
+    v = DMP.get(oid) or next((h for k, h in DMP.items() if k.startswith(str(oid))), None)
+    return v[1] if v and len(v) > 1 and v[1] else None
 for chunk in chunks:
     src = json.load(open(f'{chunk_dir(chunk)}/info_src.json'))
     OFF = chunk_center(chunk)
@@ -159,6 +166,12 @@ for chunk in chunks:
     for b in merge_parts(src['buildings']):
         ring = np.array(b['ring'])
         top = b['top'] + (22 if b['cls'] == 'kostel' and not b.get('pam') else 0.6)   # věž kostela (vlastní model památky ji má ve vršku)
+        if b.get('pam'):
+            # Záplata (Pavel 2026-11-26): u vlastního modelu je top = vršek modelu i s věží a obal půdorysu do té výšky zakrýval
+            # nebe nad střechou (u radnice mizely autobusy v ulici za ní). Obrys jen do střechy podle laseru (p90 nad terénem),
+            # nejvýš vršek modelu. Úzká věž tak obrys nemá. ▶️ Správně: obrys ze skutečného tvaru modelu (napady/OBRYSY.md).
+            p90 = dmp_p90(b.get('oid'))
+            if p90: top = min(top, b['base'] + p90 + 0.6)
         pts = [px(x, y, z)[:2] for x, y in ring for z in (b['base'], top)]
         hull = MultiPoint(pts).convex_hull
         if hull.geom_type != 'Polygon': continue

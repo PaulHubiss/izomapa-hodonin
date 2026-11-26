@@ -1,0 +1,33 @@
+{
+  "nazev": "Léto a zima na náměstí",
+  "popis": "Původní video ze 17. 11.: průlet od TIC na Masarykovo náměstí v létě, prolnutí do zimy, setmění se světly.",
+  "druh": "video",
+  "formaty": ["1:1", "4:5", "9:16", "16:9"],
+  "kratsi_strana": 1080,
+  "fps": 30,
+  "zvetseni": 1,
+  "zabery": [
+    {
+      "obdobi": "leto",
+      "cas": "2026-07-15T10:30:00+02:00",
+      "pocasi": "clear",
+      "body": [
+        { "t": 0, "ll": [48.8531, 17.1264], "m_na_px": 0.4, "noc": 0 },
+        { "t": 8, "ll": [48.8487, 17.1285] },
+        { "t": 10 }
+      ]
+    },
+    {
+      "obdobi": "zima",
+      "cas": "2026-01-14T15:30:00+01:00",
+      "pocasi": "snow",
+      "prechod": { "druh": "prolnuti", "delka": 1 },
+      "body": [
+        { "t": 0, "ll": [48.8487, 17.1285], "m_na_px": 0.4, "noc": 0 },
+        { "t": 2.5 },
+        { "t": 6, "noc": 1 },
+        { "t": 8.5 }
+      ]
+    }
+  ]
+}

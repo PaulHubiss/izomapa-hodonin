@@ -151,6 +151,10 @@ input#night::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; heigh
 input#night::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); cursor: pointer; }
 .daynight .ends { font-family: var(--body); font-size: 12px; }
 .realtime { font-size: 14px; color: var(--ink); }
+/* Den za minutu (68-den-za-minutu.js): řádek s vypínačem jako „Podle skutečného času“, běžící hodiny vpravo vedle vypínače
+   (Pavel 2026-11-26: bez vyskakovací lišty, ve stejném stylu jako ostatní prvky Vzhledu) */
+.dzm-text { flex: 1; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.dzm-cas { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* zaškrtávátka „podle skutečného času / počasí“ a vrstvy jako vypínače */
 .realtime input, .nb-layers input {

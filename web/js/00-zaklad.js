@@ -10,6 +10,14 @@
   // že vidíme stejnou verzi. Soubor změněný bez nového sestavení (chodci.py, mhd.py) pokryje no-cache.
   const NC = { cache: 'no-cache' }, SEST = '{{SESTAVENI}}', DV = `?s=${SEST}`;
   console.info(`izomapa: sestavení ${SEST}`);
+  // „Den za minutu“ (Pavel 2026-11-26, 68-den-za-minutu.js): virtuální hodiny. Co se řídí denní dobou (MHD, lidé, zvířata,
+  // slunce, hustota aut), čte čas z tedMs() / tedDate(); během ukázky běží rychleji (24 h za 60 s), jinak je to Date.now().
+  let DZM = null;                                            // { t0: performance.now() při startu, v0: virtuální ms, k: zrychlení }
+  const tedMs = () => (DZM ? DZM.v0 + (performance.now() - DZM.t0) * DZM.k : Date.now());
+  const tedDate = () => new Date(tedMs());
+  // řídit se hodinami (skutečnými nebo virtuálními): vypínač „Podle skutečného času“, nebo běžící Den za minutu.
+  // Ukázka vypínač nepřepíná, ať to nevypadá, že se zapnul sám (Pavel 2026-11-26).
+  const podleHodin = () => !!DZM || !!document.getElementById('realTime')?.checked;
   const [TILES, OV] = await Promise.all([fetch('tiles.json' + DV, NC).then((r) => r.json()), fetch('overlay.json' + DV, NC).then((r) => r.json())]);
   const HASICI_CFG = {{HASICI}}, VYLUKY_CFG = {{VYLUKY}};    // mesto.json "hasici", "vyluky" (prostředníci functions/api/hasici.js, vyluky.js)
   const PAMATKY = OV.pamatky || [];                        // kulturní památky (nastroje/pamatky.py), přepínač u ostatních vrstev
@@ -108,7 +116,7 @@
   const LAYER_TOKEN = { bezpopisku: 'l-labels', bezdopravy: 'l-traffic', bezlidi: 'l-lide', bezkoure: 'l-smoke', bezzvyrazneni: 'l-hover',
     ...Object.fromEntries(Object.values(KAT).map((c) => [c.token, c.vrstva])) };
   // výchozí vypnuté vrstvy (Pavel 2026-11-25: názvy ulic) jsou v odkazu naopak: slovo = zapnutá
-  const LAYER_ZAP = { sulicemi: 'l-ulice' };
+  const LAYER_ZAP = { sulicemi: 'l-ulice', spovodnemi: 'l-povodne' };
   const applyLayers = (tok) => { for (const [t, id] of Object.entries(LAYER_ZAP)) { const el = $(id), on = tok.includes(t); if (el && el.checked !== on) { el.checked = on; el.dispatchEvent(new Event('change', { bubbles: true })); } }
     for (const [t, id] of Object.entries(LAYER_TOKEN)) { const el = $(id); if (!el) continue; const on = !tok.includes(t); if (el.checked !== on) { el.checked = on; el.dispatchEvent(new Event('change')); } } };
   const WIP = Object.values(TILES.chunks || {}).some((c) => c.status !== 'hotovo');

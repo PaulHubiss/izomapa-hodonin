@@ -1,0 +1,22 @@
+{
+  "nazev": "Náměstí: letní den a zimní večer",
+  "popis": "Dvě fotky Masarykova náměstí ve všech formátech: letní dopoledne a zimní podvečer s jarmarkem.",
+  "druh": "foto",
+  "formaty": ["1:1", "4:5", "9:16", "16:9"],
+  "kratsi_strana": 1080,
+  "zvetseni": 1,
+  "zabery": [
+    {
+      "obdobi": "leto",
+      "cas": "2026-07-15T10:30:00+02:00",
+      "pocasi": "clear",
+      "body": [{ "t": 0, "ll": [48.8487, 17.1285], "m_na_px": 0.2, "noc": 0 }]
+    },
+    {
+      "obdobi": "zima",
+      "cas": "2026-12-10T16:30:00+01:00",
+      "pocasi": "snow",
+      "body": [{ "t": 0, "ll": [48.8487, 17.1285], "m_na_px": 0.2, "noc": 0.6 }]
+    }
+  ]
+}

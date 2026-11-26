@@ -28,6 +28,7 @@ krok "vlaky (celostátní JŘ)";       $PY nastroje-pavel/vlaky_jr.py   # stáhn
 krok "výšky DMP OK 2024";           [ -f build/dmpok_vysky.json ] || $PY nastroje/dmpok.py
 krok "scény, render, web";          ./postav.sh render
 krok "klikací plochy jarmarku";     $PY nastroje-pavel/jarmark_klik.py   # z vrstvy výzdoby, po renderu
+krok "záplavová území";             $PY nastroje-pavel/povodne.py        # bez stažených dat jen zkopíruje assets/povodne.json
 krok "cesty pro chodce";            $PY nastroje-pavel/chodci.py
 krok "tvar ulic pro hledání";       $PY nastroje-pavel/ulice.py
 krok "hotovo"

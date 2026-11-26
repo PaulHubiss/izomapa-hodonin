@@ -223,7 +223,7 @@
   const DAY_SHARE = [.08, .05, .04, .04, .08, .25, .6, 1, .85, .65, .6, .65, .7, .7, .8, .95, 1, .9, .7, .5, .35, .25, .18, .12];
   const trafficShare = () => {
     if (!roads.some((r) => r.v)) return 1;
-    if ($('realTime').checked) return DAY_SHARE[+new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Prague', hour: 'numeric', hourCycle: 'h23' }).format(new Date())];
+    if (podleHodin()) return DAY_SHARE[+new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Prague', hour: 'numeric', hourCycle: 'h23' }).format(tedDate())];
     return 1 - 0.85 * state.night;
   };
   // pevná hustota na silnici (ne strop na celou mapu: ten se dělil podle počtu načtených čtverců a auta chodila ve vlnách);
@@ -383,6 +383,7 @@
     return q[q.length - 2];
   }
   function liveMatch() {                                     // každou sekundu: živé vozidlo → nejpodobnější jedoucí spoj téže linky
+    if (DZM) { LIVE.off.clear(); LIVE.delay.clear(); LIVE.cur.clear(); return; }   // Den za minutu: jen jízdní řád, živé polohy jsou z jiného času
     if (!LIVE.on) return;
     const now = Date.now(), cand = [];
     for (const [id, v] of LIVE.v) {
@@ -418,8 +419,8 @@
   }
   const pragueNow = () => {                                // datum, den v týdnu (po = 0) a sekundy od půlnoci (čas v Česku)
     const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Prague', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', weekday: 'short', hour12: false })
-      .formatToParts(new Date()).map((q) => [q.type, q.value]));
-    return { d: +(p.year + p.month + p.day), wd: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.weekday), s: (+p.hour % 24) * 3600 + +p.minute * 60 + +p.second + (Date.now() % 1000) / 1000 };
+      .formatToParts(tedDate()).map((q) => [q.type, q.value]));   // virtuální hodiny (Den za minutu), jinak skutečný čas
+    return { d: +(p.year + p.month + p.day), wd: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.weekday), s: (+p.hour % 24) * 3600 + +p.minute * 60 + +p.second + (tedMs() % 1000) / 1000 };
   };
   const ymd = (d) => +`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   function mhdServices(d, wd, strict) {                    // služby jízdního řádu platné v daný den
@@ -431,7 +432,7 @@
     return on;
   }
   function mhdActive() {                                   // jedoucí spoje (dnešní i ty, co vyjely včera před půlnocí)
-    const n = pragueNow(), y = new Date(); y.setDate(y.getDate() - 1);
+    const n = pragueNow(), y = tedDate(); y.setDate(y.getDate() - 1);
     let today = mhdServices(n.d, n.wd, true);
     if (!MHD.trips.some((t) => today.has(t[2]))) today = mhdServices(n.d, n.wd, false);   // prošlý jízdní řád: aspoň podle dne v týdnu
     const yest = mhdServices(ymd(y), (n.wd + 6) % 7, false), out = [];
@@ -681,7 +682,7 @@
   }).catch(() => {});
   function chodciAktivita() {                               // 0–1: jaký podíl lidí je venku
     let a;
-    if ($('realTime') && $('realTime').checked) {
+    if (podleHodin()) {
       const h = pragueNow().s / 3600;
       const P = [[0, 0.04], [5, 0.04], [6.5, 0.45], [8, 0.8], [11, 0.7], [12.5, 0.9], [15, 1], [18, 0.85], [20, 0.45], [22, 0.12], [24, 0.04]];
       let k = 1; while (k < P.length - 1 && P[k][0] < h) k++;
@@ -830,7 +831,7 @@
   function zooAktivita(druh) {                              // 0–1: jaký podíl zvířat druhu je venku
     if (state.season === 'winter' && ZV[druh].teplo) return 0;   // teplomilná zvířata jsou v zimě v pavilonu
     let a;
-    if ($('realTime') && $('realTime').checked) {
+    if (podleHodin()) {
       const h = pragueNow().s / 3600;
       a = h >= 8.5 && h < 18.5 ? 1 : h >= 7 && h < 20 ? 0.6 : 0.25;      // v noci jen některá (ostatní ve stájích)
     } else a = state.night < 0.25 ? 1 : state.night < 0.7 ? 0.6 : 0.25;
@@ -860,7 +861,10 @@
     const krok = stoji ? 0 : Math.floor(s / 0.5) % 2;                  // nohy se střídají každého půl metru
     const nohy = krok ? [nb - 1, nb + 1, nf - 1, nf + 1] : [nb, nf];
     for (const nx of new Set(nohy)) if (nx >= 0 && nx < W) for (let k = 0; k < nh; k++) B(nx, Z.t.length + k, nc);
-    const ix = p[0] - W / 2 * u / sx, iy = p[1] - H * u / sx, iw = cw / sx, ih = chh / sx;
+    // lekl se (doplněk „Skrytá překvapení“: lev zařval, window.IZO_LEK): zvířata blízko nadskočí, 0,9 s
+    const lek = window.IZO_LEK, tl = lek ? (performance.now() - lek.t) / 900 : 1;
+    const skok = tl < 1 && Math.hypot(p[0] - lek.x, p[1] - lek.y) < lek.r ? Math.sin(tl * Math.PI) * 3 * u / sx : 0;
+    const ix = p[0] - W / 2 * u / sx, iy = p[1] - H * u / sx - skok, iw = cw / sx, ih = chh / sx;
     const klic = `${Math.round(x)},${Math.round(y)},${CHODCI.verze},${state.season},${u},${Math.round(sx * 20)}`;
     if (q.tvKlic !== klic) { q.tvKlic = klic; q.tv = treeShapes(x, y, h, [ix - 1, iy - 1, ix + iw + 1, iy + ih + 1]); }
     drawBehindTrees(zvC, ix, iy, iw, ih, x, y, h, sx, ox, oy, q.tv);
@@ -881,7 +885,7 @@
   function lodeAktivita() {                                  // 0–1: kolik loděk je na vodě
     if (state.season === 'winter' || state.weather === 'snow') return 0;
     let a;
-    if ($('realTime') && $('realTime').checked) {
+    if (podleHodin()) {
       const m = new Date().getMonth(), h = pragueNow().s / 3600;
       if (m < 3 || m > 9) return 0;                          // plavební sezóna duben–říjen
       a = h >= 9 && h < 19 ? 1 : h >= 8 && h < 20.5 ? 0.5 : 0;

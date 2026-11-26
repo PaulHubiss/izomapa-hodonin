@@ -246,7 +246,7 @@
       const o = new Date(a.t0), li = document.createElement('li'), tm = document.createElement('time'), x = document.createElement(dlouhy ? 'span' : 'a');
       tm.dateTime = a.od;
       tm.textContent = `${DNY[o.getDay()]} ${o.getDate()}. ${o.getMonth() + 1}.${o.getHours() || o.getMinutes() ? ` ${o.getHours()}:${String(o.getMinutes()).padStart(2, '0')}` : ''}`;
-      if (!dlouhy) { x.href = a.url; x.target = '_blank'; x.rel = 'noopener'; }
+      if (!dlouhy && /^https?:\/\//.test(a.url || '')) { x.href = a.url; x.target = '_blank'; x.rel = 'noopener'; }   // jen http(s), průchod 2026-11-26
       x.textContent = a.nazev;
       li.append(tm, x); return li;
     };

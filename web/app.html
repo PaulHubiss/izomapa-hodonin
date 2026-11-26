@@ -63,6 +63,7 @@
     <input id="night" type="range" min="0" max="100" value="0">
     <div class="ends"><span>Den</span><span>Zlatá hodinka</span><span>Noc</span></div>
     <label class="realtime"><input type="checkbox" id="realTime"> Podle skutečného času</label>
+    <label class="realtime dzm-radek" id="dzmRadek" hidden title="Ve městě uteče 24 hodin za 60 sekund, od 4:00 do 4:00"><input type="checkbox" id="dzm"><span class="dzm-text">Den za minutu<span class="dzm-cas" id="dzmCas" aria-live="off"></span></span></label>
   </div>
 
   <div>
@@ -82,6 +83,7 @@
       <label><input type="checkbox" id="l-labels" checked> Popisky<span class="lay-n" id="n-labels"></span></label>
       <label><input type="checkbox" id="l-traffic" checked> Doprava</label>
       <label><input type="checkbox" id="l-ulice"> Názvy ulic</label>
+      <label hidden><input type="checkbox" id="l-povodne"> Povodňová území</label>
       <label><input type="checkbox" id="l-lide" checked> Lidé</label>
       <label id="l-pluhy-w" hidden><input type="checkbox" id="l-pluhy" checked> Sypače ŘSD (živě) <span id="pluhy-n"></span></label>
       <label><input type="checkbox" id="l-smoke" checked> Kouř z&nbsp;komínů</label>

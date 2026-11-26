@@ -16,6 +16,9 @@ export const ZDROJE = {
 
 const ent = (s) => s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
   .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n)).replace(/\s+/g, ' ').trim();
+// odkaz z cizí stránky jen http(s), jinak stránka programu (bezpečnostní průchod 2026-11-26: napadený web by jinak mohl do karty
+// podstrčit odkaz „javascript:…“)
+export const odkaz = (u, zaklad) => { try { const x = new URL(u, zaklad); return /^https?:$/.test(x.protocol) ? x.href : zaklad; } catch { return zaklad; } };
 // „od 19. 11. 2026 v 18:00“ → "2026-11-19T18:00"
 const datum = (s) => {
   const m = /(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})(?:\s*v\s*(\d{1,2}):(\d{2}))?/.exec(s || '');
@@ -27,11 +30,11 @@ const datum = (s) => {
 export function parseDkHodonin(html, zaklad) {
   const akce = [];
   for (const kus of html.split('<div class="event"').slice(1)) {
-    const odkaz = /<a href="([^"]+)"/.exec(kus), nazev = /class="event__heading">([\s\S]*?)<\/h3>/.exec(kus);
+    const a = /<a href="([^"]+)"/.exec(kus), nazev = /class="event__heading">([\s\S]*?)<\/h3>/.exec(kus);
     const od = /class="event__date">([\s\S]*?)<\/div>/.exec(kus), doo = /class="event__time">([\s\S]*?)<\/div>/.exec(kus);
     const druh = /event__link--(?!no-ticket)([a-z-]+)/.exec(kus);
-    if (!odkaz || !nazev || !od) continue;
-    akce.push({ nazev: ent(nazev[1]), od: datum(od[1]), do: doo ? datum(doo[1]) : null, url: new URL(ent(odkaz[1]), zaklad).href, druh: druh ? druh[1] : null });
+    if (!a || !nazev || !od) continue;
+    akce.push({ nazev: ent(nazev[1]), od: datum(od[1]), do: doo ? datum(doo[1]) : null, url: odkaz(ent(a[1]), zaklad), druh: druh ? druh[1] : null });
   }
   return akce.filter((a) => a.od);
 }
@@ -46,7 +49,7 @@ export function parseKinoSvet(html, zaklad) {
   while ((m = re.exec(s))) {
     if (m[1]) { den = `${m[3]}-${p(m[2])}-${p(m[1])}`; continue; }
     if (!den) continue;
-    akce.push({ nazev: ent(m[7]), od: `${den}T${p(m[5])}:${m[6]}`, do: null, url: new URL(m[4], zaklad).href, druh: 'film' });
+    akce.push({ nazev: ent(m[7]), od: `${den}T${p(m[5])}:${m[6]}`, do: null, url: odkaz(m[4], zaklad), druh: 'film' });
   }
   return akce;
 }

@@ -40,6 +40,7 @@
         ctx.fillRect(Math.round(ox + x * sx), Math.round(oy + y * sx), q, q);
       }
     }
+    kresliPovodne(sx, ox, oy, cw, ch, dpr);              // záplavová území (83-povodne.js), pod zvýrazněním budovy a vším živým
     // vybraná / zvýrazněná budova
     for (const [b, c, lw] of [[state.hover, 'rgba(242,198,109,.9)', 1.5], [state.sel, '#f2c66d', 2.5]]) {
       if (!b) continue;
@@ -90,7 +91,8 @@
         if (q.d <= o.d) nav();
       }
       if (MHD.on) {
-        const ns = Math.floor(now / 1000);
+        // jedoucí spoje jednou za sekundu, mezi tím se poloha dopočítá; Den za minutu (DZM) běží 1440× rychleji → každý snímek
+        const ns = DZM ? now / 1000 : Math.floor(now / 1000);
         if (ns !== MHD.t) { MHD.t = ns; MHD.act = mhdActive(); liveMatch(); updateXings(); if (MHD.follow !== null) mhdFollowText(); }
         MHD.drawn = [];
         if (MHD.follow !== null) {
@@ -141,7 +143,7 @@
       const hpx = Math.abs(toImg(0, 0, 1)[1] - toImg(0, 0, 0)[1]), u = hpx * 0.1 * sx;   // velikost bodu postavy na obrazovce
       if (u >= 0.3) {
         if (now - (window.__pHT || 0) > 30000) { window.__pHT = now; window.__pH = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Prague', hour: 'numeric', hourCycle: 'h23' }).format(new Date()); }
-        let share = $('realTime').checked ? PEOPLE_SHARE[window.__pH] : 1 - 0.85 * night;
+        let share = podleHodin() ? PEOPLE_SHARE[window.__pH] : 1 - 0.85 * night;
         if (state.weather === 'rain') share *= 0.45; else if (state.weather === 'snow') share *= 0.75;
         if (eco || SLOW) share *= 0.5;
         const nb = Math.min(4, Math.round(night * 5)), list = [], rain = state.weather === 'rain';

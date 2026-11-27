@@ -6,7 +6,7 @@ import html, json, os, re, sys, urllib.parse, urllib.request
 sys.path.insert(0, '.')
 import geo
 
-UA = {'User-Agent': 'izomapa/1.0 (https://github.com/adamklatovsky/izomapa)'}
+UA = {'User-Agent': 'izomapa-hodonin/1.0 (+https://github.com/PaulHubiss/izomapa-hodonin)'}
 KATALOG = 'https://pamatkovykatalog.cz/soupis/podle-relevance/1/seznam/?katCislo={}'   # formátovací URL vlastnosti P4075 ve Wikidatech
 
 

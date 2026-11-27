@@ -43,7 +43,7 @@ if not os.path.exists(hr):
     q = urllib.parse.urlencode({'q': f"{geo.MESTO['nazev']}, Česko", 'format': 'json', 'polygon_geojson': 1,
                                 'limit': 8, 'countrycodes': 'cz'})
     req = urllib.request.Request('https://nominatim.openstreetmap.org/search?' + q,
-                                 headers={'User-Agent': 'izomapa/1.0 (https://github.com/adamklatovsky/izomapa)'})
+                                 headers={'User-Agent': 'izomapa-hodonin/1.0 (+https://github.com/PaulHubiss/izomapa-hodonin)'})
     res = [r for r in json.loads(urllib.request.urlopen(req, timeout=60).read())
            if r.get('geojson', {}).get('type') in ('Polygon', 'MultiPolygon')]
     res.sort(key=lambda r: (r.get('class') != 'boundary', -float(r.get('importance') or 0)))

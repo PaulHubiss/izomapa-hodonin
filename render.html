@@ -502,8 +502,89 @@ function pamModely(W, R, X) {
     let top = -1e9, x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     [W, R, X].forEach((B, k) => { for (let i = z0[k]; i < B.p.length; i += 3) { const x = B.p[i], z = B.p[i + 1], y = -B.p[i + 2]; if (z > top) top = z; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } });
     window.PAM_STATS[q.s] = { trojuhelniku: Math.round((W.p.length + R.p.length + X.p.length - n0) / 9), budov: kus.length,
-      vrsek: Math.round(top * 100) / 100, g: Math.round(g * 100) / 100, obalka: [x0 + OFFX, y0 + OFFY, x1 + OFFX, y1 + OFFY].map((v) => Math.round(v * 100) / 100) };
+      vrsek: Math.round(top * 100) / 100, g: Math.round(g * 100) / 100, obalka: [x0 + OFFX, y0 + OFFY, x1 + OFFX, y1 + OFFY].map((v) => Math.round(v * 100) / 100),
+      ...pamObrys([W, R, X], z0) };
   }
+}
+// Skutečný tvar modelu pro zakrývání vozidel a lidí a pro klik (pamatky/pred_po.mjs -> pamatky/vrsky.json -> overlay.py):
+// obrys = silueta v pohledu mapy (rovina kamery jako geo.view: vx, vy v metrech, společné souřadnice, nezávislé na čtverci),
+// pudorys = průmět shora (východ, sever ve společných souřadnicích). Obojí jako seznam obrysů (bez děr). Trojúhelníky do 0,8 m
+// nad terénem (dlažba, obruby, nízké zídky) se nepočítají, jinak by model schovával auta a lidi na náměstí před sebou.
+// Jen čte hotové trojúhelníky, kresbu nemění.
+const CAM_EL = Math.asin(Math.tan(Math.atan(0.5))), CAM_AZ = 225 * Math.PI / 180;
+const CAM_ZV = new THREE.Vector3(Math.sin(CAM_AZ) * Math.cos(CAM_EL), Math.sin(CAM_EL), -Math.cos(CAM_AZ) * Math.cos(CAM_EL));
+const CAM_XV = new THREE.Vector3(0, 1, 0).cross(CAM_ZV).normalize(), CAM_YV = CAM_ZV.clone().cross(CAM_XV);
+function pamObrys(BS, z0) {
+  const sil = [], pud = [];
+  BS.forEach((B, k) => {
+    for (let i = z0[k]; i + 8 < B.p.length; i += 9) {
+      const v = [0, 1, 2].map((j) => [B.p[i + 3 * j], -B.p[i + 3 * j + 2], B.p[i + 3 * j + 1]]);   // místní x, y, výška (three: x, výška, -y)
+      const cx = (v[0][0] + v[1][0] + v[2][0]) / 3, cy = (v[0][1] + v[1][1] + v[2][1]) / 3;
+      if (Math.max(v[0][2], v[1][2], v[2][2]) < pamVyska(cx, cy) + 0.8) continue;
+      const t = [], f = [];
+      for (const [x, y, h] of v) {
+        const X = x + OFFX, Y = y + OFFY;                                   // geo.view: p = [x, výška, -y]
+        t.push(X * CAM_XV.x + h * CAM_XV.y - Y * CAM_XV.z, X * CAM_YV.x + h * CAM_YV.y - Y * CAM_YV.z);
+        f.push(X, Y);
+      }
+      sil.push(t); pud.push(f);
+    }
+  });
+  return sil.length ? { obrys: obrysRastru(sil, 0.2), pudorys: obrysRastru(pud, 0.25) } : {};
+}
+// sjednocení trojúhelníků [ax, ay, bx, by, cx, cy] → vnější obrysy (rastr s krokem res, hrany buněk, zjednodušení)
+function obrysRastru(T, res) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const t of T) for (let j = 0; j < 6; j += 2) { x0 = Math.min(x0, t[j]); x1 = Math.max(x1, t[j]); y0 = Math.min(y0, t[j + 1]); y1 = Math.max(y1, t[j + 1]); }
+  res = Math.max(res, (x1 - x0) / 3000, (y1 - y0) / 3000);
+  x0 = Math.floor(x0 / res) * res - res; y0 = Math.floor(y0 / res) * res - res;
+  const NX = Math.ceil((x1 - x0) / res) + 2, NY = Math.ceil((y1 - y0) / res) + 2, G = new Uint8Array(NX * NY);
+  for (const t of T) {                                                   // konzervativně: každý řádek, kterého se trojúhelník dotkne
+    const ys = [t[1], t[3], t[5]], r0 = Math.floor((Math.min(...ys) - y0) / res), r1 = Math.floor((Math.max(...ys) - y0) / res);
+    for (let r = r0; r <= r1; r++) {
+      const ya = y0 + r * res, yb = ya + res; let lo = Infinity, hi = -Infinity;
+      for (let j = 0; j < 3; j++) {
+        const ax = t[2 * j], ay = t[2 * j + 1], bx = t[(2 * j + 2) % 6], by = t[(2 * j + 3) % 6];
+        if (ay >= ya && ay <= yb) { lo = Math.min(lo, ax); hi = Math.max(hi, ax); }
+        for (const yl of [ya, yb]) if ((ay - yl) * (by - yl) < 0) { const x = ax + (bx - ax) * (yl - ay) / (by - ay); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      }
+      if (lo > hi) continue;
+      const c0 = Math.max(0, Math.floor((lo - x0) / res)), c1 = Math.min(NX - 1, Math.floor((hi - x0) / res));
+      G.fill(1, r * NX + c0, r * NX + c1 + 1);
+    }
+  }
+  // hrany plných buněk sousedících s prázdnou, orientované tak, že plná buňka je vlevo (vnější obrys proti směru hodin)
+  const on = (c, r) => c >= 0 && r >= 0 && c < NX && r < NY && G[r * NX + c] === 1, out = new Map(), key = (c, r) => r * (NX + 1) + c;
+  const add = (a, b) => { const k = key(...a); if (!out.has(k)) out.set(k, []); out.get(k).push(b); };
+  for (let r = 0; r < NY; r++) for (let c = 0; c < NX; c++) if (on(c, r)) {
+    if (!on(c, r - 1)) add([c, r], [c + 1, r]);
+    if (!on(c + 1, r)) add([c + 1, r], [c + 1, r + 1]);
+    if (!on(c, r + 1)) add([c + 1, r + 1], [c, r + 1]);
+    if (!on(c - 1, r)) add([c, r + 1], [c, r]);
+  }
+  const smycky = [];
+  for (const [k0, list] of out) while (list.length) {
+    let a = [k0 % (NX + 1), Math.floor(k0 / (NX + 1))], b = list.pop(); const P = [a];
+    for (let n = 0; n < 4 * NX * NY && (b[0] !== P[0][0] || b[1] !== P[0][1]); n++) {
+      const nx = out.get(key(...b)); if (!nx || !nx.length) break;
+      const dx = b[0] - a[0], dy = b[1] - a[1];                          // ve vrcholu se dvěma pokračováními (úhlopříčné buňky) zahnout doleva
+      let j = 0; if (nx.length > 1) j = nx.findIndex((q) => (q[0] - b[0]) === -dy && (q[1] - b[1]) === dx); if (j < 0) j = 0;
+      P.push(b); a = b; b = nx.splice(j, 1)[0];
+    }
+    let s = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; s += p[0] * q[1] - q[0] * p[1]; }
+    if (s / 2 * res * res >= 1) smycky.push(P.map(([c, r]) => [x0 + c * res, y0 + r * res]));   // díry (záporná plocha) a drobky pryč
+  }
+  const dp = (P, tol) => {                                               // Douglas–Peucker na otevřené lomené čáře
+    if (P.length < 3) return P;
+    const [ax, ay] = P[0], [bx, by] = P[P.length - 1], L = Math.hypot(bx - ax, by - ay) || 1;
+    let im = 0, dm = 0; for (let i = 1; i < P.length - 1; i++) { const d = Math.abs((bx - ax) * (ay - P[i][1]) - (ax - P[i][0]) * (by - ay)) / L; if (d > dm) { dm = d; im = i; } }
+    return dm <= tol ? [P[0], P[P.length - 1]] : [...dp(P.slice(0, im + 1), tol).slice(0, -1), ...dp(P.slice(im), tol)];
+  };
+  return smycky.map((P) => {
+    let im = 0, dm = 0; for (let i = 1; i < P.length; i++) { const d = Math.hypot(P[i][0] - P[0][0], P[i][1] - P[0][1]); if (d > dm) { dm = d; im = i; } }
+    const Q = [...dp(P.slice(0, im + 1), res * 1.2).slice(0, -1), ...dp([...P.slice(im), P[0]], res * 1.2).slice(0, -1)];
+    return Q.map(([x, y]) => [Math.round(x * 100) / 100, Math.round(y * 100) / 100]);
+  }).filter((Q) => Q.length >= 3);
 }
 
 {

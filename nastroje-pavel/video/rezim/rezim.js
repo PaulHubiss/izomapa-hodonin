@@ -56,7 +56,7 @@
     return { cx: (vlevo + vpravo) / 2, cy: (nahore + dole) / 2, f: Math.min((vpravo - vlevo) * 0.9 / w, (dole - nahore) * 0.94 / h) };
   }
   function img2ll(ix, iy) {                                              // inverze ll2img Newtonem (mapa ji navenek nenabízí)
-    const h = (location.hash.split('@')[1] || '').split(',').map(Number);
+    const h = (Z.pohled ? Z.pohled() : '').split(',').map(Number);     // počáteční odhad: střed pohledu (adresa ho od 2026-11-27 nenese)
     let lat = Number.isFinite(h[0]) ? h[0] : 48.857, lon = Number.isFinite(h[1]) ? h[1] : 17.124;
     for (let k = 0; k < 25; k++) {
       const e = 1e-5, [x, y] = Z.ll2img(lat, lon), [x1, y1] = Z.ll2img(lat + e, lon), [x2, y2] = Z.ll2img(lat, lon + e);

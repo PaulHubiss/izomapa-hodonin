@@ -3,6 +3,8 @@ Zapíná se v mesto.json: "doplnky": {"prekvapeni": {"enabled": true, ...}}. Vol
   "kostel": "Svatý Vavřinec"   název budovy v datech mapy (site/overlay), na kterou se kliká
   "vez": [lat, lon, výška m]   odkud vyletí noty (špička věže); bez ní nejvyšší bod obrysu (ten má u kostela bez vlastního
                                modelu 22 m navíc, u Hodonína model věže 44,96 m, poloha ze západní hrany půdorysu 2026-11-26)
+  "vez_od": 19, "vez_sirka": 4 s věží se překvapení spustí jen klikem na věž (Pavel 2026-11-27: „ne na celý kostel“): pás ±vez_sirka m
+                               kolem osy věže od vez_od m (nad hřebenem lodi, laser) po špičku; bez "vez" klik na celý kostel
   "zoo_druh": "lev"            druh z assets/zoo.json (výběh, kde zvíře zařve)
   "kominy_min_h": 80           komíny z assets/kominy.json aspoň tak vysoké (m)
   "vodnik": 0.35               jak často vykoukne vodník (podíl kliknutí do vody)
@@ -35,7 +37,7 @@ def build_overlay(ctx: dict[str, Any]) -> dict[str, Any] | bool:
                 if g.area > 800: vody.append(g)                 # ~32 m² a víc (louže a jezírka v zahradách ne)
     if kostel:
         out['kostel'] = {'hull': kostel, 'spicka': min(kostel, key=lambda q: q[1])}   # záložní: nejvyšší bod obrysu
-        if cfg.get('vez'): out['kostel']['vez'] = cfg['vez']
+        if cfg.get('vez'): out['kostel'].update(vez=cfg['vez'], vez_od=cfg.get('vez_od', cfg['vez'][2] * 0.45), vez_sirka=cfg.get('vez_sirka', 4))
     if vody:
         u = shapely.unary_union(vody).simplify(1.5)
         kruh = lambda r: [[round(x, 1), round(y, 1)] for x, y in list(r.coords)[:-1]]

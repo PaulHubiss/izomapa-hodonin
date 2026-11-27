@@ -8,10 +8,13 @@ const den = [...new Set(hod.map((t) => t.slice(0, 10)))].slice(0, 7), N = (a, v)
 const TELO = JSON.stringify({ current: { temperature_2m: 7.4, apparent_temperature: 5, weather_code: 3, is_day: 1, wind_speed_10m: 12, precipitation: 0, wind_direction_10m: 270 },
   hourly: { time: hod, temperature_2m: N(hod, 7), weather_code: N(hod, 3), precipitation_probability: N(hod, 10), is_day: N(hod, 1) },
   daily: { time: den, weather_code: N(den, 3), temperature_2m_max: N(den, 9), temperature_2m_min: N(den, 2), precipitation_probability_max: N(den, 10) } });
-const b = await chromium.launch();
-let ok = 0, spatne = 0;
+let b = null, ok = 0, spatne = 0;
 const over = (co, v, info = '') => { v ? ok++ : spatne++; console.log(v ? '✅' : '❌', co, info === '' ? '' : `· ${info}`); };
 for (const [jm, prvni] of [['dotaz projde napoprvé', null], ['první dotaz odmítnutý (429)', '429'], ['první spojení spadne', 'spadne']]) {
+  // každá situace v novém prohlížeči: Firefox v Playwrightu sdílí mezipaměť mezi kontexty a s přesměrováním sítě dostal při
+  // druhém načtení odpověď 304 bez těla → nesouhlasil otisk integrity openseadragon.min.js (2026-11-27, otisk prázdného souboru)
+  if (b) await b.close();
+  b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1400, height: 900 } })).newPage();
   const chyby = []; p.on('pageerror', (e) => { if (!e.message.includes('open-meteo')) chyby.push(e.message); });   // Firefox hlásí i předstíraný výpadek sítě
   let n = 0;

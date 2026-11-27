@@ -92,9 +92,11 @@
 
       api.onMapClick((evt) => {
         const { x, y } = evt, tol = 14 / posledniSx;              // 14 px obrazovky
-        if (D.kostel && inPoly(x, y, D.kostel.hull) && smi('kostel', 4000)) {
+        if (D.kostel) {
           const v = D.kostel.vez, s = v ? api.latLonToImg(v[0], v[1], v[2]) : D.kostel.spicka;   // špička věže
-          pridej({ typ: 'kostel', x: s[0], y: s[1] });
+          // jen klik na věž (Pavel 2026-11-27: ne na celý kostel): pás kolem osy věže od hřebene lodi po špičku
+          const naVez = v ? vUsecce(x, y, api.latLonToImg(v[0], v[1], D.kostel.vez_od), s) < (D.kostel.vez_sirka || 4) / 0.2 : inPoly(x, y, D.kostel.hull);
+          if (naVez && smi('kostel', 4000)) pridej({ typ: 'kostel', x: s[0], y: s[1] });
         }
         if (D.zoo) {
           const c = api.latLonToImg(D.zoo.lat, D.zoo.lon, 0), r = (D.zoo.r + 4) / 0.2;

@@ -43,7 +43,7 @@ await c1.close();
 // Sezónní start z mesto.json "sezonni_start" (Pavel 2026-11-23): 23. 11. – 29. 2. zima, sněžení a pohled na jarmark (náměstí)
 const xmasNa = (p) => p.evaluate(() => window.__izo.viewer.world._items.some((i) => /xmas/.test(i.source?.tilesUrl || i.source?.url || '')));
 const SEZONA = { '2026-02-10': 1, '2026-11-25': 1, '2026-12-01': 1 };
-const naNamesti = (p) => p.evaluate(() => { const at = location.hash.split('@')[1]?.split(',').map(Number) || []; return at.length >= 3 && Math.abs(at[0] - 48.8487) < 0.002 && Math.abs(at[1] - 17.1285) < 0.003 && at[2] < 0.6; });
+const naNamesti = (p) => p.evaluate(() => { const at = __izo.pohled().split(',').map(Number); return at.length >= 3 && Math.abs(at[0] - 48.8487) < 0.002 && Math.abs(at[1] - 17.1285) < 0.003 && at[2] < 0.6; });
 for (const [datum, ceka] of [['2026-02-10', 'winter'], ['2026-04-10', 'spring'], ['2026-07-10', 'summer'], ['2026-11-21', 'autumn'], ['2026-11-25', 'winter'], ['2026-12-01', 'winter']]) {
   const c = await b.newContext({ viewport: { width: 1400, height: 900 } });
   const p = await c.newPage(); p.on('pageerror', (e) => chyby.push(e.message));

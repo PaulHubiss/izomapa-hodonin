@@ -35,7 +35,7 @@
  "pole": {"skvrny": false, "prahy": [[104.5, "wheat"], [92.5, "rape"], [74.5, "soil"], [-1, "maize"]]},
  "rozliseni": "detailni",
  "sezonni_start": {"od": "11-23", "do": "02-29", "obdobi": "winter", "pocasi": "snow", "pohled": [48.8487, 17.1285, 0.35]},
- "doplnky": {"santa": {"enabled": true, "pauza_s": 25, "polomer": 2000, "rychlost": 28}, "prekvapeni": {"enabled": true, "vez": [48.84903, 17.128401, 44]}},
+ "doplnky": {"santa": {"enabled": true, "pauza_s": 25, "polomer": 2000, "rychlost": 28}, "prekvapeni": {"enabled": true, "vez": [48.84903, 17.128401, 44], "vez_od": 19, "vez_sirka": 4}},
  "lode": {"pristav": [48.843176, 17.14398], "jez": [48.842497, 17.142687], "reka": "Morava", "delka": 1500,
   "ramena": [
    {"nazev": "Stará Morava u přístavu", "bod": [48.84533, 17.14089], "typy": ["kanoe", "pramice"]},

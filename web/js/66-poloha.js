@@ -56,7 +56,7 @@
       // Sdílený odkaz na místo (…@lat,lon) si drží svůj pohled, poloha se jen ukáže; mimo mapu se potichu vypne.
       navigator.permissions?.query({ name: 'geolocation' }).then((s) => {
         if (s.state !== 'granted' || hlidac !== null) return;
-        tise = true; spust(!location.hash.includes('@'));
+        tise = true; spust(!ODKAZ_S_POLOHOU);
       }).catch(() => {});
     }
   }

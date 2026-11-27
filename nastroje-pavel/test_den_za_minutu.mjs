@@ -39,5 +39,8 @@ await p.waitForTimeout(200);
 const s3 = await stav();
 over('posuvník denní doby ukázku ukončí a nechá ruční nastavení', !s3.lista && s3.noc === 60 && !s3.rt, `noc ${s3.noc}`);
 over('chyby stránky', !chyby.length, JSON.stringify(chyby));
+// pojistka v 89-kresleni.js zaznamená vadné položky jedoucích spojů (občasná chyba ve WebKitu, 2026-11-27): ukázat, co to bylo
+const vadne = await p.evaluate(() => window.__test.mhdVadne || []);
+over('jedoucí spoje MHD bez vadných položek', !vadne.length, vadne.slice(0, 3).join(' | '));
 console.log(`\n${ok} v pořádku, ${spatne} špatně`);
 await b.close(); process.exit(spatne ? 1 : 0);

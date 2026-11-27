@@ -111,13 +111,13 @@ for (const [w, h] of OKNA) {
   await p.mouse.move(600, 400);
   for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, -400); await p.waitForTimeout(150); }
   await p.waitForTimeout(1200);
-  const km = +(await p.evaluate(() => location.hash)).split(',')[2];
+  const km = +(await p.evaluate(() => __izo.pohled())).split(',')[2];
   vysledek('kolečkem se přiblíží', km < 1.5, `(${km} km)`);
   for (const [t, kam] of SMERY) {
-    const pred = await p.evaluate(() => location.hash);
+    const pred = await p.evaluate(() => __izo.pohled());
     for (let i = 0; i < 4; i++) await tahni(...t);
     // volná mapa: u okraje smí být vidět pozadí; hlídá se, že se mapa posunula a střed zůstal na mapě
-    const po = await p.evaluate(() => location.hash), [pk] = await prazdne(p);
+    const po = await p.evaluate(() => __izo.pohled()), [pk] = await prazdne(p);
     vysledek(`přiblíženo, odtaženo ${kam}: posunulo se a střed zůstal na mapě`, pred !== po && await naMape(), `(prázdné ${(pk * 100).toFixed(1)} %) ${po}`);
   }
   if (chyby.length) vysledek('chyby stránky', false, chyby.join(' | '));

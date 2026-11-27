@@ -23,6 +23,13 @@
     }
     return false;
   }
+  // je z vozidla vidět aspoň kus? (předek, střed, zadek ve výšce ~1,5 m; stejné místo jako drawVehicle) – číslo linky
+  // nad úplně zakrytým vozem nevisí ve vzduchu (Pavel 2026-11-26, autobusy za radnicí)
+  function vozVidet(o, len) {
+    const L = Math.hypot(o.dx, o.dy) || 1, fx_ = o.dx / L * (o.dirSign || 1), fy_ = o.dy / L * (o.dirSign || 1);
+    const lane = o.lane ?? 1.6, cxw = o.x + fy_ * lane, cyw = o.y - fx_ * lane, h0 = o.z ?? gz(cxw, cyw);
+    return [-0.4, 0, 0.4].some((f) => !svetloSkryte(cxw + fx_ * len * f, cyw + fy_ * len * f, h0 + 1.5));
+  }
   function drawVehicle(o, len, wid, col, sx, ox, oy, night, isBus, lights = 3) {   // lights: 1 přední, 2 zadní
     const L = Math.hypot(o.dx, o.dy) || 1, fx_ = o.dx / L * (o.dirSign || 1), fy_ = o.dy / L * (o.dirSign || 1);
     const sxv = -fy_, syv = fx_;

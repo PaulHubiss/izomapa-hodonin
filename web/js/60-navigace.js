@@ -199,12 +199,18 @@
   }
   // sdílení: odkaz obsahuje polohu, přiblížení, roční období, denní dobu a vypnuté vrstvy (#zima-noc-bezdopravy@50.77,15.06,0.8);
   // s otevřenou kartou míří na její místo a kartu otevře (…@lat,lon,km,druh, viz showCard)
+  // současný pohled „lat,lon,km“ (střed a šířka výřezu); adresa ho nenese (10-vrstvy.js, cistaAdresa)
+  function pohledAt() {
+    const c = viewer.viewport.getCenter(true), [x, y] = imgToWorld(c.x * W, c.y * W), [lon, lat] = lonlat(x, y);
+    const km = viewer.viewport.getBounds(true).width * W * cam.mpp / 1000;
+    return `${lat.toFixed(5)},${lon.toFixed(5)},${km.toFixed(2)}`;
+  }
   function shareUrl() {
     const tok = [{ spring: 'jaro', summer: 'leto', autumn: 'podzim', winter: 'zima' }[state.season]];
     if (state.night > 0.7) tok.push('noc'); else if (state.night > 0.25) tok.push('soumrak');
     for (const [t, id] of Object.entries(LAYER_ZAP)) if ($(id) && $(id).checked) tok.push(t);
     for (const [t, id] of Object.entries(LAYER_TOKEN)) if ($(id) && !$(id).checked && !$(id).closest('label').hidden) tok.push(t);   // skrytý přepínač (vrstva bez dat) do odkazu nepatří
-    let at = location.hash.split('@')[1] || '';
+    let at = pohledAt();
     if (state.card && !$('card').hidden) at = `${state.card.lat.toFixed(5)},${state.card.lon.toFixed(5)},${at.split(',')[2] || '0.40'},${state.card.kind}`;
     return `${location.origin}${location.pathname}#${tok.join('-')}@${at}`;
   }

@@ -58,7 +58,58 @@ const volnyBod = () => p.evaluate((H) => {
     const e = document.elementFromPoint(X, Y); if (e && e.closest('#osd') && !e.closest('.pin') && dalOdPinu(X, Y)) return [X, Y];
   }
   return null; }, kost);
-await zkus('kostel', 'kostel', `leto@${await kam(kx, ky)},0.3`, 1, 0, volnyBod);
+// věž: bod na ose věže mezi hřebenem lodi a špičkou, kde neleží ikonka (Pavel 2026-11-27: jen věž, ne celý kostel)
+const naVezi = () => p.evaluate((K) => {
+  const v = K.vez, r = __izo.viewer.element.getBoundingClientRect();
+  for (let t = 0.15; t <= 0.9; t += 0.05) {
+    const [ix, iy] = Izomapa.latLonToImg(v[0], v[1], K.vez_od + (v[2] - K.vez_od) * t);
+    const q = __izo.viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(ix / __izo.W, iy / __izo.W), true), X = r.left + q.x, Y = r.top + q.y;
+    const e = document.elementFromPoint(X, Y); if (e && e.closest('#osd') && !e.closest('.pin')) return [X, Y];
+  }
+  return null; }, d.kostel);
+await zkus('kostel (věž)', 'kostel', `leto@${await kam(kx, ky)},0.3`, 1, 0, naVezi);
+// loď kostela: střed obrysu (mimo věž) překvapení nespustí, karta se otevře
+{
+  await otevri(`leto@${await kam(kx, ky)},0.3`);
+  const bod = await p.evaluate(([H, K]) => {                 // bod obrysu nejdál od osy věže (loď), bez ikonky
+    const inP = (x, y) => { let c = false; for (let i = 0, j = H.length - 1; i < H.length; j = i++) { const [xi, yi] = H[i], [xj, yj] = H[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+    const v = K.vez, [ax] = Izomapa.latLonToImg(v[0], v[1], 0), r = __izo.viewer.element.getBoundingClientRect(), xs = H.map((q) => q[0]), ys = H.map((q) => q[1]);
+    let best = null, bd = 0;
+    for (let y = Math.min(...ys); y < Math.max(...ys); y += 6) for (let x = Math.min(...xs); x < Math.max(...xs); x += 6) {
+      if (!inP(x, y) || Math.abs(x - ax) <= bd) continue;
+      const q = __izo.viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(x / __izo.W, y / __izo.W), true), X = r.left + q.x, Y = r.top + q.y;
+      const e = document.elementFromPoint(X, Y); if (e && e.closest('#osd') && !e.closest('.pin')) { best = [X, Y]; bd = Math.abs(x - ax); }
+    }
+    return best; }, [kost, d.kostel]);
+  over('loď kostela: našel se bod ke kliknutí', !!bod);
+  if (bod) {
+    await p.mouse.click(bod[0], bod[1]); await p.waitForTimeout(700);
+    const s = await spustene();
+    over('loď kostela: překvapení se nespustí', !s.includes('kostel'), s.join(', '));
+    over('loď kostela: karta se otevře', await p.evaluate(() => !document.getElementById('card').hidden));
+  }
+}
+// ikonka přes věž kostela: klik na ni otevře kartu a spustí i překvapení (2026-11-27, dřív ho pohltila); ikonka mimo věž ne
+for (const [co, naVez] of [['ikonka přes věž', true], ['ikonka mimo věž', false]]) {
+  await otevri(`leto@${await kam(kx, ky)},0.3`);
+  const pin = await p.evaluate(([K, naVez]) => {
+    const v = K.vez, r = __izo.viewer.element.getBoundingClientRect();
+    const scr = (h) => { const [ix, iy] = Izomapa.latLonToImg(v[0], v[1], h), q = __izo.viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(ix / __izo.W, iy / __izo.W), true); return [r.left + q.x, r.top + q.y]; };
+    const a = scr(K.vez_od), b = scr(v[2]);
+    if (naVez) {                                            // bod na ose věže, nad kterým leží ikonka
+      for (let t = 0; t <= 1; t += 0.02) { const X = a[0] + (b[0] - a[0]) * t, Y = a[1] + (b[1] - a[1]) * t, e = document.elementFromPoint(X, Y); if (e?.closest('.pin')) return [X, Y]; }
+      return null;
+    }
+    const el = [...document.querySelectorAll('.pin.ikp')].map((e) => [e, e.getBoundingClientRect()]).filter(([, q]) => q.width && q.left > r.left && q.right < r.right && q.top > r.top && q.bottom < r.bottom)
+      .find(([, q]) => { const X = q.left + q.width / 2, Y = q.top + q.height / 2; return Math.min(...[0, 0.5, 1].map((t) => Math.hypot(X - a[0] - (b[0] - a[0]) * t, Y - a[1] - (b[1] - a[1]) * t))) > 120; });
+    return el ? [el[1].left + el[1].width / 2, el[1].top + el[1].height / 2] : null; }, [d.kostel, naVez]);
+  if (naVez && !pin) { over(`${co}: žádná ikonka věž nepřekrývá (není co ověřit)`, true); continue; }
+  over(`${co}: našla se`, !!pin); if (!pin) continue;
+  await p.mouse.click(pin[0], pin[1]); await p.waitForTimeout(700);
+  const s = await spustene();
+  over(`${co}: překvapení ${naVez ? 'se spustí' : 'se nespustí'}`, s.includes('kostel') === naVez, s.join(', '));
+  over(`${co}: karta se otevře`, await p.evaluate(() => !document.getElementById('card').hidden));
+}
 // polohu na obrazovce počítat až po načtení místa: latLonToImg bere výšku terénu z načtených čtverců
 await zkus('lev', 'zoo', `leto@${d.zoo.lat},${d.zoo.lon},0.25`, 1, 0, async () => {                                 // výběh vedle středu
   const z0 = await p.evaluate((z) => Izomapa.latLonToImg(z.lat, z.lon, 0), d.zoo); return naObr(z0[0] + 25, z0[1] + 10); });

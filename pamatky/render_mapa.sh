@@ -4,7 +4,8 @@
 #   pamatky/render_mapa.sh summer     jen léto (rychlá kontrola)
 #   CTVERCE="0,0 1,0" pamatky/render_mapa.sh   jen vybrané čtverce
 # 0) pamatky/schvalene.json z dashboardu (do dlaždic jen schválené), 1) vršky modelů pro obrys při najetí myší
-#    (pred_po.mjs -> pamatky/vrsky.json, jen u schválených, které vršek ještě nemají; PRED_PO=vse obnoví snímky dashboardu všech),
+#    a tvary pro zakrývání (pred_po.mjs -> pamatky/vrsky.json, jen u schválených, které vršek nebo tvar ještě nemají nebo mají
+#    model novější než vrsky.json; PRED_PO=vse obnoví snímky dashboardu všech),
 # 2) prep dotčených čtverců, 3) render celých čtverců (výstup grafické karty se může o odstín lišit, proto celé), 4) dzi do site/tiles,
 # 5) náhled a overlay.
 # Čtverce: bez CTVERCE všechny, kterých se týká schválený model nebo model, který byl v dlaždicích minule a už schválený není
@@ -23,7 +24,7 @@ else
   CHYBI=$(python -c "
 import json, os
 v = json.load(open('pamatky/vrsky.json', encoding='utf-8')) if os.path.exists('pamatky/vrsky.json') else {}
-print(' '.join(s for s in json.load(open('pamatky/schvalene.json', encoding='utf-8')) if s not in v))")
+print(' '.join(s for s in json.load(open('pamatky/schvalene.json', encoding='utf-8')) if s not in v or 'obrys' not in v[s] or os.path.getmtime(f'pamatky/{s}.js') > os.path.getmtime('pamatky/vrsky.json')))")
 fi
 if [ "${PRED_PO:-}" = vse ] || [ -n "$CHYBI" ]; then
   node pamatky/pred_po.mjs $CHYBI > build/pamatky_pred_po.log 2>&1 || { tail -5 build/pamatky_pred_po.log; exit 1; }

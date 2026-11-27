@@ -145,7 +145,16 @@
       el.style.setProperty('--kat', KAT[k] ? KAT[k].barva : 'var(--ink)'); el.innerHTML = katSvg(ik);
       el.dataset.nazev = nazev; el.dataset.kat = k; el.setAttribute('aria-label', `${popis}: ${nazev}`); p.el = el; PINY.push(p);
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      el.addEventListener('click', (e) => { e.stopPropagation(); otevri(p); });
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // doplňky se o kliku dozví jako o kliku do mapy v místě kliku (pin: true), karta se otevře vždy: ikonka příběhu
+        // přes věž kostela jinak pohltila skryté překvapení se zvony (2026-11-27)
+        if (!pluginCapture && pluginClicks.length && e.detail > 0) {             // detail 0 = klávesnice (Enter), bez místa kliku
+          const r = viewer.element.getBoundingClientRect(), [ix, iy] = vpToImg(new OpenSeadragon.Point(e.clientX - r.left, e.clientY - r.top));
+          for (const h of pluginClicks) try { h.fn({ x: ix, y: iy, pin: true, screenX: e.clientX - r.left, screenY: e.clientY - r.top, originalEvent: e }); } catch (err) { console.error(err); }
+        }
+        otevri(p);
+      });
       viewer.addOverlay({ element: el, location: new OpenSeadragon.Point(p.xy[0] / W, p.xy[1] / W), placement: OpenSeadragon.Placement.CENTER, checkResize: false });
     };
     const IK0 = (k) => (KAT[k] ? KAT[k].ik : '');
@@ -240,7 +249,11 @@
         } else showCard({ title: 'Vybrané místo', rows: [], lat, lon, kind: 4 });
       }
     };
-    goToLink(true, true);
+    // Adresa zůstává čistá (Pavel 2026-11-27: „nevypadá to dobře, když chci stránku někde sdílet“): poloha ani vrstvy se do ní
+    // nepíšou, odkaz s polohou se po přechodu na místo smaže. Odkaz na pohled dává tlačítko Sdílet (shareUrl, 60-navigace.js).
+    // Obnovení stránky proto vrací výchozí pohled. ?video, ?ladeni a další parametry za otazníkem zůstávají.
+    const cistaAdresa = () => { if (location.hash) history.replaceState(history.state, '', location.pathname + location.search); };
+    goToLink(true, true); cistaAdresa();
     // odkaz vložený do už otevřené mapy: stránka se nenačte znovu, takže je potřeba přejít sem (replaceState níže tuto událost nespouští)
     addEventListener('hashchange', () => {
       if (Date.now() - uiBackAt < 1500) return;                  // návrat po zavření okna (Zpět) mapu nepřesouvá
@@ -250,15 +263,8 @@
       const denni = tok.includes('noc') ? 1 : tok.includes('soumrak') ? 0.42 : tok.some((q) => SEASON_TOKEN[q]) ? 0 : null;
       if (denni !== null) { $('realTime').checked = false; state.night = denni; $('night').value = Math.round(denni * 100); applyTime(); }
       if (tok.some((q) => SEASON_TOKEN[q])) applyLayers(tok);   // celý sdílený odkaz nese i vrstvy; odkaz jen s polohou je nemění
-      goToLink(false, false);
+      goToLink(false, false); cistaAdresa();
     });
-    let hashT = null;
-    viewer.addHandler('animation-finish', () => { clearTimeout(hashT); hashT = setTimeout(() => {
-      const c = viewer.viewport.getCenter(true), [x, y] = imgToWorld(c.x * W, c.y * W), [lon, lat] = lonlat(x, y);
-      const km = viewer.viewport.getBounds(true).width * W * cam.mpp / 1000;
-      const base = location.hash.slice(1).split('@')[0];
-      history.replaceState(null, '', `#${base}@${lat.toFixed(5)},${lon.toFixed(5)},${km.toFixed(2)}`);
-    }, 400); });
     loadVisible();
   }
   // sezónní výchozí stav z mesto.json "sezonni_start" (Pavel 2026-11-23: zima se sněžením a skok na jarmark do konce února):

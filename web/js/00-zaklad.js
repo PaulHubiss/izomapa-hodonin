@@ -109,6 +109,8 @@
   // skutečný čas a počasí vypnuté, volby se pamatují. 'autumn' tady jen do nastavení podle kalendáře.
   const state = { season: 'autumn', night: 0, weather: 'clear', sel: null, hover: null, wip: false };
   const hashTokens = (location.hash || '').slice(1).split('@')[0].split('-');
+  // odkaz s polohou (#…@lat,lon,km): adresa se po přechodu na místo vyčistí (Pavel 2026-11-27, 10-vrstvy.js), proto zapamatovat
+  const ODKAZ_S_POLOHOU = (location.hash || '').includes('@');
   const SEASON_TOKEN = { jaro: 'spring', leto: 'summer', podzim: 'autumn', zima: 'winter' };
   for (const t of hashTokens) { if (SEASON_TOKEN[t]) state.season = SEASON_TOKEN[t]; if (t === 'noc') state.night = 1; if (t === 'soumrak') state.night = 0.42; if (t === 'vse') state.wip = true; }
   if (state.season === 'winter') state.weather = 'snow';

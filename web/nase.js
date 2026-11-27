@@ -172,7 +172,7 @@
     if (Number.isFinite(k.lat) && Number.isFinite(k.lon)) {
       const naMape = el('button', 'nb-odkaz', 'Ukázat na mapě'); naMape.type = 'button';
       naMape.addEventListener('click', () => {
-        location.hash = `${location.hash.slice(1).split('@')[0] || 'leto'}@${k.lat},${k.lon},0.35`;
+        location.hash = `@${k.lat},${k.lon},0.35`;   // jen poloha: roční období a vrstvy zůstanou (adresa je jinak čistá)
         // ikonka místa u kamery blikne jako při výběru z Míst (Pavel 2026-11-19); až po přeletu mapy, ať je bliknutí vidět
         setTimeout(() => window.IZO_OZNAC?.(k.lat, k.lon), 700);
       });
@@ -502,7 +502,7 @@
   // Jen na telefonu (na počítači je Vzhled otevřený od startu): ukáže na Vzhled a Vrstvy. Zmizí po klepnutí do lišty nebo mapy,
   // křížkem nebo sama po 12 s; viděnou si pamatuje prohlížeč. U sdíleného odkazu na místo (#…@) se neukáže.
   // Náhled ?bublina: ukáže se vždy (i opakovaně) a na počítači začne panel zavřený, ať jde bublina posoudit.
-  // nase.js běží před skriptem mapy, takže location.hash je ještě ten z odkazu (mapa ho po startu přepíše polohou).
+  // nase.js běží před skriptem mapy, takže location.hash je ještě ten z odkazu (mapa ho po startu smaže).
   const BUB = 'nase-bublina', nahledBub = new URLSearchParams(location.search).has('bublina');
   if (nahledBub && !mobil.matches) zavri(false);
   if (nahledBub || (mobil.matches && !nacti(BUB) && !location.hash.includes('@'))) {

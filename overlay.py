@@ -156,6 +156,78 @@ def dmp_p90(oid):
     if not oid: return None
     v = DMP.get(oid) or next((h for k, h in DMP.items() if k.startswith(str(oid))), None)
     return v[1] if v and len(v) > 1 and v[1] else None
+
+
+# Obrys budov s vlastním modelem památky ze skutečného tvaru modelu (napady/OBRYSY.md, 2026-11-27): render.html spočítá siluetu
+# v rovině kamery a půdorys shora, pamatky/pred_po.mjs je zapíše do pamatky/vrsky.json. Budova modelu dostane obrys = silueta
+# (zakrývání vozidel a lidí, klik, obrys při najetí myší) a půdorys = půdorys modelu (kdo je za modelem). Model skupiny domů se
+# rozdělí: každý dům dostane část půdorysu modelu nad svým půdorysem z dat (zbytek nejbližšímu domu) a siluetu nad ní.
+# Bez spočítaného tvaru zůstává starší obrys z půdorysu dat do výšky střechy podle laseru.
+def _pam_tvary():
+    if not (os.path.exists('pamatky/vrsky.json') and os.path.exists('pamatky/schvalene.json')): return []
+    schv = set(json.load(open('pamatky/schvalene.json', encoding='utf-8')))
+    out = []
+    for s, v in json.load(open('pamatky/vrsky.json', encoding='utf-8')).items():
+        if s not in schv or not v.get('obrys') or not v.get('pudorys'): continue
+        S = shapely.unary_union([shapely.geometry.Polygon(q).buffer(0) for q in v['obrys'] if len(q) > 2])
+        M = shapely.unary_union([shapely.geometry.Polygon(q).buffer(0) for q in v['pudorys'] if len(q) > 2])
+        if S.is_empty or M.is_empty: continue
+        out.append({'slug': s, 'oids': [o for o in v.get('oids', []) if o], 'vrsek': v['vrsek'], 'S': S, 'M': M, 'domy': {}})
+    return out
+PAM_TVARY = None
+PAM_DUVOD = {}                                                # oid → proč nedostal obrys z tvaru (výpis na konci)
+def pam_tvar(oid):
+    return next((t for t in PAM_TVARY if any(str(oid).startswith(o) for o in t['oids'])), None) if oid else None
+def _cam_px(g):
+    """silueta v rovině kamery (vx, vy v metrech) -> pixely obrázku"""
+    return shapely.affinity.affine_transform(g, [1 / im.mpp, 0, 0, -1 / im.mpp, -im.x0 / im.mpp, im.y1 / im.mpp])
+def _polys(g):
+    return [q for q in getattr(g, 'geoms', [g]) if q.geom_type == 'Polygon' and not q.is_empty]
+def _svisly_pas(R, z0, z1):
+    """průmět půdorysu R (svět) taženého svisle od z0 do z1: nad ním leží vše, co model nad R nakreslí"""
+    parts = []
+    for q in _polys(R):
+        rg = list(q.exterior.coords)[:-1]
+        lo = [im.px(x, y, z0)[:2] for x, y in rg]; hi = [im.px(x, y, z1)[:2] for x, y in rg]
+        parts += [shapely.geometry.Polygon(lo), shapely.geometry.Polygon(hi)]
+        parts += [shapely.geometry.Polygon([lo[i], lo[(i + 1) % len(rg)], hi[(i + 1) % len(rg)], hi[i]]) for i in range(len(rg))]
+    return shapely.unary_union([p.buffer(0) for p in parts if p.area > 0])
+def pam_obrys(b, off):
+    """(hull, fb) budovy b s vlastním modelem ze skutečného tvaru modelu, nebo None"""
+    t = pam_tvar(b.get('oid'))
+    duvod = lambda d: PAM_DUVOD.__setitem__(str(b.get('oid'))[:8], f"{t['slug'] if t else '?'}: {d}")
+    if t is None: return duvod('model bez spočítaného tvaru')
+    if len(t['domy']) > 1:                                    # skupina: část půdorysu modelu nad tímto domem
+        F = t['domy'].get(b['id_svet'])
+        if F is None: return duvod('dům chybí v seznamu domů modelu')
+        R = t['M'].intersection(F)
+        zbytek = t['M'].difference(shapely.unary_union(list(t['domy'].values())))
+        for q in _polys(zbytek):
+            if min(t['domy'].items(), key=lambda kv: kv[1].distance(q))[0] == b['id_svet']: R = R.union(q)
+        if R.area < 1: return duvod('model nad domem nic nekreslí')
+        sil = _cam_px(t['S']).intersection(_svisly_pas(R, b['base'] - 3, t['vrsek'] + 3))
+    else:
+        R, sil = t['M'], _cam_px(t['S'])
+    ps = _polys(sil)
+    if not ps: return duvod('prázdná silueta')
+    hull = shapely.geometry.Polygon(max(ps, key=lambda q: q.area).exterior).simplify(0.6)
+    # na celé pixely tak, aby obrys zůstal platný (prosté round() překřížilo úzké výběžky, 2026-11-27: 4 budovy)
+    hp = [q for q in _polys(shapely.set_precision(hull, 1.0)) if q.area > 0]
+    if not hp: return duvod('obrys po zaokrouhlení prázdný')
+    hull_ = [[round(x), round(y)] for x, y in list(max(hp, key=lambda q: q.area).exterior.coords)[:-1]]
+    if len(hull_) < 3 or not shapely.geometry.Polygon(hull_).is_valid: return duvod('obrys po zaokrouhlení neplatný')
+    fb = [[[round(x), round(y)] for x, y in (im.px(x_, y_, b['base'])[:2] for x_, y_ in q.simplify(0.3).exterior.coords[:-1])] for q in _polys(R)]
+    return hull_, fb
+import shapely.affinity
+PAM_TVARY = _pam_tvary()
+if PAM_TVARY:                                                 # půdorysy domů každého modelu (svět), kvůli dělení skupin
+    for chunk in chunks:
+        o_ = chunk_center(chunk)
+        for b in json.load(open(f'{chunk_dir(chunk)}/info_src.json'))['buildings']:
+            t = pam_tvar(b.get('oid')) if b.get('pam') else None
+            if t is not None and len(b['ring']) > 2:
+                t['domy'][f"{CKEY[chunk]}:{b['id']}"] = shapely.geometry.Polygon([(x + o_[0], y + o_[1]) for x, y in b['ring']]).buffer(0)
+pam_hotovo, pam_bez = [], []
 for chunk in chunks:
     src = json.load(open(f'{chunk_dir(chunk)}/info_src.json'))
     OFF = chunk_center(chunk)
@@ -169,7 +241,7 @@ for chunk in chunks:
         if b.get('pam'):
             # Záplata (Pavel 2026-11-26): u vlastního modelu je top = vršek modelu i s věží a obal půdorysu do té výšky zakrýval
             # nebe nad střechou (u radnice mizely autobusy v ulici za ní). Obrys jen do střechy podle laseru (p90 nad terénem),
-            # nejvýš vršek modelu. Úzká věž tak obrys nemá. ▶️ Správně: obrys ze skutečného tvaru modelu (napady/OBRYSY.md).
+            # nejvýš vršek modelu. Úzká věž tak obrys nemá. Platí jen pro modely bez spočítaného tvaru (pam_obrys výš).
             p90 = dmp_p90(b.get('oid'))
             if p90: top = min(top, b['base'] + p90 + 0.6)
         pts = [px(x, y, z)[:2] for x, y in ring for z in (b['base'], top)]
@@ -208,6 +280,11 @@ for chunk in chunks:
                 candidate = sil_.simplify(0.6)
                 rounded = shapely.geometry.Polygon([(round(x), round(y)) for x, y in candidate.exterior.coords])
                 if rounded.is_valid and rounded.area > 0: hull = candidate
+        pam_ = pam_obrys({**b, 'id_svet': f"{K}:{b['id']}"}, OFF) if b.get('pam') else None   # vlastní model: skutečný tvar
+        if pam_:
+            hull, fb = shapely.geometry.Polygon(pam_[0]), pam_[1]
+            pam_hotovo.append(b.get('oid'))
+        elif b.get('pam'): pam_bez.append(b.get('oid'))
         dm = min(px(x, y, b['base'])[2] for x, y in ring)
         cx, cy = ring.mean(axis=0)
         d = px(cx, cy, b['base'])[2]
@@ -310,6 +387,25 @@ for chunk in chunks:
                     ta, tb, _ = px(t[0], t[1], t[2] + h_ * 0.62); ra, rb, _ = px(t[0] + r_, t[1], t[2] + h_ * 0.62)
                     if (a_ - ta) ** 2 + (b_ - tb) ** 2 < (ra - ta) ** 2 + (rb - tb) ** 2: skryta = True; break
             if not skryta: svicky.append([round(a_), round(b_), round(u, 3)])
+    # sochy a pomníky s vlastním modelem bez budovy v datech: vlastní položka se siluetou a půdorysem modelu (zakrývání, klik)
+    for t in PAM_TVARY:
+        if t['oids'] or not os.path.exists(f"pamatky/{t['slug']}.json"): continue
+        c_ = t['M'].centroid
+        if chunk_of(c_.x, c_.y) != tuple(chunk): continue
+        d_ = json.load(open(f"pamatky/{t['slug']}.json", encoding='utf-8'))
+        z_ = d_.get('z', 0)
+        ps_ = _polys(_cam_px(t['S']))
+        if not ps_: continue
+        hp_ = [q for q in _polys(shapely.set_precision(shapely.geometry.Polygon(max(ps_, key=lambda q: q.area).exterior).simplify(0.6), 1.0)) if q.area > 0]
+        if not hp_: continue
+        hull_ = [[round(x), round(y)] for x, y in list(max(hp_, key=lambda q: q.area).exterior.coords)[:-1]]
+        if len(hull_) < 3: continue
+        fb_ = [[[round(x), round(y)] for x, y in (im.px(x_, y_, z_)[:2] for x_, y_ in q.simplify(0.3).exterior.coords[:-1])] for q in _polys(t['M'])]
+        dd_ = [im.px(x_, y_, z_)[2] for q in _polys(t['M']) for x_, y_ in q.exterior.coords]
+        buildings.append({'id': f"{K}:pam-{t['slug']}", 'hull': hull_, 'fb': fb_, 'd': round(float(im.px(c_.x, c_.y, z_)[2]), 1),
+                          'dm': round(float(min(dd_)), 1), 'name': d_.get('nazev'), 'cls': 'pomník',
+                          'lon': round(float(d_['lon']), 6), 'lat': round(float(d_['lat']), 6), 'k': K})
+        pam_hotovo.append(t['slug'])
     per_chunk[K] = {'buildings': buildings, 'chimneys': chimneys, 'roads': roads, 'water': water.pop(K), 'pistes': pistes, 'trees': vtrees, 'svicky': svicky, 'ulice': ulice, **walk_of(chunk)}
 
 
@@ -478,6 +574,8 @@ if not districts and os.path.exists('data_all/address.parquet'):
         districts.append({'name': nm, 'xy': list(px(p.x, p.y, gz(p.x, p.y))[:2]), 'a': round(shapely.MultiPoint(inn).convex_hull.area / 1e6, 2),
                           'k': 'obec' if nm == obec else 'cast'})
 print('čtvrtí', len(districts))
+print('budovy s vlastním modelem: obrys z tvaru modelu', len(pam_hotovo), '· starší obrys', len(pam_bez))
+for o in pam_bez: print(f"  starší obrys {str(o)[:8]}: {PAM_DUVOD.get(str(o)[:8], '?')}")
 # tramvaje: graf kolejí přes všechny čtverce, linky = nejkratší cesta mezi konečnými (TRAM_LINES), tam a zpět
 OFF = (0.0, 0.0)
 tnodes, tadj = {}, {}

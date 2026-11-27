@@ -1,0 +1,215 @@
+{
+ "skupina": "11. výběr (ChatGPT)",
+ "zdroj": "Pavel 2026-11-27: nejviditelnější budovy bez modelu (napady/CHATGPT-DAVKA-11.md); skupina = jedna stavba s více budovami",
+ "poznamky_davky": {
+  "a": "Průmyslový areál u Bratislavské a Anenské (jih města, u elektrárny). Většina budov nemá adresu ani název: nejdřív zjisti, co v areálu sídlí (firma, provoz), a napiš to na začátek poznámek. Haly jsou velké a na mapě hodně vidět: drž tvar a výšku střechy podle `orto.jpg` a `laser.json` (pilové světlíky, sedlové a obloukové střechy, nástavby, rampy, vrata), drobnosti jen úsporně.",
+  "b": "Areál u Bratislavské a obchody na Brněnské. Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. U hal a obchodů drž tvar a výšku střechy podle `orto.jpg` a `laser.json`, u obchodů výlohu, vchod a reklamní pás bez cizích log.",
+  "c": "Obchody a provozy na Brněnské (sever města). Nejdřív zjisti, co v budově sídlí (obchodní centrum, prodejna, sklad), a napiš to na začátek poznámek. Loga obchodních řetězců nekresli, jen barevný pás.",
+  "d": "Haly a provozy u Lipové aleje, Kateřinské a U Tirexu. Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "e": "Průmyslová zóna u Masné, Velkomoravské a U Tirexu (západ města). Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "f": "Haly a sklady v různých částech města (Masná, Měšťanská, Na Salajce, Plucárna, U Kyjovky). Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "g": "Sklady a provozy (Průmyslová, Pánovská, Redlichova, Slovácká, Smetanova). Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "h": "Velké haly a sklady (Stavební, U Cihelny, U Elektrárny, Velkomoravská). Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Patří k nejviditelnějším budovám mapy: tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "i": "Velké haly na Velkomoravské (západ města). Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Patří k nejviditelnějším budovám mapy: tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "j": "Provozy na Průmyslové, Velkomoravské a třídě Bří Čapků. Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Tvar a výška střechy podle `orto.jpg` a `laser.json`.",
+  "k": "Sklady a haly u třídy Bří Čapků a budova na Čajkovského. Nejdřív zjisti, co v budovách sídlí, a napiš to na začátek poznámek. Tvar a výška střechy podle `orto.jpg` a `laser.json`."
+ },
+ "davky": {
+  "a": {
+   "Hala (Anenská)": [
+    "c8115d6f"
+   ],
+   "Haly (Bratislavská)": [
+    "7a2aad67",
+    "b6c101d5"
+   ],
+   "Sklad 1 (Bratislavská)": [
+    "31e1ff14"
+   ],
+   "Hala 1 (Bratislavská)": [
+    "4337116f"
+   ],
+   "Budova 1 (Bratislavská)": [
+    "ed291573"
+   ]
+  },
+  "b": {
+   "Hala 2 (Bratislavská)": [
+    "2342fada"
+   ],
+   "Bratislavská 4518": [
+    "736075c6"
+   ],
+   "Sklad 2 (Bratislavská)": [
+    "d09fbd58"
+   ],
+   "Budova 2 (Bratislavská)": [
+    "7b3e4064"
+   ],
+   "Brněnská 4031": [
+    "f18d5873"
+   ]
+  },
+  "c": {
+   "Brněnská 3955": [
+    "e236b1e2"
+   ],
+   "Brněnská 4404": [
+    "ef0e6637"
+   ],
+   "Budova (Brněnská)": [
+    "b688aa71"
+   ],
+   "Brněnská 4372": [
+    "427b647a"
+   ],
+   "Brněnská 4062": [
+    "32c341ca"
+   ]
+  },
+  "d": {
+   "Kateřinská 4315": [
+    "2427d9b9"
+   ],
+   "Hala 1 (Lipová alej)": [
+    "07dc9b96"
+   ],
+   "Budova (Lipová alej)": [
+    "fac25ec4"
+   ],
+   "Hala 2 (Lipová alej)": [
+    "5bc7b8c5"
+   ],
+   "U Tirexu 3543 a další": [
+    "56012c94",
+    "202a38bd"
+   ]
+  },
+  "e": {
+   "Budova (Masná)": [
+    "88947150"
+   ],
+   "Velkomoravská 3929": [
+    "e00ab729"
+   ],
+   "U Tirexu 4052": [
+    "ee9a3adf"
+   ],
+   "Sklad 1 (Masná)": [
+    "84d1fe77"
+   ],
+   "Sklad 2 (Masná)": [
+    "c88efe88"
+   ]
+  },
+  "f": {
+   "Hala (Masná)": [
+    "b6464b70"
+   ],
+   "Měšťanská 1125": [
+    "47c5a05c"
+   ],
+   "Budova (Na Salajce)": [
+    "917631de"
+   ],
+   "Hala (Plucárna)": [
+    "db7091d0"
+   ],
+   "U Kyjovky 4507": [
+    "1eb3b792"
+   ]
+  },
+  "g": {
+   "Sklad (Průmyslová)": [
+    "6b2cd089"
+   ],
+   "Haly (Pánovská)": [
+    "66a21d50",
+    "d48b7e50"
+   ],
+   "Sklad (Redlichova)": [
+    "08d0b86f"
+   ],
+   "Budova (Slovácká)": [
+    "d8c4e393"
+   ],
+   "Budova (Smetanova)": [
+    "5e181013"
+   ]
+  },
+  "h": {
+   "Sklad (Stavební)": [
+    "3ab90183"
+   ],
+   "Hala (Stavební)": [
+    "bd5ba870"
+   ],
+   "Hala (U Cihelny)": [
+    "4c2f46f2"
+   ],
+   "Hala (U Elektrárny)": [
+    "8fd21e1a"
+   ],
+   "Haly (Velkomoravská)": [
+    "dfc7969a",
+    "3d915ad6"
+   ]
+  },
+  "i": {
+   "Hala 1 (Velkomoravská)": [
+    "e4448bb1"
+   ],
+   "Hala 2 (Velkomoravská)": [
+    "e49e7c98"
+   ],
+   "Hala 3 (Velkomoravská)": [
+    "c0d98612"
+   ],
+   "Sklady (Velkomoravská)": [
+    "c82d2e2c",
+    "7e01e9e7"
+   ],
+   "Velkomoravská 4322": [
+    "90b008b9"
+   ]
+  },
+  "j": {
+   "Průmyslová 3834": [
+    "7b6bcdce"
+   ],
+   "Velkomoravská 3863": [
+    "0fc427de"
+   ],
+   "Budova 1 (Velkomoravská)": [
+    "1d835785"
+   ],
+   "Budova 2 (Velkomoravská)": [
+    "59cb890b"
+   ],
+   "Haly (třída Bří Čapků)": [
+    "e070db89",
+    "124a63dc"
+   ]
+  },
+  "k": {
+   "Sklad 1 (třída Bří Čapků)": [
+    "7082c600"
+   ],
+   "Sklad 2 (třída Bří Čapků)": [
+    "699ebee8"
+   ],
+   "Hala 1 (třída Bří Čapků)": [
+    "92fa44e9"
+   ],
+   "Hala 2 (třída Bří Čapků)": [
+    "216de7ac"
+   ],
+   "Budova (třída Bří Čapků)": [
+    "4a0c199c"
+   ],
+   "Čajkovského 4211": [
+    "bf79de16"
+   ]
+  }
+ }
+}

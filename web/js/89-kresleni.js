@@ -99,7 +99,15 @@
           const a = MHD.act.find((q) => q[0] === MHD.follow);
           if (a) { const o = mhdPos(MHD.trips[a[0]], a[2] ? 0 : a[1] + (now / 1000 - ns) - (busWait.get(a[0]) || 0) + (LIVE.cur.get(a[0]) || 0)); viewer.viewport.panTo(new OpenSeadragon.Point(o.ix / W, o.iy / W), true); }
         }
-        if (sx > 0.12) for (const [i, el0, ceka, poradi] of MHD.act) {
+        if (sx > 0.12) for (const a_ of MHD.act) {
+          // Pojistka (2026-11-27): ve WebKitu při Dni za minutu občas „undefined is not a function“ při rozkladu položky,
+          // příčina nenalezena. Vadnou položku přeskočit (snímek nespadne) a zaznamenat, co to bylo.
+          if (!Array.isArray(a_) || !MHD.trips[a_[0]]) {
+            if (!MHD.vadneHlaseno) { MHD.vadneHlaseno = true; console.warn('MHD.act: vadná položka', a_, typeof a_); }
+            if (window.__test) (window.__test.mhdVadne ||= []).push(String(a_) + ' / ' + typeof a_);
+            continue;
+          }
+          const [i, el0, ceka, poradi] = a_;
           const trip = MHD.trips[i], [line, typ] = MHD.routes[trip[0]];
           const el = el0 + liveOff(i, dt);                        // živá poloha: spoj posunutý v čase podle dispečinku
           if (el > MHD.dur[i]) continue;                         // dojel (zpožděné spoje bez živé polohy po čase jízdního řádu zmizí)
@@ -114,7 +122,7 @@
           if (!vis(o.ix, o.iy, 120) || !cam.grounds.some((q) => Math.abs(o.x - q.cx) <= cam.half && Math.abs(o.y - q.cy) <= cam.half)) continue;   // mimo čtverce mapy
           const shown_ = typ === 0 ? drawVehicle(o, 15, 2.5, 't3', sx, ox, oy, night, 2) : typ === 2 ? drawTrain(trip, el + (now / 1000 - ns), line, sx, ox, oy, night) : drawVehicle(o, 12, 2.5, '#e9e6dc', sx, ox, oy, night, true);
           if (shown_) for (const q of typ === 2 ? drawTrain.pts : [o]) MHD.drawn.push([Math.round(ox + q.ix * sx), Math.round(oy + q.iy * sx) - Math.round(8 * sx), i]);
-          if (shown_ && (sx > 0.55 || i === MHD.follow)) {     // číslo linky nad vozidlem
+          if (shown_ && (i === MHD.follow || (sx > 0.55 && (typ === 2 || vozVidet(o, typ === 0 ? 15 : 12))))) {     // číslo linky nad vozidlem (nad zakrytým ne)
             const h = gz(o.x, o.y), [tx, ty] = toImg(o.x, o.y, h + 6), X_ = Math.round(ox + tx * sx), Y_ = Math.round(oy + ty * sx);
             ctx.font = '700 13px "Source Sans 3", system-ui, sans-serif'; const tw = Math.ceil(ctx.measureText(line).width) + 10;
             ctx.fillStyle = '#16191f'; ctx.fillRect(X_ - tw / 2 - 1, Y_ - 10, tw + 2, 19);

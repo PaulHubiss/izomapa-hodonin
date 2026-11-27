@@ -9,6 +9,7 @@ import { ROOT, PODKLADY, server, prohlizec, vyrez, stranka } from './_spolecne.m
 const IMG = path.join(PODKLADY, 'img'); fs.mkdirSync(IMG, { recursive: true });
 const seznam = JSON.parse(fs.readFileSync(path.join(ROOT, 'pamatky/seznam.json'), 'utf8'));
 const want = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const JEN_OBRYSY = process.argv.includes('--obrysy');   // jen vršky a tvary modelů do vrsky.json (rychlé, bez snímků a dashboardu)
 const slugs = (want.length ? want : seznam).filter((s) => seznam.includes(s) && fs.existsSync(path.join(ROOT, `pamatky/${s}.js`)));
 const D = Object.fromEntries(seznam.map((s) => [s, JSON.parse(fs.readFileSync(path.join(ROOT, `pamatky/${s}.json`), 'utf8'))]));
 for (const s of slugs) if (!D[s].ram) { console.log(`${s}: chybí rám – nejdřív .venv/bin/python pamatky/sestav.py ${s}`); process.exit(1); }
@@ -25,8 +26,18 @@ const stats = {}, logs = [];
 for (const dir of [...new Set(slugs.map((s) => vyrez(D[s]).dir))]) {             // po čtvercích: scéna se načte jednou
   const mine = slugs.filter((s) => vyrez(D[s]).dir === dir);
   // pam=vse = i neschválené (běžný render dlaždic bere jen pamatky/schvalene.json)
+  if (JEN_OBRYSY) {                                                             // jen tvary modelů, bez snímků
+    const po = await stranka(browser, port, dir, `pam=vse&pamatka=${mine.join(',')}`);
+    const st = await po.evaluate(() => window.PAM_STATS);
+    for (const s of mine) { stats[s] = st[s]; console.log(s, st[s] ? `obrys ${(st[s].obrys || []).length} · půdorys ${(st[s].pudorys || []).length}` : 'model se nevolal'); }
+    logs.push(...(await po.evaluate(() => window.PAM_LOG)), ...po.chyby);
+    await po.close();
+    continue;
+  }
   const [pred, po, sam] = [await stranka(browser, port, dir, 'pam=0'), await stranka(browser, port, dir, 'pam=vse'), await stranka(browser, port, dir, 'pam=vse&jen=1')];
-  Object.assign(stats, await po.evaluate(() => window.PAM_STATS));
+  // jen stavby tohoto čtverce: stránka kreslí i cizí modely, které do čtverce zasahují kouskem, a ty mají neúplný tvar a vršek
+  // (2026-11-27: převzetí 11. výběru přepsalo Erbenově sever půdorys na 2 domy ze 3)
+  { const st = await po.evaluate(() => window.PAM_STATS); for (const s of mine) stats[s] = st[s]; }
   logs.push(...(await po.evaluate(() => window.PAM_LOG)).filter((l) => mine.some((s) => l.startsWith(s)) || l.startsWith('_kit')), ...po.chyby);
   for (const s of mine) {
     const v = vyrez(D[s]);
@@ -43,8 +54,12 @@ for (const l of logs) console.log('  ! ' + l);
 
 // vršky modelů (světové souřadnice) pro obrys při najetí myší
 const VF = path.join(ROOT, 'pamatky/vrsky.json'), vrsky = fs.existsSync(VF) ? JSON.parse(fs.readFileSync(VF, 'utf8')) : {};
-for (const [s, st] of Object.entries(stats)) if (st.vrsek > -1e8 && D[s]) vrsky[s] = { vrsek: st.vrsek, obalka: st.obalka, oids: D[s].oids || [] };
-fs.writeFileSync(VF, JSON.stringify(vrsky, null, 1));
+// obrys = silueta v rovině kamery (sochy bez budovy v datech dostanou v overlay.py vlastní položku) (geo.view), pudorys = průmět shora; z nich overlay.py dělá obrys budovy (zakrývání, klik)
+for (const [s, st] of Object.entries(stats)) if (st && st.vrsek > -1e8 && D[s]) vrsky[s] = { vrsek: st.vrsek, obalka: st.obalka, oids: D[s].oids || [],
+  ...(st.obrys ? { obrys: st.obrys, pudorys: st.pudorys } : {}) };
+// jeden obrys na řádek: soubor je v gitu, rozdíly pak zůstanou čitelné
+fs.writeFileSync(VF, JSON.stringify(vrsky, null, 1).replace(/\[\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]/g, '[$1, $2]').replace(/\[\s+(\[-?[\d.]+, -?[\d.]+\](?:,\s+\[-?[\d.]+, -?[\d.]+\])*)\s+\]/g, (m, a) => `[${a.replace(/,\s+/g, ',')}]`));
+if (JEN_OBRYSY) { console.log('hotovo:', Object.keys(stats).length, 'modelů → pamatky/vrsky.json'); process.exit(0); }
 
 // souhrn pro dashboard
 const DJ = path.join(PODKLADY, 'dashboard.json'), old = fs.existsSync(DJ) ? JSON.parse(fs.readFileSync(DJ, 'utf8')) : {};

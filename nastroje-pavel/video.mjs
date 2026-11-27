@@ -113,7 +113,7 @@ let kde = '';
 const LOG = path.join(KOREN, 'ladeni', 'video-chyby.log');
 const tik = async (ms) => { try { await p.clock.runFor(ms); } catch (e) {
   const z = await p.evaluate(() => { const vp = window.__izo.viewer.viewport, c = vp.getCenter(true);
-    const r = { stred: [c.x, c.y], zoom: vp.getZoom(true), hash: location.hash, cas: Date.now(), nan: window.__nanZaznam || [] };
+    const r = { stred: [c.x, c.y], zoom: vp.getZoom(true), pohled: window.__izo.pohled(), cas: Date.now(), nan: window.__nanZaznam || [] };
     window.__nanZaznam = []; return r; }).catch((x) => ({ chyba_zaznamu: x.message }));
   chyby.push(`${kde}: ${e.message.split('\n')[0]}`);
   fs.mkdirSync(path.dirname(LOG), { recursive: true });
